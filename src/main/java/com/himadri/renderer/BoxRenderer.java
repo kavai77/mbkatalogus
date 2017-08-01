@@ -56,8 +56,9 @@ public class BoxRenderer {
         }
 
         // headline box
+        final Color mainColor = Util.getBoxMainColor(box);
         g2.setPaint(new LinearGradientPaint(TEXT_BOX_X, TEXT_BOX_HEAD_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, 0,
-                new float[]{0.0f, 0.5f, 1f}, new Color[]{page.getMainColor(), Color.white, page.getMainColor()}));
+                new float[]{0.0f, 0.5f, 1f}, new Color[]{mainColor, Color.white, mainColor}));
         g2.fill(new Rectangle2D.Float(TEXT_BOX_X, 0, TEXT_BOX_WIDTH, TEXT_BOX_HEAD_HEIGHT));
 
         // text boxes

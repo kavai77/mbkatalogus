@@ -7,13 +7,15 @@ public class Box {
     private final String brandImage;
     private final String title;
     private final String category;
+    private final int productGroupNb;
     private final List<Article> articles;
 
-    public Box(String image, String brandImage, String title, String category, List<Article> articles) {
+    public Box(String image, String brandImage, String title, String category, int productGroupNb, List<Article> articles) {
         this.image = image;
         this.brandImage = brandImage;
         this.title = title;
         this.category = category;
+        this.productGroupNb = productGroupNb;
         this.articles = articles;
     }
 
@@ -31,6 +33,10 @@ public class Box {
 
     public String getCategory() {
         return category;
+    }
+
+    public int getProductGroupNb() {
+        return productGroupNb;
     }
 
     public List<Article> getArticles() {

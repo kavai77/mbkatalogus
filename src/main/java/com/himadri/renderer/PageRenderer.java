@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.himadri.model.Page;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
@@ -47,6 +46,7 @@ public class PageRenderer {
     public void drawPage(Graphics2D g2, Page page) {
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
         float marginRight = MARGIN_RIGHT.get(page.getOrientation());
+        Color mainColor = Util.getBoxMainColor(page.getBoxes().get(0));
 
         // draw middle line
         g2.setPaint(Color.lightGray);
@@ -59,13 +59,13 @@ public class PageRenderer {
             g2.draw(new Line2D.Float(marginLeft, MARGIN_TOP, WIDTH, MARGIN_TOP));
             g2.draw(new Line2D.Float(marginLeft, MARGIN_TOP, marginLeft, HEIGHT-MARGIN_BOTTOM));
             g2.draw(new Line2D.Float(marginLeft, HEIGHT-MARGIN_BOTTOM, WIDTH, HEIGHT-MARGIN_BOTTOM));
-            g2.setPaint(page.getMainColor());
+            g2.setPaint(mainColor);
             g2.fill(new Rectangle2D.Float(0, 0, 30, 700));
         } else {
             g2.draw(new Line2D.Float(0, MARGIN_TOP, WIDTH-marginRight, MARGIN_TOP));
             g2.draw(new Line2D.Float(WIDTH-marginRight, MARGIN_TOP, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM));
             g2.draw(new Line2D.Float(0, HEIGHT-MARGIN_BOTTOM, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM));
-            g2.setPaint(page.getMainColor());
+            g2.setPaint(mainColor);
             g2.fill(new Rectangle2D.Float(WIDTH - 30, 0, 30, 700));
         }
 
@@ -80,7 +80,7 @@ public class PageRenderer {
         }
 
         // drawing headline
-        g2.setPaint(page.getMainColor());
+        g2.setPaint(mainColor);
         g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 15));
         final float headLineStartX = page.getOrientation() == Page.Orientation.LEFT ? marginLeft :
                 WIDTH - marginRight - getStringWidth(g2, page.getHeadLine());

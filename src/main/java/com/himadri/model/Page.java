@@ -1,6 +1,5 @@
 package com.himadri.model;
 
-import java.awt.*;
 import java.util.List;
 
 public class Page {
@@ -11,15 +10,13 @@ public class Page {
     private final String pageNumber;
     private final Orientation orientation;
     private final List<Box> boxes;
-    private final Color mainColor;
 
-    public Page(String headLine, String category, String pageNumber, Orientation orientation, List<Box> boxes, Color mainColor) {
+    public Page(String headLine, String category, String pageNumber, Orientation orientation, List<Box> boxes) {
         this.headLine = headLine;
         this.category = category;
         this.pageNumber = pageNumber;
         this.orientation = orientation;
         this.boxes = boxes;
-        this.mainColor = mainColor;
     }
 
     public String getHeadLine() {
@@ -40,9 +37,5 @@ public class Page {
 
     public List<Box> getBoxes() {
         return boxes;
-    }
-
-    public Color getMainColor() {
-        return mainColor;
     }
 }
