@@ -32,7 +32,7 @@ public class PageRenderer {
     );
     private static final float BOX_WIDTH = (WIDTH - MARGIN_LEFT.get(Page.Orientation.LEFT) - MARGIN_RIGHT.get(Page.Orientation.LEFT)) / 2; // 262.5
     private static final float BOX_HEIGHT = (HEIGHT - MARGIN_TOP - MARGIN_BOTTOM) / BOX_PER_PAGE; //99f;
-    public static final String OLDAL = "oldal";
+    private static final String OLDAL = "oldal";
 
     static {
         assert MARGIN_LEFT.get(Page.Orientation.LEFT) + MARGIN_RIGHT.get(Page.Orientation.LEFT) ==
@@ -104,7 +104,7 @@ public class PageRenderer {
             } else {
                 g2.translate(BOX_WIDTH+7.5f, 0);
             }
-            boxRenderer.drawBox(g2, page.getBoxes().get(i), page);
+            boxRenderer.drawBox(g2, page.getBoxes().get(i));
         }
 
     }

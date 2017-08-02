@@ -1,8 +1,8 @@
 package com.himadri.renderer;
 
+import com.himadri.Settings;
 import com.himadri.ValidationException;
 import com.himadri.model.Box;
-import com.himadri.model.Page;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -17,7 +17,7 @@ import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.himadri.App.IMAGE_LOCATION;
+import static com.himadri.Settings.IMAGE_LOCATION;
 
 public class BoxRenderer {
     private static final Logger LOG = Logger.getLogger(BoxRenderer.class.getName());
@@ -39,20 +39,25 @@ public class BoxRenderer {
         this.boxHeight = boxHeight;
     }
 
-    public void drawBox(Graphics2D g2, Box box, Page page) {
+    public void drawBox(Graphics2D g2, Box box) {
         // draw image
-        AffineTransform transform = g2.getTransform();
-        try (InputStream fis = new FileInputStream(new File(IMAGE_LOCATION, box.getImage()))) {
-            BufferedImage image = ImageIO.read(fis);
-            float scale = Math.min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight());
-            int posX = (int) (TEXT_BOX_X / scale - image.getWidth()) / 2;
-            int posY = (int) (boxHeight / scale - image.getHeight()) / 2;
-            g2.scale(scale, scale);
-            g2.drawImage(image, posX, posY, image.getWidth(), image.getHeight(), null);
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Nem lehetett kirajzolni a képet: " + box.getImage());
-        } finally {
-            g2.setTransform(transform);
+        final File imageFile = new File(IMAGE_LOCATION, box.getImage());
+        if (!imageFile.exists()) {
+            LOG.log(Level.WARNING, "Nem található a kép: " + box.getImage());
+        } else if (!Settings.DISABLE_IMAGES) {
+            AffineTransform transform = g2.getTransform();
+            try (InputStream fis = new FileInputStream(imageFile)) {
+                BufferedImage image = ImageIO.read(fis);
+                float scale = Math.min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight());
+                int posX = (int) (TEXT_BOX_X / scale - image.getWidth()) / 2;
+                int posY = (int) (boxHeight / scale - image.getHeight()) / 2;
+                g2.scale(scale, scale);
+                g2.drawImage(image, posX, posY, image.getWidth(), image.getHeight(), null);
+            } catch (IOException e) {
+                LOG.log(Level.SEVERE, "Nem lehetett kirajzolni a képet: " + box.getImage());
+            } finally {
+                g2.setTransform(transform);
+            }
         }
 
         // headline box

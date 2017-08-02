@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 
 public class App {
-    public static final File IMAGE_LOCATION = new File("/Users/himadri/Projects/MBKatalogus/cikkek");
 
     public static void main(String[] args) throws Exception {
 
@@ -43,8 +42,8 @@ public class App {
 
         PageRenderer pageRenderer = new PageRenderer();
 
+        PDDocument doc = new PDDocument();
         for (Page page: pages) {
-            PDDocument doc = new PDDocument();
             PDPage pdPage = new PDPage(PDRectangle.A4);
             PdfBoxGraphics2D g2 = new PdfBoxGraphics2D(doc, PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight());
             doc.addPage(pdPage);
@@ -54,14 +53,11 @@ public class App {
             PDPageContentStream contentStream = new PDPageContentStream(doc, pdPage);
             contentStream.drawForm(g2.getXFormObject());
             contentStream.close();
-            File pdfFile = new File("target/out-" + page.getPageNumber() + ".pdf");
-            doc.save(pdfFile);
-            doc.close();
-            Desktop.getDesktop().open(pdfFile);
         }
-
-
-
+        File pdfFile = new File("target/out.pdf");
+        doc.save(pdfFile);
+        doc.close();
+        Desktop.getDesktop().open(pdfFile);
 
     }
 
@@ -95,10 +91,5 @@ public class App {
                 }
             }
         });
-
-        g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     }
 }
