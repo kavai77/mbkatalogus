@@ -3,6 +3,8 @@ package com.himadri.renderer;
 import com.himadri.Settings;
 import com.himadri.ValidationException;
 import com.himadri.model.Box;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -14,14 +16,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.himadri.Settings.IMAGE_LOCATION;
 
 public class BoxRenderer {
-    private static final Logger LOG = Logger.getLogger(BoxRenderer.class.getName());
-
+    private static final Logger LOG = LoggerFactory.getLogger(BoxRenderer.class);
 
     private final float boxWidth;
     private final float boxHeight;
@@ -43,7 +42,7 @@ public class BoxRenderer {
         // draw image
         final File imageFile = new File(IMAGE_LOCATION, box.getImage());
         if (!imageFile.exists()) {
-            LOG.log(Level.WARNING, "Nem található a kép: " + box.getImage());
+            LOG.warn("Nem található a kép: " + box.getImage());
         } else if (!Settings.DISABLE_IMAGES) {
             AffineTransform transform = g2.getTransform();
             try (InputStream fis = new FileInputStream(imageFile)) {
@@ -54,7 +53,7 @@ public class BoxRenderer {
                 g2.scale(scale, scale);
                 g2.drawImage(image, posX, posY, image.getWidth(), image.getHeight(), null);
             } catch (IOException e) {
-                LOG.log(Level.SEVERE, "Nem lehetett kirajzolni a képet: " + box.getImage());
+                LOG.error("Nem lehetett kirajzolni a képet: " + box.getImage());
             } finally {
                 g2.setTransform(transform);
             }
@@ -92,7 +91,8 @@ public class BoxRenderer {
             } else {
                 String[] words = box.getTitle().split(" ");
                 if (words.length == 0) {
-                    throw new ValidationException(Level.SEVERE, "A cikknév egyetlen hosszú szóbál áll, amit nem lehetett tördelni");
+                    LOG.error( "A cikknév egyetlen hosszú szóbál áll, amit nem lehetett tördelni");
+                    throw new ValidationException();
                 }
                 StringBuilder firstLine = new StringBuilder(words[0]);
                 int wordSplit;
@@ -107,13 +107,14 @@ public class BoxRenderer {
                 }
                 if (wordSplit == words.length) {
                     g2.drawString(firstLine.toString(), boxTextStart, 13);
-                    throw new ValidationException(Level.WARNING, "Sikerült kiírni a címsort, de nagyon közel áll a végéhez.");
+                    LOG.warn("Sikerült kiírni a címsort, de nagyon közel áll a végéhez.");
+                    throw new ValidationException();
                 }
                 StringBuilder secondLine = new StringBuilder(words[wordSplit]);
                 for (int i = wordSplit + 1; i < words.length; i++) {
                     String nextString = secondLine.toString() + " " + words[i];
                     if (Util.getStringWidth(g2, nextString) > categoryStart - boxTextStart - 3) {
-                        LOG.log(Level.WARNING, "Túl hosszú a címsor, le kellett vágni a második sorban " + box);
+                        LOG.warn( "Túl hosszú a címsor, le kellett vágni a második sorban " + box);
                         break;
                     }
                     secondLine.append(" ").append(words[i]);
@@ -122,7 +123,7 @@ public class BoxRenderer {
 
             }
         } catch (ValidationException e) {
-            LOG.log(e.getLevel(), e.getMessage() + " " + box);
+            LOG.info("Hibás doboz: " + box);
         }
 
         try {
@@ -156,7 +157,8 @@ public class BoxRenderer {
                         sb = new StringBuilder(word);
                         currentLine++;
                         if (currentLine > TEXT_BOX_LINE_COUNT) {
-                            throw new ValidationException(Level.SEVERE, "Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
+                            LOG.error("Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
+                            throw new ValidationException();
                         }
                     }
                 }
@@ -165,11 +167,12 @@ public class BoxRenderer {
                 }
                 currentLine++;
                 if (currentLine > TEXT_BOX_LINE_COUNT) {
-                    throw new ValidationException(Level.SEVERE, "Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
+                    LOG.error("Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
+                    throw new ValidationException();
                 }
             }
         } catch (ValidationException e) {
-            LOG.log(e.getLevel(), e.getMessage() + " " + box);
+            LOG.info("Hibás doboz: " + box);
         }
 
         // bottom line

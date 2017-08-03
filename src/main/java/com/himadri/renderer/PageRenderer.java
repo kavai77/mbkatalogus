@@ -2,18 +2,20 @@ package com.himadri.renderer;
 
 import com.google.common.collect.ImmutableMap;
 import com.himadri.model.Page;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.himadri.renderer.Util.getStringWidth;
 
+@Component
 public class PageRenderer {
-    private static final Logger LOG = Logger.getLogger(PageRenderer.class.getName());
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(PageRenderer.class);
+
 
     private static final int WIDTH = 595;
     private static final int HEIGHT = 842;
@@ -94,7 +96,7 @@ public class PageRenderer {
 
         //drawing the boxes
         if (page.getBoxes().size() > BOX_PER_PAGE * 2) {
-            LOG.log(Level.SEVERE, "Több doboz van az oldalon, mint megengedett " + BOX_PER_PAGE * 2);
+            LOG.error("Több doboz van az oldalon, mint megengedett " + BOX_PER_PAGE * 2);
         }
         g2.translate(marginLeft, MARGIN_TOP);
         g2.translate(BOX_WIDTH+7.5f, -BOX_HEIGHT);

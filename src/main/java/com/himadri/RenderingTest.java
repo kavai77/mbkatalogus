@@ -14,6 +14,8 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -23,10 +25,13 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+@Component
+public class RenderingTest {
 
-public class App {
+    @Autowired
+    private PageRenderer pageRenderer;
 
-    public static void main(String[] args) throws Exception {
+    public String testRendering() throws IOException {
 
         Box[] boxes = new Box[2];
         boxes[0]  = new Box("3645.psd", null, "mélykúti csőszivattyú, 750W, 3\"",
@@ -40,8 +45,6 @@ public class App {
         pages[1] = new Page("Kéziszerszám Katalógus", "Pneumatikus gépek", "17", Page.Orientation.RIGHT,
                 new Random().ints(16, 0, boxes.length).mapToObj(i -> boxes[i]).collect(Collectors.toList()));
 
-        PageRenderer pageRenderer = new PageRenderer();
-
         PDDocument doc = new PDDocument();
         for (Page page: pages) {
             PDPage pdPage = new PDPage(PDRectangle.A4);
@@ -54,11 +57,10 @@ public class App {
             contentStream.drawForm(g2.getXFormObject());
             contentStream.close();
         }
-        File pdfFile = new File("target/out.pdf");
+        File pdfFile = new File(Settings.RENDERING_LOCATION, "out.pdf");
         doc.save(pdfFile);
         doc.close();
-        Desktop.getDesktop().open(pdfFile);
-
+        return pdfFile.getName();
     }
 
     private static void setCommonGraphics(PdfBoxGraphics2D g2) {
