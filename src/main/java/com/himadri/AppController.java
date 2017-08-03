@@ -1,7 +1,12 @@
 package com.himadri;
 
-import com.himadri.csv.CatalogueBean;
 import com.himadri.csv.CatalogueReader;
+import com.himadri.engine.ModelTransformerEngine;
+import com.himadri.engine.UserSession;
+import com.himadri.model.Item;
+import com.himadri.model.Page;
+import com.himadri.model.UserRequest;
+import com.himadri.renderer.DocumentRenderer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -23,23 +28,43 @@ public class AppController extends WebMvcConfigurerAdapter {
     @Autowired
     private CatalogueReader catalogueReader;
 
+    @Autowired
+    private ModelTransformerEngine modelTransformerEngine;
+
+    @Autowired
+    private DocumentRenderer documentRenderer;
+
+    @Autowired
+    private UserSession userSession;
+
     @RequestMapping("/testRendering")
     @ResponseBody
     public String testRendering() throws IOException {
-        final String file = renderingTest.testRendering();
-        return String.format("<a href=\"/render/%s\" target=\"_blank\">Rendered PDF</a>", file);
+        return convertFileListToLinks(renderingTest.testRendering());
     }
 
-    @RequestMapping("/testCsvParsing")
+    @RequestMapping("/csvRendering")
     @ResponseBody
-    public List<CatalogueBean> testCsvParsing() throws IOException {
-        return catalogueReader.readWithCsvBeanReader();
+    public String testCsvParsing() throws IOException {
+        userSession.setUserRequest(new UserRequest("Kéziszerszám Katalógus"));
+        final List<Item> itemList = catalogueReader.readWithCsvBeanReader();
+        final List<Page> pagesFromItems = modelTransformerEngine.createPagesFromItems(itemList);
+        final List<String> fileNames = documentRenderer.renderDocument(pagesFromItems);
+        return convertFileListToLinks(fileNames);
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/render/*").addResourceLocations("file://" +
                 Settings.RENDERING_LOCATION.getAbsolutePath() + "/");
+    }
+
+    private String convertFileListToLinks(List<String> files) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < files.size(); i++) {
+            sb.append(String.format("<a href=\"/render/%s\" target=\"_blank\">Rendered PDF #%d</a>%n", files.get(i), i));
+        }
+        return sb.toString();
     }
 
     public static void main(String[] args) throws Exception {

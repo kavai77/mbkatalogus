@@ -1,6 +1,7 @@
 package com.himadri.csv;
 
 import com.himadri.Settings;
+import com.himadri.model.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -20,16 +21,16 @@ import java.util.List;
 @Component
 public class CatalogueReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(CatalogueReader.class);
-    public List<CatalogueBean> readWithCsvBeanReader() throws IOException {
+    public List<Item> readWithCsvBeanReader() throws IOException {
 
-        final List<CatalogueBean> beanArrayList = new ArrayList<>();
+        final List<Item> beanArrayList = new ArrayList<>();
         try (ICsvBeanReader beanReader = new CsvBeanReader(new FileReader(Settings.CSV_LOCATION),
                 CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE)) {
             final String[] header = beanReader.getHeader(true);
             final CellProcessor[] processors = getProcessors();
 
-            CatalogueBean catalogueBean;
-            while( (catalogueBean = beanReader.read(CatalogueBean.class, header, processors)) != null ) {
+            Item catalogueBean;
+            while( (catalogueBean = beanReader.read(Item.class, header, processors)) != null ) {
                 beanArrayList.add(catalogueBean);
             }
 

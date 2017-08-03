@@ -1,6 +1,6 @@
-package com.himadri.csv;
+package com.himadri.model;
 
-public class CatalogueBean {
+public class Item {
     private String cikkszam;
     private String cikknev;
     private String cikkfajta;
@@ -18,7 +18,7 @@ public class CatalogueBean {
     private String kepnev;
     private String gyartokepnev;
 
-    public CatalogueBean() {
+    public Item() {
     }
 
     public String getCikkszam() {

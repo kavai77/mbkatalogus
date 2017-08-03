@@ -6,8 +6,11 @@ import java.awt.*;
 
 public class Util {
     private static final Color[] PRODUCT_GROUP_COLORS = new Color[] {
-            new Color(164, 203, 226),
-            new Color(229, 198, 144)
+            new Color(176, 208, 228),
+            new Color(237, 162, 143),
+            new Color(142, 180, 193),
+            new Color(254, 240, 223),
+            new Color(149, 176, 153)
     };
 
     public static int getStringWidth(Graphics2D g2, String string) {
@@ -15,6 +18,6 @@ public class Util {
     }
 
     public static Color getBoxMainColor(Box box) {
-        return PRODUCT_GROUP_COLORS[box.getProductGroupNb() % PRODUCT_GROUP_COLORS.length];
+        return PRODUCT_GROUP_COLORS[box.getIndexOfProductGroup() % PRODUCT_GROUP_COLORS.length];
     }
 }

@@ -7,15 +7,19 @@ public class Box {
     private final String brandImage;
     private final String title;
     private final String category;
-    private final int productGroupNb;
+    private final String productGroup;
+    private final int indexOfProductGroup;
+    private final int occupiedSpace;
     private final List<Article> articles;
 
-    public Box(String image, String brandImage, String title, String category, int productGroupNb, List<Article> articles) {
+    public Box(String image, String brandImage, String title, String category, String productGroup, int indexOfProductGroup, int occupiedSpace, List<Article> articles) {
         this.image = image;
         this.brandImage = brandImage;
         this.title = title;
         this.category = category;
-        this.productGroupNb = productGroupNb;
+        this.productGroup = productGroup;
+        this.indexOfProductGroup = indexOfProductGroup;
+        this.occupiedSpace = occupiedSpace;
         this.articles = articles;
     }
 
@@ -35,8 +39,16 @@ public class Box {
         return category;
     }
 
-    public int getProductGroupNb() {
-        return productGroupNb;
+    public String getProductGroup() {
+        return productGroup;
+    }
+
+    public int getIndexOfProductGroup() {
+        return indexOfProductGroup;
+    }
+
+    public int getOccupiedSpace() {
+        return occupiedSpace;
     }
 
     public List<Article> getArticles() {
@@ -83,6 +95,8 @@ public class Box {
                 ", brandImage='" + brandImage + '\'' +
                 ", title='" + title + '\'' +
                 ", category='" + category + '\'' +
+                ", indexOfProductGroup='" + indexOfProductGroup + '\'' +
+                ", occupiedSpace='" + occupiedSpace + '\'' +
                 ", articles=" + articles +
                 '}';
     }

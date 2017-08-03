@@ -5,6 +5,7 @@ import com.himadri.ValidationException;
 import com.himadri.model.Box;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -18,12 +19,13 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static com.himadri.Settings.IMAGE_LOCATION;
+import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
+import static org.apache.commons.lang.StringUtils.stripToEmpty;
 
+@Component
 public class BoxRenderer {
     private static final Logger LOG = LoggerFactory.getLogger(BoxRenderer.class);
 
-    private final float boxWidth;
-    private final float boxHeight;
     private static final float IMAGE_WIDTH_MAX = 99f;
     private static final float IMAGE_HEIGHT_MAX = 99f;
     private static final float TEXT_BOX_X = 105f;
@@ -33,15 +35,10 @@ public class BoxRenderer {
     private static final int TEXT_BOX_LINE_COUNT = 6;
     private static final String FONT = "Arial Narrow";
 
-    public BoxRenderer(float boxWidth, float boxHeight) {
-        this.boxWidth = boxWidth;
-        this.boxHeight = boxHeight;
-    }
-
     public void drawBox(Graphics2D g2, Box box) {
         // draw image
-        final File imageFile = new File(IMAGE_LOCATION, box.getImage());
-        if (!imageFile.exists()) {
+        final File imageFile = new File(IMAGE_LOCATION, stripToEmpty(box.getImage()));
+        if (!imageFile.exists() || !imageFile.isFile()) {
             LOG.warn("Nem található a kép: " + box.getImage());
         } else if (!Settings.DISABLE_IMAGES) {
             AffineTransform transform = g2.getTransform();
@@ -49,7 +46,7 @@ public class BoxRenderer {
                 BufferedImage image = ImageIO.read(fis);
                 float scale = Math.min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight());
                 int posX = (int) (TEXT_BOX_X / scale - image.getWidth()) / 2;
-                int posY = (int) (boxHeight / scale - image.getHeight()) / 2;
+                int posY = (int) (BOX_HEIGHT / scale - image.getHeight()) / 2;
                 g2.scale(scale, scale);
                 g2.drawImage(image, posX, posY, image.getWidth(), image.getHeight(), null);
             } catch (IOException e) {
@@ -144,7 +141,7 @@ public class BoxRenderer {
 
                 // description
                 g2.setPaint(Color.black);
-                g2.setFont(new Font(FONT, Font.PLAIN, 8));
+                g2.setFont(new Font(FONT, Font.PLAIN, 7));
                 StringBuilder sb = null;
 
                 for (String word : article.getDescription().split(" ")) {
@@ -178,7 +175,7 @@ public class BoxRenderer {
         // bottom line
         g2.setColor(Color.lightGray);
         g2.setStroke(new BasicStroke(.5f));
-        g2.draw(new Line2D.Float(5, boxHeight, TEXT_BOX_X + TEXT_BOX_WIDTH, boxHeight));
+        g2.draw(new Line2D.Float(5, BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, BOX_HEIGHT));
     }
 
     private float getLineYBaseLine(int line) {

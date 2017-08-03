@@ -7,11 +7,11 @@ public class Page {
 
     private final String headLine;
     private final String category;
-    private final String pageNumber;
+    private final int pageNumber;
     private final Orientation orientation;
     private final List<Box> boxes;
 
-    public Page(String headLine, String category, String pageNumber, Orientation orientation, List<Box> boxes) {
+    public Page(String headLine, String category, int pageNumber, Orientation orientation, List<Box> boxes) {
         this.headLine = headLine;
         this.category = category;
         this.pageNumber = pageNumber;
@@ -27,7 +27,7 @@ public class Page {
         return category;
     }
 
-    public String getPageNumber() {
+    public int getPageNumber() {
         return pageNumber;
     }
 
