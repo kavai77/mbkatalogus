@@ -1,6 +1,6 @@
 package com.himadri;
 
-import com.himadri.csv.CatalogueReader;
+import com.himadri.engine.CatalogueReader;
 import com.himadri.engine.ModelTransformerEngine;
 import com.himadri.engine.UserSession;
 import com.himadri.model.Item;
@@ -46,10 +46,13 @@ public class AppController extends WebMvcConfigurerAdapter {
     @RequestMapping("/csvRendering")
     @ResponseBody
     public String testCsvParsing() throws IOException {
-        userSession.setUserRequest(new UserRequest("Kéziszerszám Katalógus"));
-        final List<Item> itemList = catalogueReader.readWithCsvBeanReader();
-        final List<Page> pagesFromItems = modelTransformerEngine.createPagesFromItems(itemList);
-        final List<String> fileNames = documentRenderer.renderDocument(pagesFromItems);
+        final UserRequest userRequest = new UserRequest();
+        userRequest.setCatalogueName("Kéziszerszám Katalógus");
+        userRequest.setLocalCsvFile("/Users/himadri/Projects/MBKatalogus/katalogus.csv");
+        userSession.setUserRequest(userRequest);
+        final List<Item> items = catalogueReader.readWithCsvBeanReader();
+        final List<Page> pages = modelTransformerEngine.createPagesFromItems(items);
+        final List<String> fileNames = documentRenderer.renderDocument(pages);
         return convertFileListToLinks(fileNames);
     }
 
