@@ -26,7 +26,7 @@ public class LogoImageCache {
                 .expireAfterAccess(60, TimeUnit.MINUTES)
                 .build(new CacheLoader<File, FileImage>() {
                             public FileImage load(File file) throws IOException {
-                                LOGGER.info("Loading logo file: " + file);
+                                LOGGER.info("Loading logo file: {}", file);
                                 return new FileImage(ImageIO.read(file), file.lastModified());
                             }
                         });
@@ -36,6 +36,8 @@ public class LogoImageCache {
         try {
             FileImage fileImage = logoImageCache.get(file);
             if (file.lastModified() != fileImage.getLastModified()) {
+                LOGGER.info("Logo file {} modified from {} to {}, reloading...", file, fileImage.getLastModified(),
+                        file.lastModified());
                 logoImageCache.invalidate(file);
                 return logoImageCache.get(file).getImage();
             } else {
