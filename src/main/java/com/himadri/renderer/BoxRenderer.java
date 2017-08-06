@@ -5,6 +5,8 @@ import com.himadri.ValidationException;
 import com.himadri.engine.UserSession;
 import com.himadri.model.Box;
 import com.himadri.model.ErrorCollector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +29,8 @@ import static org.apache.commons.lang.StringUtils.stripToEmpty;
 
 @Component
 public class BoxRenderer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BoxRenderer.class);
+
     private static final float IMAGE_WIDTH_MAX = 99f;
     private static final float IMAGE_HEIGHT_MAX = 99f;
     private static final float LOGO_IMAGE_WIDTH_MAX = 33f;
@@ -60,7 +64,9 @@ public class BoxRenderer {
                 g2.scale(scale, scale);
                 g2.drawImage(image, posX, posY, image.getWidth(), image.getHeight(), null);
             } catch (IOException e) {
-                errorCollector.addErrorItem(ERROR, "Nem lehetett kirajzolni a képet: " + box.getImage());
+                errorCollector.addErrorItem(ERROR, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
+                        box.getImage(), e.getMessage()));
+                LOGGER.error("Could not paint image", e);
             } finally {
                 g2.setTransform(transform);
             }
@@ -78,7 +84,9 @@ public class BoxRenderer {
                 g2.scale(scale, scale);
                 g2.drawImage(logoImage, (int)(3f / scale), (int)(3f / scale), logoImage.getWidth(), logoImage.getHeight(), null);
             } catch (IOException e) {
-                errorCollector.addErrorItem(ERROR, "Nem lehetett kirajzolni a logo képet: " + box.getBrandImage());
+                errorCollector.addErrorItem(ERROR, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
+                        box.getImage(), e.getMessage()));
+                LOGGER.error("Could not paint logo image", e);
             } finally {
                 g2.setTransform(transform);
             }

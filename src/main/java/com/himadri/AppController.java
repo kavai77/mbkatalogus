@@ -17,7 +17,11 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 @Controller
@@ -48,12 +52,26 @@ public class AppController extends WebMvcConfigurerAdapter {
     public String testCsvParsing() throws IOException {
         final UserRequest userRequest = new UserRequest();
         userRequest.setCatalogueName("Kéziszerszám Katalógus");
-        userRequest.setLocalCsvFile("/Users/himadri/Projects/MBKatalogus/katalogus.csv");
+        userRequest.setLocalCsvFile("/Users/himadri/Projects/MBKatalogus/filtered_katalogus.csv");
         userSession.setUserRequest(userRequest);
         final List<Item> items = catalogueReader.readWithCsvBeanReader();
         final List<Page> pages = modelTransformerEngine.createPagesFromItems(items);
         final List<String> fileNames = documentRenderer.renderDocument(pages);
         return convertFileListToLinks(fileNames);
+    }
+
+    @RequestMapping("/unknownImages")
+    @ResponseBody
+    public String unknownImages() throws IOException {
+        final UserRequest userRequest = new UserRequest();
+        userRequest.setLocalCsvFile("/Users/himadri/Projects/MBKatalogus/katalogus.csv");
+        userSession.setUserRequest(userRequest);
+        final List<Item> items = catalogueReader.readWithCsvBeanReader();
+        final Set<String> kepek = items.stream().map(Item::getKepnev).collect(Collectors.toSet());
+        final Set<String> files = Files.list(Paths.get(Settings.IMAGE_LOCATION.getAbsolutePath())).map(a -> a.getFileName().toString()).collect(Collectors.toSet());
+        files.removeAll(kepek);
+        return files.toString();
+
     }
 
     @Override
