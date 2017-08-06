@@ -2,9 +2,10 @@ package com.himadri.renderer;
 
 import com.himadri.Settings;
 import com.himadri.ValidationException;
+import com.himadri.engine.UserSession;
 import com.himadri.model.Box;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.himadri.model.ErrorCollector;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
@@ -19,15 +20,16 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static com.himadri.Settings.IMAGE_LOCATION;
+import static com.himadri.Settings.LOGO_IMAGE_LOCATION;
+import static com.himadri.model.ErrorCollector.Severity.*;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
 import static org.apache.commons.lang.StringUtils.stripToEmpty;
 
 @Component
 public class BoxRenderer {
-    private static final Logger LOG = LoggerFactory.getLogger(BoxRenderer.class);
-
     private static final float IMAGE_WIDTH_MAX = 99f;
     private static final float IMAGE_HEIGHT_MAX = 99f;
+    private static final float LOGO_IMAGE_WIDTH_MAX = 33f;
     private static final float TEXT_BOX_X = 105f;
     private static final float TEXT_BOX_WIDTH = 150f;
     private static final float TEXT_BOX_HEAD_HEIGHT = 27f;
@@ -35,11 +37,19 @@ public class BoxRenderer {
     private static final int TEXT_BOX_LINE_COUNT = 6;
     private static final String FONT = "Arial Narrow";
 
+    @Autowired
+    private LogoImageCache logoImageCache;
+
+    @Autowired
+    private UserSession userSession;
+
     public void drawBox(Graphics2D g2, Box box) {
+        ErrorCollector errorCollector = userSession.getErrorCollector();
+
         // draw image
         final File imageFile = new File(IMAGE_LOCATION, stripToEmpty(box.getImage()));
         if (!imageFile.exists() || !imageFile.isFile()) {
-            LOG.warn("Nem található a kép: " + box.getImage());
+            errorCollector.addErrorItem(WARN, "Nem található a kép: " + box.getImage());
         } else if (!Settings.DISABLE_IMAGES) {
             AffineTransform transform = g2.getTransform();
             try (InputStream fis = new FileInputStream(imageFile)) {
@@ -50,7 +60,25 @@ public class BoxRenderer {
                 g2.scale(scale, scale);
                 g2.drawImage(image, posX, posY, image.getWidth(), image.getHeight(), null);
             } catch (IOException e) {
-                LOG.error("Nem lehetett kirajzolni a képet: " + box.getImage());
+                errorCollector.addErrorItem(ERROR, "Nem lehetett kirajzolni a képet: " + box.getImage());
+            } finally {
+                g2.setTransform(transform);
+            }
+        }
+
+        // draw the logo
+        final File logoImageFile = new File(LOGO_IMAGE_LOCATION, stripToEmpty(box.getBrandImage()));
+        if (!logoImageFile.exists() || !logoImageFile.isFile()) {
+            errorCollector.addErrorItem(WARN, "Nem található a logo file kép: " + box.getBrandImage());
+        } else if (!Settings.DISABLE_IMAGES) {
+            AffineTransform transform = g2.getTransform();
+            try {
+                BufferedImage logoImage = logoImageCache.getLogoImage(logoImageFile);
+                float scale = Math.min(1f, LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth());
+                g2.scale(scale, scale);
+                g2.drawImage(logoImage, (int)(3f / scale), (int)(3f / scale), logoImage.getWidth(), logoImage.getHeight(), null);
+            } catch (IOException e) {
+                errorCollector.addErrorItem(ERROR, "Nem lehetett kirajzolni a logo képet: " + box.getBrandImage());
             } finally {
                 g2.setTransform(transform);
             }
@@ -88,7 +116,7 @@ public class BoxRenderer {
             } else {
                 String[] words = box.getTitle().split(" ");
                 if (words.length == 0) {
-                    LOG.error( "A cikknév egyetlen hosszú szóbál áll, amit nem lehetett tördelni");
+                    errorCollector.addErrorItem(ERROR, "A cikknév egyetlen hosszú szóbál áll, amit nem lehetett tördelni");
                     throw new ValidationException();
                 }
                 StringBuilder firstLine = new StringBuilder(words[0]);
@@ -104,14 +132,14 @@ public class BoxRenderer {
                 }
                 if (wordSplit == words.length) {
                     g2.drawString(firstLine.toString(), boxTextStart, 13);
-                    LOG.warn("Sikerült kiírni a címsort, de nagyon közel áll a végéhez.");
+                    errorCollector.addErrorItem(WARN, "Sikerült kiírni a címsort, de nagyon közel áll a végéhez.");
                     throw new ValidationException();
                 }
                 StringBuilder secondLine = new StringBuilder(words[wordSplit]);
                 for (int i = wordSplit + 1; i < words.length; i++) {
                     String nextString = secondLine.toString() + " " + words[i];
                     if (Util.getStringWidth(g2, nextString) > categoryStart - boxTextStart - 3) {
-                        LOG.warn( "Túl hosszú a címsor, le kellett vágni a második sorban " + box);
+                        errorCollector.addErrorItem(WARN, "Túl hosszú a címsor, le kellett vágni a második sorban " + box);
                         break;
                     }
                     secondLine.append(" ").append(words[i]);
@@ -120,7 +148,7 @@ public class BoxRenderer {
 
             }
         } catch (ValidationException e) {
-            LOG.info("Hibás doboz: " + box);
+            errorCollector.addErrorItem(INFO, "Hibás doboz: " + box);
         }
 
         try {
@@ -154,7 +182,7 @@ public class BoxRenderer {
                         sb = new StringBuilder(word);
                         currentLine++;
                         if (currentLine > TEXT_BOX_LINE_COUNT) {
-                            LOG.error("Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
+                            errorCollector.addErrorItem(ERROR, "Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
                             throw new ValidationException();
                         }
                     }
@@ -164,12 +192,12 @@ public class BoxRenderer {
                 }
                 currentLine++;
                 if (currentLine > TEXT_BOX_LINE_COUNT) {
-                    LOG.error("Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
+                    errorCollector.addErrorItem(ERROR, "Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
                     throw new ValidationException();
                 }
             }
         } catch (ValidationException e) {
-            LOG.info("Hibás doboz: " + box);
+            errorCollector.addErrorItem(INFO, "Hibás doboz: " + box);
         }
 
         // bottom line

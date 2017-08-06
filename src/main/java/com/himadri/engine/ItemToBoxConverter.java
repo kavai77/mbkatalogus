@@ -15,6 +15,7 @@ import static org.apache.commons.lang.StringUtils.*;
 @Component
 public class ItemToBoxConverter {
 
+    public static final String BRAND_EXTENSION = ".psd";
     @Autowired
     private UserSession userSession;
 
@@ -24,7 +25,7 @@ public class ItemToBoxConverter {
             articleList.add(convertItemToArticle(item));
         }
         Item firstItem = items.get(0);
-        return new Box(firstItem.getKepnev(), firstItem.getGyartokepnev(), getBoxTitle(items),
+        return new Box(firstItem.getKepnev(), firstItem.getGyarto() + BRAND_EXTENSION, getBoxTitle(items),
                 firstItem.getCikkfajta(), firstItem.getCikkcsoportnev(), indexOfProductGroup, 1, articleList);
 
     }

@@ -1,9 +1,9 @@
 package com.himadri.renderer;
 
 import com.google.common.collect.ImmutableMap;
+import com.himadri.engine.UserSession;
+import com.himadri.model.ErrorCollector;
 import com.himadri.model.Page;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,13 +12,11 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
+import static com.himadri.model.ErrorCollector.Severity.ERROR;
 import static com.himadri.renderer.Util.getStringWidth;
 
 @Component
 public class PageRenderer {
-    private static final Logger LOG = LoggerFactory.getLogger(PageRenderer.class);
-
-
     private static final int WIDTH = 595;
     private static final int HEIGHT = 842;
     private static final int MARGIN_TOP = 30;
@@ -49,7 +47,11 @@ public class PageRenderer {
     @Autowired
     private BoxRenderer boxRenderer;
 
+    @Autowired
+    private UserSession userSession;
+
     public void drawPage(Graphics2D g2, Page page) {
+        final ErrorCollector errorCollector = userSession.getErrorCollector();
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
         float marginRight = MARGIN_RIGHT.get(page.getOrientation());
         Color mainColor = Util.getBoxMainColor(page.getBoxes().get(0));
@@ -100,7 +102,7 @@ public class PageRenderer {
 
         //drawing the boxes
         if (page.getBoxes().size() > BOX_PER_PAGE) {
-            LOG.error("Több doboz van az oldalon, mint megengedett " + BOX_PER_PAGE);
+            errorCollector.addErrorItem(ERROR, "Több doboz van az oldalon, mint megengedett " + BOX_PER_PAGE);
         }
         g2.translate(marginLeft, MARGIN_TOP);
         g2.translate(BOX_WIDTH+7.5f, -BOX_HEIGHT);
