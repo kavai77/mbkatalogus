@@ -1,10 +1,10 @@
 package com.himadri.renderer;
 
-import com.himadri.Settings;
+import com.google.common.cache.Cache;
 import com.himadri.ValidationException;
-import com.himadri.engine.UserSession;
 import com.himadri.model.Box;
 import com.himadri.model.ErrorCollector;
+import com.himadri.model.UserRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,16 +45,16 @@ public class BoxRenderer {
     private LogoImageCache logoImageCache;
 
     @Autowired
-    private UserSession userSession;
+    private Cache<String, ErrorCollector> userSessionCache;
 
-    public void drawBox(Graphics2D g2, Box box) {
-        ErrorCollector errorCollector = userSession.getErrorCollector();
+    public void drawBox(Graphics2D g2, Box box, UserRequest userRequest) {
+        final ErrorCollector errorCollector = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
         final File imageFile = new File(IMAGE_LOCATION, stripToEmpty(box.getImage()));
         if (!imageFile.exists() || !imageFile.isFile()) {
             errorCollector.addErrorItem(WARN, "Nem található a kép: " + box.getImage());
-        } else if (!Settings.DISABLE_IMAGES) {
+        } else if (userRequest.isEnableImages()) {
             AffineTransform transform = g2.getTransform();
             try (InputStream fis = new FileInputStream(imageFile)) {
                 BufferedImage image = ImageIO.read(fis);
@@ -66,7 +66,7 @@ public class BoxRenderer {
             } catch (IOException e) {
                 errorCollector.addErrorItem(ERROR, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
                         box.getImage(), e.getMessage()));
-                LOGGER.error("Could not paint image", e);
+                LOGGER.error("Could not paint image {}", box, e);
             } finally {
                 g2.setTransform(transform);
             }
@@ -76,7 +76,7 @@ public class BoxRenderer {
         final File logoImageFile = new File(LOGO_IMAGE_LOCATION, stripToEmpty(box.getBrandImage()));
         if (!logoImageFile.exists() || !logoImageFile.isFile()) {
             errorCollector.addErrorItem(WARN, "Nem található a logo file kép: " + box.getBrandImage());
-        } else if (!Settings.DISABLE_IMAGES) {
+        } else if (userRequest.isEnableImages()) {
             AffineTransform transform = g2.getTransform();
             try {
                 BufferedImage logoImage = logoImageCache.getLogoImage(logoImageFile);

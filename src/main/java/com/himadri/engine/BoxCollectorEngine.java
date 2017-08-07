@@ -2,6 +2,7 @@ package com.himadri.engine;
 
 import com.himadri.model.Box;
 import com.himadri.model.Item;
+import com.himadri.model.UserRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +15,12 @@ public class BoxCollectorEngine {
     @Autowired
     private ItemToBoxConverter itemToBoxConverter;
 
-    public List<Box> collectBoxes(Collection<Collection<List<Item>>> itemsPerProductGroupPerBox) {
+    public List<Box> collectBoxes(Collection<Collection<List<Item>>> itemsPerProductGroupPerBox, UserRequest userRequest) {
         List<Box> boxes = new ArrayList<>();
         int indexOfProductGroup = 0;
         for (Collection<List<Item>> productGroupItemsPerBox: itemsPerProductGroupPerBox) {
             for (List<Item> boxItems: productGroupItemsPerBox) {
-                final Box box = itemToBoxConverter.createBox(boxItems, indexOfProductGroup);
+                final Box box = itemToBoxConverter.createBox(boxItems, indexOfProductGroup, userRequest);
                 boxes.add(box);
             }
             indexOfProductGroup++;

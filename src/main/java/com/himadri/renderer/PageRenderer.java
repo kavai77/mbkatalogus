@@ -1,9 +1,10 @@
 package com.himadri.renderer;
 
+import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableMap;
-import com.himadri.engine.UserSession;
 import com.himadri.model.ErrorCollector;
 import com.himadri.model.Page;
+import com.himadri.model.UserRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -48,10 +49,10 @@ public class PageRenderer {
     private BoxRenderer boxRenderer;
 
     @Autowired
-    private UserSession userSession;
+    private Cache<String, ErrorCollector> userSessionCache;
 
-    public void drawPage(Graphics2D g2, Page page) {
-        final ErrorCollector errorCollector = userSession.getErrorCollector();
+    public void drawPage(Graphics2D g2, Page page, UserRequest userRequest) {
+        final ErrorCollector errorCollector = userSessionCache.getIfPresent(userRequest.getRequestId());
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
         float marginRight = MARGIN_RIGHT.get(page.getOrientation());
         Color mainColor = Util.getBoxMainColor(page.getBoxes().get(0));
@@ -112,7 +113,7 @@ public class PageRenderer {
             } else {
                 g2.translate(BOX_WIDTH+7.5f, 0);
             }
-            boxRenderer.drawBox(g2, page.getBoxes().get(i));
+            boxRenderer.drawBox(g2, page.getBoxes().get(i), userRequest);
         }
 
     }

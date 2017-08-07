@@ -2,6 +2,7 @@ package com.himadri.renderer;
 
 import com.himadri.Settings;
 import com.himadri.model.Page;
+import com.himadri.model.UserRequest;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DColorMapper;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DImageEncoder;
 import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
@@ -28,7 +29,7 @@ public class DocumentRenderer {
     @Autowired
     private PageRenderer pageRenderer;
 
-    public List<String> renderDocument(List<Page> pages) throws IOException {
+    public List<String> renderDocument(List<Page> pages, UserRequest userRequest) throws IOException {
         int pagePerDocument = Integer.MAX_VALUE;
         List<String> fileNames = new ArrayList<>();
         PDDocument doc = new PDDocument();
@@ -42,7 +43,7 @@ public class DocumentRenderer {
             PdfBoxGraphics2D g2 = new PdfBoxGraphics2D(doc, PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight());
             doc.addPage(pdPage);
             setCommonGraphics(g2);
-            pageRenderer.drawPage(g2, page);
+            pageRenderer.drawPage(g2, page, userRequest);
             g2.dispose();
             PDPageContentStream contentStream = new PDPageContentStream(doc, pdPage);
             contentStream.drawForm(g2.getXFormObject());

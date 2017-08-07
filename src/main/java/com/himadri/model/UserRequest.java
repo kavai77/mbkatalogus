@@ -1,22 +1,33 @@
 package com.himadri.model;
 
+import java.io.InputStream;
+
 public class UserRequest {
-    private String localCsvFile;
-    private String catalogueName;
+    private final String requestId;
+    private final InputStream csvInputStream;
+    private final String catalogueTitle;
+    private final boolean enableImages;
 
-    public String getCatalogueName() {
-        return catalogueName;
+    public UserRequest(String requestId, InputStream csvInputStream, String catalogueTitle, boolean enableImages) {
+        this.requestId = requestId;
+        this.csvInputStream = csvInputStream;
+        this.catalogueTitle = catalogueTitle;
+        this.enableImages = enableImages;
     }
 
-    public void setCatalogueName(String catalogueName) {
-        this.catalogueName = catalogueName;
+    public String getRequestId() {
+        return requestId;
     }
 
-    public String getLocalCsvFile() {
-        return localCsvFile;
+    public InputStream getCsvInputStream() {
+        return csvInputStream;
     }
 
-    public void setLocalCsvFile(String localCsvFile) {
-        this.localCsvFile = localCsvFile;
+    public String getCatalogueTitle() {
+        return catalogueTitle;
+    }
+
+    public boolean isEnableImages() {
+        return enableImages;
     }
 }

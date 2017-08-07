@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="hu" ng-app="app">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/main.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+    <script src="ng-file-upload.min.js"></script>
+    <script src="main.js"></script>
+
+    <title>Katalóguskészítő - Madal Bal</title>
+</head>
+<body ng-controller="controller">
+<div class="container">
+    <div class="alert alert-danger" role="alert" ng-show="errorMessage ? true : false">
+        <button type="button" class="close" aria-label="Close" ng-click="errorMessage=''"><span aria-hidden="true">&times;</span></button>
+        {{errorMessage}}
+    </div>
+    <div class="jumbotron">
+        <h1 class="display-3">Madal Bal Katalógus</h1>
+        <p class="lead">Használd ezt az alkalmazást, hogy egyszerűen készíts PDF katalógust!</p>
+        <hr class="my-4">
+        <form ng-submit="send()">
+            <div class="form-group">
+                <label for="catalogueTitle">Katalógus címe</label>
+                <input type="text" class="form-control" id="catalogueTitle" ng-model="catalogueTitle"
+                       aria-describedby="catalogueTitleHelp" placeholder="Cím">
+                <small id="catalogueTitleHelp" class="form-text text-muted">Pl. Kéziszerszám Katalógus</small>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" id="imageIncluded" ng-model="imageIncluded">
+                    Képekkel együtt
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="catalogueCsvFile">CSV fájl</label>
+                <input type="file" ngf-select ng-model="catalogueCsvFile" id="catalogueCsvFile">
+            </div>
+            <button type="submit" class="btn btn-primary">Katalógus Készítés</button>
+        </form>
+    </div>
+</div> <!-- /container -->
+
+
+<!-- jQuery first, then Tether, then Bootstrap JS. -->
+<script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+</body>
+</html>
