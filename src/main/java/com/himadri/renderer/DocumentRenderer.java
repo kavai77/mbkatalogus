@@ -1,8 +1,10 @@
 package com.himadri.renderer;
 
+import com.google.common.cache.Cache;
 import com.himadri.Settings;
 import com.himadri.model.Page;
 import com.himadri.model.UserRequest;
+import com.himadri.model.UserSession;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DColorMapper;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DImageEncoder;
 import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
@@ -21,21 +23,29 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+
+import static org.apache.commons.lang.StringUtils.deleteWhitespace;
+import static org.apache.commons.lang.StringUtils.lowerCase;
 
 @Component
 public class DocumentRenderer {
     @Autowired
     private PageRenderer pageRenderer;
 
-    public List<String> renderDocument(List<Page> pages, UserRequest userRequest) throws IOException {
+    @Autowired
+    private Cache<String, UserSession> userSessionCache;
+
+    public void renderDocument(List<Page> pages, UserRequest userRequest) throws IOException {
         int pagePerDocument = Integer.MAX_VALUE;
-        List<String> fileNames = new ArrayList<>();
+        int previousDocumentStartPage = 1;
+        UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
         for (int i = 0; i < pages.size(); i++) {
             if (i > 0 && i % pagePerDocument == 0) {
-                closeDocument(doc, fileNames);
+                closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
+                previousDocumentStartPage = i + 1;
                 doc = new PDDocument();
             }
             Page page = pages.get(i);
@@ -48,14 +58,16 @@ public class DocumentRenderer {
             PDPageContentStream contentStream = new PDPageContentStream(doc, pdPage);
             contentStream.drawForm(g2.getXFormObject());
             contentStream.close();
+            userSession.incrementCurrentPageNumber();
         }
-        closeDocument(doc, fileNames);
-        return fileNames;
+        closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
     }
 
-    private void closeDocument(PDDocument doc, List<String> fileNames) throws IOException {
-        final String fileName = String.format("out-%d.pdf", fileNames.size() + 1);
-        fileNames.add(fileName);
+    private void closeDocument(PDDocument doc, UserRequest userRequest, UserSession userSession, int previousDocumentStartPage) throws IOException {
+        String docPrefix = deleteWhitespace(lowerCase(userRequest.getCatalogueTitle(), Locale.ENGLISH));
+        final String fileName = String.format("%s-%d-%d.pdf", docPrefix, previousDocumentStartPage,
+                userSession.getCurrentPageNumber() + 1);
+        userSession.addGeneratedDocument(fileName);
         doc.save(new File(Settings.RENDERING_LOCATION, fileName));
         doc.close();
     }

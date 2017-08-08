@@ -2,9 +2,9 @@ package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableMap;
-import com.himadri.model.ErrorCollector;
 import com.himadri.model.Page;
 import com.himadri.model.UserRequest;
+import com.himadri.model.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
-import static com.himadri.model.ErrorCollector.Severity.ERROR;
+import static com.himadri.model.UserSession.Severity.ERROR;
 import static com.himadri.renderer.Util.getStringWidth;
 
 @Component
@@ -49,10 +49,10 @@ public class PageRenderer {
     private BoxRenderer boxRenderer;
 
     @Autowired
-    private Cache<String, ErrorCollector> userSessionCache;
+    private Cache<String, UserSession> userSessionCache;
 
     public void drawPage(Graphics2D g2, Page page, UserRequest userRequest) {
-        final ErrorCollector errorCollector = userSessionCache.getIfPresent(userRequest.getRequestId());
+        final UserSession errorCollector = userSessionCache.getIfPresent(userRequest.getRequestId());
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
         float marginRight = MARGIN_RIGHT.get(page.getOrientation());
         Color mainColor = Util.getBoxMainColor(page.getBoxes().get(0));

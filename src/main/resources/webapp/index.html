@@ -15,7 +15,7 @@
     <title>Katalóguskészítő - Madal Bal</title>
 </head>
 <body ng-controller="controller">
-<div class="container">
+<div class="container" ng-show="!requestId">
     <div class="alert alert-danger" role="alert" ng-show="errorMessage ? true : false">
         <button type="button" class="close" aria-label="Close" ng-click="errorMessage=''"><span aria-hidden="true">&times;</span></button>
         {{errorMessage}}
@@ -46,6 +46,13 @@
     </div>
 </div> <!-- /container -->
 
+<div class="container" ng-show="requestId">
+    <div class="jumbotron">
+        <h1 class="display-3">Madal Bal Katalógus</h1>
+        <p class="lead">A dokumentum generálása folyamatban...</p>
+        <hr class="my-4">
+        <p id="errorsPlaceholder"></p>
+</div>
 
 <!-- jQuery first, then Tether, then Bootstrap JS. -->
 <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>

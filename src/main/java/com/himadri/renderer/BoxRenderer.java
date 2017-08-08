@@ -3,8 +3,8 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.himadri.ValidationException;
 import com.himadri.model.Box;
-import com.himadri.model.ErrorCollector;
 import com.himadri.model.UserRequest;
+import com.himadri.model.UserSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ import java.io.InputStream;
 
 import static com.himadri.Settings.IMAGE_LOCATION;
 import static com.himadri.Settings.LOGO_IMAGE_LOCATION;
-import static com.himadri.model.ErrorCollector.Severity.*;
+import static com.himadri.model.UserSession.Severity.*;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
 import static org.apache.commons.lang.StringUtils.stripToEmpty;
 
@@ -45,10 +45,10 @@ public class BoxRenderer {
     private LogoImageCache logoImageCache;
 
     @Autowired
-    private Cache<String, ErrorCollector> userSessionCache;
+    private Cache<String, UserSession> userSessionCache;
 
     public void drawBox(Graphics2D g2, Box box, UserRequest userRequest) {
-        final ErrorCollector errorCollector = userSessionCache.getIfPresent(userRequest.getRequestId());
+        final UserSession errorCollector = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
         final File imageFile = new File(IMAGE_LOCATION, stripToEmpty(box.getImage()));

@@ -1,9 +1,7 @@
 package com.himadri.engine;
 
-import com.himadri.model.Box;
-import com.himadri.model.Item;
-import com.himadri.model.Page;
-import com.himadri.model.UserRequest;
+import com.google.common.cache.Cache;
+import com.himadri.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,10 +19,15 @@ public class ModelTransformerEngine {
     @Autowired
     private PageCollectorEngine pageCollectorEngine;
 
+    @Autowired
+    private Cache<String, UserSession> userSessionCache;
+
     public List<Page> createPagesFromItems(List<Item> items, UserRequest userRequest) {
         final Collection<Collection<List<Item>>> itemsPerProductGroupPerBox = itemCategorizerEngine
                 .itemsPerProductGroupPerBox(items);
         final List<Box> boxes = boxCollectorEngine.collectBoxes(itemsPerProductGroupPerBox, userRequest);
-        return pageCollectorEngine.createPages(boxes, userRequest.getCatalogueTitle());
+        final List<Page> pages = pageCollectorEngine.createPages(boxes, userRequest.getCatalogueTitle());
+        userSessionCache.getIfPresent(userRequest.getRequestId()).setTotalPageCount(pages.size());
+        return pages;
     }
 }
