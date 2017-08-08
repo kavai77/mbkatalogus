@@ -9,17 +9,19 @@ public class UserPollingInfo {
     private final List<String> generatedDocuments;
     private final int totalPageCount;
     private final int currentPageNumber;
+    private final boolean done;
 
-    private UserPollingInfo(List<UserSession.ErrorItem> errorItems, List<String> generatedDocuments, int totalPageCount, int currentPageNumber) {
+    private UserPollingInfo(List<UserSession.ErrorItem> errorItems, List<String> generatedDocuments, int totalPageCount, int currentPageNumber, boolean done) {
         this.errorItems = errorItems;
         this.generatedDocuments = generatedDocuments;
         this.totalPageCount = totalPageCount;
         this.currentPageNumber = currentPageNumber;
+        this.done = done;
     }
 
     public static UserPollingInfo createFromUserSession(UserSession userSession) {
         return new UserPollingInfo(userSession.pollErrorItems(), userSession.getAllGeneratedDocuments(),
-                userSession.getTotalPageCount(), userSession.getCurrentPageNumber());
+                userSession.getTotalPageCount(), userSession.getCurrentPageNumber(), userSession.isDone());
     }
 
     public List<UserSession.ErrorItem> getErrorItems() {
@@ -36,5 +38,20 @@ public class UserPollingInfo {
 
     public int getCurrentPageNumber() {
         return currentPageNumber;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    @Override
+    public String toString() {
+        return "UserPollingInfo{" +
+                "errorItems=" + errorItems +
+                ", generatedDocuments=" + generatedDocuments +
+                ", totalPageCount=" + totalPageCount +
+                ", currentPageNumber=" + currentPageNumber +
+                ", done=" + done +
+                '}';
     }
 }

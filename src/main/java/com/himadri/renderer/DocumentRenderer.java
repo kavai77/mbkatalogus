@@ -24,10 +24,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 
-import static org.apache.commons.lang.StringUtils.deleteWhitespace;
-import static org.apache.commons.lang.StringUtils.lowerCase;
+import static com.himadri.Settings.PDF_DOCUMENT_THRESHOLD;
+import static com.himadri.Settings.PDF_TEXT_ONLY_BYTES_PER_PAGE_ESTIMATE;
+import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
 public class DocumentRenderer {
@@ -38,14 +38,14 @@ public class DocumentRenderer {
     private Cache<String, UserSession> userSessionCache;
 
     public void renderDocument(List<Page> pages, UserRequest userRequest) throws IOException {
-        int pagePerDocument = Integer.MAX_VALUE;
         int previousDocumentStartPage = 1;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
         for (int i = 0; i < pages.size(); i++) {
-            if (i > 0 && i % pagePerDocument == 0) {
+            if (userSession.getCurrentPDFImageBytes() > PDF_DOCUMENT_THRESHOLD) {
                 closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
                 previousDocumentStartPage = i + 1;
+                userSession.resetCurrentPDFImageBytes();
                 doc = new PDDocument();
             }
             Page page = pages.get(i);
@@ -59,14 +59,21 @@ public class DocumentRenderer {
             contentStream.drawForm(g2.getXFormObject());
             contentStream.close();
             userSession.incrementCurrentPageNumber();
+            userSession.addCurrentPDFImageBytes(PDF_TEXT_ONLY_BYTES_PER_PAGE_ESTIMATE);
+            if (userSession.isCancelled()) {
+                break;
+            }
         }
+
         closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
+        userSession.addErrorItem(UserSession.Severity.INFO,
+                userSession.isCancelled() ? "A dokumentum készítés megszakítva" : "A dokumentum készítés kész.");
     }
 
     private void closeDocument(PDDocument doc, UserRequest userRequest, UserSession userSession, int previousDocumentStartPage) throws IOException {
-        String docPrefix = deleteWhitespace(lowerCase(userRequest.getCatalogueTitle(), Locale.ENGLISH));
+        String docPrefix = deleteWhitespace(stripAccents(lowerCase(userRequest.getCatalogueTitle())));
         final String fileName = String.format("%s-%d-%d.pdf", docPrefix, previousDocumentStartPage,
-                userSession.getCurrentPageNumber() + 1);
+                userSession.getCurrentPageNumber());
         userSession.addGeneratedDocument(fileName);
         doc.save(new File(Settings.RENDERING_LOCATION, fileName));
         doc.close();

@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
     <link rel="stylesheet" href="/main.css">
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.5.0/ui-bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.5.0/ui-bootstrap-tpls.min.js"></script>
     <script src="ng-file-upload.min.js"></script>
     <script src="main.js"></script>
 
@@ -44,14 +46,24 @@
             <button type="submit" class="btn btn-primary">Katalógus Készítés</button>
         </form>
     </div>
-</div> <!-- /container -->
+</div>
 
 <div class="container" ng-show="requestId">
     <div class="jumbotron">
         <h1 class="display-3">Madal Bal Katalógus</h1>
         <p class="lead">A dokumentum generálása folyamatban...</p>
-        <hr class="my-4">
-        <p id="errorsPlaceholder"></p>
+
+        <uib-progressbar class="progress-striped active" value="currentPageNumber" max="totalPageCount" type="success">
+            <span style="white-space: nowrap;">{{currentPageNumber}} / {{totalPageCount}} oldal kirajzolva</span>
+        </uib-progressbar>
+        <div ng-repeat="doc in generatedDocuments">
+            <a ng-href="/render/{{doc}}" target="_blank">{{doc}}</a>
+        </div>
+    </div>
+    <button class="btn btn-outline-danger btn-sm" ng-show="!done" ng-click="cancel()">Leállítás</button>
+
+    <hr class="my-4">
+    <p id="errorsPlaceholder"></p>
 </div>
 
 <!-- jQuery first, then Tether, then Bootstrap JS. -->

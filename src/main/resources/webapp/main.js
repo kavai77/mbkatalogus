@@ -1,4 +1,4 @@
-var app=angular.module('app', ['ngFileUpload']);
+var app=angular.module('app', ['ngFileUpload', 'ui.bootstrap']);
 
 app.controller('controller', function($scope, Upload, $interval, $http) {
     $scope.send = function() {
@@ -21,10 +21,19 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             }
         }).then(function (resp) {
             $scope.requestId = resp.data.requestId;
-            $interval(function() {
+            $scope.totalPageCount = 0;
+            $scope.currentPageNumber = 0;
+            stop = $interval(function() {
                 $http.get('/service/pollUserInfo?requestId=' + $scope.requestId).then(
                 function successCallback(response){
-                    $('#errorsPlaceholder').append(JSON.stringify(response.data) + "<br>");
+                    $scope.generatedDocuments = response.data.generatedDocuments;
+                    $scope.totalPageCount = response.data.totalPageCount;
+                    $scope.currentPageNumber = response.data.currentPageNumber;
+                    $scope.appendErrorItems(response.data.errorItems);
+                    $scope.done = response.data.done;
+                    if ($scope.done) {
+                        $interval.cancel(stop);
+                    }
                 }, function errorCallback(response) {
                     console.log(JSON.stringify(response));
                 });
@@ -32,6 +41,30 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
         }, function (resp) {
             $scope.errorMessage = "A feltöltés nem sikerült. Próbáld újra..."
         });
+    }
+
+    $scope.cancel = function() {
+        $http.get('/service/cancel?requestId=' + $scope.requestId);
+    }
+
+    $scope.appendErrorItems = function(errorItems) {
+        for (i = 0; i < errorItems.length;i++) {
+            var style;
+            switch (errorItems[i].severity) {
+                case "INFO":
+                    style = "success";
+                    break;
+                case "WARN":
+                    style = "warning";
+                    break;
+                case "ERROR":
+                    style = "danger";
+                    break
+                default:
+                    style = "info";
+            }
+            $('#errorsPlaceholder').append("<div class=\"alert alert-" + style + "\" role=\"alert\">" + errorItems[i].message + "</div>");
+        }
     }
 
 });

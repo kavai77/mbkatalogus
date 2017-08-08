@@ -2,6 +2,9 @@
   background-color: @brand-primary;
 }
 
+.progress-bar {height: 30px;}
+
+
 /* Space out content a bit */
 body {
   padding-top: 20px;

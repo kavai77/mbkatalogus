@@ -4,18 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class UserSession {
     public enum Severity {INFO, WARN, ERROR}
 
     private final Queue<ErrorItem> errorItems = new ConcurrentLinkedQueue<>();
     private final Queue<String> generatedDocuments = new ConcurrentLinkedQueue<>();
-    private volatile int totalPageCount;
+    private final AtomicInteger totalPageCount = new AtomicInteger();
     private final AtomicInteger currentPageNumber = new AtomicInteger();
+    private final AtomicLong currentPDFImageBytes = new AtomicLong();
+    private final AtomicBoolean done = new AtomicBoolean();
+    private final AtomicBoolean cancelled = new AtomicBoolean();
 
-    public void addErrorItem(Severity severity, String message, Object... args) {
-        errorItems.add(new ErrorItem(severity, String.format(message, args)));
+    public void addErrorItem(Severity severity, String message) {
+        errorItems.add(new ErrorItem(severity, message));
     }
 
     public void addGeneratedDocument(String fileName) {
@@ -36,11 +41,11 @@ public class UserSession {
     }
 
     public int getTotalPageCount() {
-        return totalPageCount;
+        return totalPageCount.get();
     }
 
     public void setTotalPageCount(int totalPageCount) {
-        this.totalPageCount = totalPageCount;
+        this.totalPageCount.set(totalPageCount);
     }
 
     public int getCurrentPageNumber() {
@@ -49,6 +54,34 @@ public class UserSession {
 
     public void incrementCurrentPageNumber() {
         currentPageNumber.incrementAndGet();
+    }
+
+    public boolean isDone() {
+        return done.get();
+    }
+
+    public void setDone() {
+        done.set(true);
+    }
+
+    public boolean isCancelled() {
+        return cancelled.get();
+    }
+
+    public void setCancelled() {
+        cancelled.set(true);
+    }
+
+    public void addCurrentPDFImageBytes(long bytes) {
+        currentPDFImageBytes.addAndGet(bytes);
+    }
+
+    public void resetCurrentPDFImageBytes() {
+        currentPDFImageBytes.set(0L);
+    }
+
+    public long getCurrentPDFImageBytes() {
+        return currentPDFImageBytes.get();
     }
 
     public static class ErrorItem {

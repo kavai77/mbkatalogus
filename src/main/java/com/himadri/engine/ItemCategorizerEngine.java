@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 
-import static org.apache.commons.lang.StringUtils.*;
+import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
 public class ItemCategorizerEngine {
