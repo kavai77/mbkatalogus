@@ -1,6 +1,7 @@
 var app=angular.module('app', ['ngFileUpload', 'ui.bootstrap']);
 
 app.controller('controller', function($scope, Upload, $interval, $http) {
+    $scope.pagesPerDocument = "2147483647";
     $scope.send = function() {
         $scope.errorMessage = null;
         $scope.requestId = null;
@@ -17,7 +18,8 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             data: {
                 'file': $scope.catalogueCsvFile,
                 'title': $scope.catalogueTitle,
-                'imageIncluded': !$scope.imageIncluded ? false : true
+                'imageIncluded': !$scope.imageIncluded ? false : true,
+                'pagesPerDocument': $scope.pagesPerDocument
             }
         }).then(function (resp) {
             $scope.requestId = resp.data.requestId;

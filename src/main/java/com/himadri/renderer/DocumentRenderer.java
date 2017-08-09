@@ -6,12 +6,14 @@ import com.himadri.model.Page;
 import com.himadri.model.UserRequest;
 import com.himadri.model.UserSession;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DColorMapper;
+import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DFontApplier;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DImageEncoder;
 import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFontFactory;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
@@ -25,8 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static com.himadri.Settings.PDF_DOCUMENT_THRESHOLD;
-import static com.himadri.Settings.PDF_TEXT_ONLY_BYTES_PER_PAGE_ESTIMATE;
 import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
@@ -42,10 +42,9 @@ public class DocumentRenderer {
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
         for (int i = 0; i < pages.size(); i++) {
-            if (userSession.getCurrentPDFImageBytes() > PDF_DOCUMENT_THRESHOLD) {
+            if (i > 0 && i % userRequest.getPagesPerDocument() == 0) {
                 closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
                 previousDocumentStartPage = i + 1;
-                userSession.resetCurrentPDFImageBytes();
                 doc = new PDDocument();
             }
             Page page = pages.get(i);
@@ -59,7 +58,6 @@ public class DocumentRenderer {
             contentStream.drawForm(g2.getXFormObject());
             contentStream.close();
             userSession.incrementCurrentPageNumber();
-            userSession.addCurrentPDFImageBytes(PDF_TEXT_ONLY_BYTES_PER_PAGE_ESTIMATE);
             if (userSession.isCancelled()) {
                 break;
             }
@@ -107,6 +105,12 @@ public class DocumentRenderer {
                 } catch (IOException e) {
                     throw new RuntimeException("Could not encode Image", e);
                 }
+            }
+        });
+        g2.setFontApplier(new IPdfBoxGraphics2DFontApplier() {
+            @Override
+            public void applyFont(PDDocument document, PDPageContentStream contentStream, Font font) throws IOException {
+                contentStream.setFont(PDFontFactory.createDefaultFont(), 1);
             }
         });
     }

@@ -59,11 +59,13 @@ public class Box {
         private final String number;
         private final String price;
         private final String description;
+        private final boolean emptyItemText;
 
-        public Article(String number, String price, String description) {
+        public Article(String number, String price, String description, boolean emptyItemText) {
             this.number = number;
             this.price = price;
             this.description = description;
+            this.emptyItemText = emptyItemText;
         }
 
         public String getNumber() {
@@ -76,6 +78,10 @@ public class Box {
 
         public String getDescription() {
             return description;
+        }
+
+        public boolean isEmptyItemText() {
+            return emptyItemText;
         }
 
         @Override

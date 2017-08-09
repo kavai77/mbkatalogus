@@ -1,12 +1,15 @@
 package com.himadri.model;
 
+import com.himadri.ValidationException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+
+import static org.apache.commons.lang3.StringUtils.joinWith;
 
 public class UserSession {
     public enum Severity {INFO, WARN, ERROR}
@@ -15,12 +18,16 @@ public class UserSession {
     private final Queue<String> generatedDocuments = new ConcurrentLinkedQueue<>();
     private final AtomicInteger totalPageCount = new AtomicInteger();
     private final AtomicInteger currentPageNumber = new AtomicInteger();
-    private final AtomicLong currentPDFImageBytes = new AtomicLong();
     private final AtomicBoolean done = new AtomicBoolean();
     private final AtomicBoolean cancelled = new AtomicBoolean();
 
     public void addErrorItem(Severity severity, String message) {
         errorItems.add(new ErrorItem(severity, message));
+    }
+
+    public void addErrorItem(ValidationException validationException, Object suffixToString) {
+        errorItems.add(new ErrorItem(validationException.getSeverity(),
+                joinWith(" ", validationException.getMessage(), suffixToString)));
     }
 
     public void addGeneratedDocument(String fileName) {
@@ -70,18 +77,6 @@ public class UserSession {
 
     public void setCancelled() {
         cancelled.set(true);
-    }
-
-    public void addCurrentPDFImageBytes(long bytes) {
-        currentPDFImageBytes.addAndGet(bytes);
-    }
-
-    public void resetCurrentPDFImageBytes() {
-        currentPDFImageBytes.set(0L);
-    }
-
-    public long getCurrentPDFImageBytes() {
-        return currentPDFImageBytes.get();
     }
 
     public static class ErrorItem {

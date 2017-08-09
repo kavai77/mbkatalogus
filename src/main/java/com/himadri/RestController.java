@@ -47,11 +47,12 @@ public class RestController {
     @ResponseBody
     public RequestId csvRendering(@RequestParam MultipartFile file,
                                   @RequestParam String title,
-                                  @RequestParam boolean imageIncluded) throws IOException {
+                                  @RequestParam boolean imageIncluded,
+                                  @RequestParam int pagesPerDocument) throws IOException {
         String id = UUID.randomUUID().toString();
         final UserSession userSession = new UserSession();
         userSessionCache.put(id, userSession);
-        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, imageIncluded);
+        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, imageIncluded, pagesPerDocument);
         executorService.submit(new Runnable() {
             @Override
             public void run() {

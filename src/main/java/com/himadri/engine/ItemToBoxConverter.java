@@ -43,9 +43,9 @@ public class ItemToBoxConverter {
             descriptionBuilder.append(String.format("(Min:%s%s/%s/%s) ", stripToEmpty(item.getM1()),
                     stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3())));
         }
-        final String itemText = stripToEmpty(removeStart(removeStart(item.getCikknev(), boxTitle), ";"));
+        final String itemText = strip(removeStart(item.getCikknev(), boxTitle), " ;");
         descriptionBuilder.append(itemText);
-        return new Box.Article(item.getCikkszam(), item.getNagykerar(), descriptionBuilder.toString());
+        return new Box.Article(item.getCikkszam(), item.getNagykerar(), descriptionBuilder.toString(), isBlank(itemText));
     }
 
     private String getBoxTitle(List<Item> items, UserRequest userRequest) {
@@ -53,12 +53,18 @@ public class ItemToBoxConverter {
             return stripToEmpty(substringBefore(items.get(0).getCikknev(), ";"));
         } else {
             final String[] titles = toStringArray(items.stream().map(Item::getCikknev).collect(Collectors.toList()).toArray());
-            final String commonPrefix = stripToEmpty(getCommonPrefix(titles));
+            String commonPrefix = getCommonPrefix(titles);
+            if (!endsWithAny(commonPrefix, " ", ";")) {
+                final int lastSeparator = lastIndexOfAny(commonPrefix, " ", ";");
+                if(lastSeparator > 0) {
+                    commonPrefix = substring(commonPrefix, 0, lastSeparator);
+                }
+            }
             if (isEmpty(commonPrefix)) {
                 userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(UserSession.Severity.ERROR,
                         "Az összevont cikkeknek nincs egységes kezdetük: " + Arrays.toString(titles));
             }
-            return removeEnd(commonPrefix, ";");
+            return strip(commonPrefix, " ;");
         }
     }
 }

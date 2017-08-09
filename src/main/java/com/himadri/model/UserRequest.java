@@ -7,12 +7,14 @@ public class UserRequest {
     private final InputStream csvInputStream;
     private final String catalogueTitle;
     private final boolean enableImages;
+    private final int pagesPerDocument;
 
-    public UserRequest(String requestId, InputStream csvInputStream, String catalogueTitle, boolean enableImages) {
+    public UserRequest(String requestId, InputStream csvInputStream, String catalogueTitle, boolean enableImages, int pagesPerDocument) {
         this.requestId = requestId;
         this.csvInputStream = csvInputStream;
         this.catalogueTitle = catalogueTitle;
         this.enableImages = enableImages;
+        this.pagesPerDocument = pagesPerDocument;
     }
 
     public String getRequestId() {
@@ -29,5 +31,9 @@ public class UserRequest {
 
     public boolean isEnableImages() {
         return enableImages;
+    }
+
+    public int getPagesPerDocument() {
+        return pagesPerDocument;
     }
 }

@@ -40,6 +40,17 @@
                 </label>
             </div>
             <div class="form-group">
+                <label for="pagesPerDocument">Oldalak PDF dokumentumonként</label>
+                <select class="form-control" id="pagesPerDocument" ng-model="pagesPerDocument"
+                        style="width: 100px;" aria-describedby="pagesPerDocumentHelp">
+                    <option value="2147483647">Összes</option>
+                    <option>10</option>
+                    <option>25</option>
+                    <option>50</option>
+                </select>
+                <small id="pagesPerDocumentHelp" class="form-text text-muted">Ha túl nagyméretű PDF dokumentumok generálódnak, akkor válassz kisebb oldal tördelést</small>
+            </div>
+            <div class="form-group">
                 <label for="catalogueCsvFile">CSV fájl</label>
                 <input type="file" ngf-select ng-model="catalogueCsvFile" id="catalogueCsvFile">
             </div>
@@ -53,7 +64,7 @@
         <h1 class="display-3">Madal Bal Katalógus</h1>
         <p class="lead">A dokumentum generálása folyamatban...</p>
 
-        <uib-progressbar class="progress-striped active" value="currentPageNumber" max="totalPageCount" type="success">
+        <uib-progressbar class="progress active" value="currentPageNumber" max="totalPageCount" type="success">
             <span style="white-space: nowrap;">{{currentPageNumber}} / {{totalPageCount}} oldal kirajzolva</span>
         </uib-progressbar>
         <div ng-repeat="doc in generatedDocuments">
