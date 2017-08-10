@@ -33,23 +33,21 @@
                        aria-describedby="catalogueTitleHelp" placeholder="Cím">
                 <small id="catalogueTitleHelp" class="form-text text-muted">Pl. Kéziszerszám Katalógus</small>
             </div>
-            <div class="form-check">
-                <label class="form-check-label">
-                    <input type="checkbox" class="form-check-input" id="imageIncluded" ng-model="imageIncluded">
-                    Képekkel együtt
-                </label>
-            </div>
-            <div class="form-group">
-                <label for="pagesPerDocument">Oldalak PDF dokumentumonként</label>
-                <select class="form-control" id="pagesPerDocument" ng-model="pagesPerDocument"
-                        style="width: 100px;" aria-describedby="pagesPerDocumentHelp">
-                    <option value="2147483647">Összes</option>
-                    <option>10</option>
-                    <option>25</option>
-                    <option>50</option>
-                </select>
-                <small id="pagesPerDocumentHelp" class="form-text text-muted">Ha túl nagyméretű PDF dokumentumok generálódnak, akkor válassz kisebb oldal tördelést</small>
-            </div>
+            <fieldset class="form-group">
+                <legend>Minőség</legend>
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input type="radio" class="form-check-input" ng-model="draftMode" value="true">
+                        Előnézet (képek nélkül, kereshető szövegekkel, egy PDF lapon)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input type="radio" class="form-check-input" ng-model="draftMode" value="false">
+                        Nyomdai (minden tartalommal, csak vektorizált szövegek, nagy méret, több PDF dokumentumra tördelve)
+                    </label>
+                </div>
+            </fieldset>
             <div class="form-group">
                 <label for="catalogueCsvFile">CSV fájl</label>
                 <input type="file" ngf-select ng-model="catalogueCsvFile" id="catalogueCsvFile">
@@ -74,6 +72,8 @@
     <button class="btn btn-outline-danger btn-sm" ng-show="!done" ng-click="cancel()">Leállítás</button>
 
     <hr class="my-4">
+    <span class="bg-warning text-white" ng-show="warningCount > 0">{{warningCount}} figyelmeztetés</span>
+    <span class="bg-danger text-white" ng-show="errorCount > 0">{{errorCount}} hiba</span>
     <p id="errorsPlaceholder"></p>
 </div>
 

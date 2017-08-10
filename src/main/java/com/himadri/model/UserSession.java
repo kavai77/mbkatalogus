@@ -9,8 +9,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.apache.commons.lang3.StringUtils.joinWith;
-
 public class UserSession {
     public enum Severity {INFO, WARN, ERROR}
 
@@ -25,9 +23,8 @@ public class UserSession {
         errorItems.add(new ErrorItem(severity, message));
     }
 
-    public void addErrorItem(ValidationException validationException, Object suffixToString) {
-        errorItems.add(new ErrorItem(validationException.getSeverity(),
-                joinWith(" ", validationException.getMessage(), suffixToString)));
+    public void addErrorItem(ValidationException validationException) {
+        errorItems.add(new ErrorItem(validationException.getSeverity(), validationException.getMessage()));
     }
 
     public void addGeneratedDocument(String fileName) {

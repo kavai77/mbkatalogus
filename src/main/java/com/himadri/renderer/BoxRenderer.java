@@ -6,7 +6,6 @@ import com.himadri.model.Box;
 import com.himadri.model.UserRequest;
 import com.himadri.model.UserSession;
 import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +21,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import static com.himadri.Settings.IMAGE_LOCATION;
 import static com.himadri.Settings.LOGO_IMAGE_LOCATION;
 import static com.himadri.model.UserSession.Severity.ERROR;
 import static com.himadri.model.UserSession.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
-import static org.apache.commons.lang3.StringUtils.split;
-import static org.apache.commons.lang3.StringUtils.stripToEmpty;
+import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
 public class BoxRenderer {
@@ -58,7 +57,7 @@ public class BoxRenderer {
         final File imageFile = new File(IMAGE_LOCATION, stripToEmpty(box.getImage()));
         if (!imageFile.exists() || !imageFile.isFile()) {
             //userSession.addErrorItem(WARN, "Nem található a kép: " + box.getImage());
-        } else if (userRequest.isEnableImages()) {
+        } else if (!userRequest.isDraftMode()) {
             AffineTransform transform = g2.getTransform();
             try (InputStream fis = new FileInputStream(imageFile)) {
                 BufferedImage image = ImageIO.read(fis);
@@ -80,7 +79,7 @@ public class BoxRenderer {
         final File logoImageFile = new File(LOGO_IMAGE_LOCATION, stripToEmpty(box.getBrandImage()));
         if (!logoImageFile.exists() || !logoImageFile.isFile()) {
             userSession.addErrorItem(WARN, "Nem található a logo file kép: " + box.getBrandImage());
-        } else if (userRequest.isEnableImages()) {
+        } else if (!userRequest.isDraftMode()) {
             AffineTransform transform = g2.getTransform();
             try {
                 BufferedImage logoImage = logoImageCache.getLogoImage(logoImageFile);
@@ -128,7 +127,9 @@ public class BoxRenderer {
             } else {
                 String[] words = split(box.getTitle(),' ');
                 if (words.length == 1) {
-                    throw new ValidationException(ERROR, "A cikknév egyetlen hosszú szóbál áll, amit nem lehetett tördelni " + box);
+                    throw new ValidationException(ERROR, String.format(
+                            "A cikknév egyetlen hosszú szóbál áll, amit nem lehetett tördelni. Cikkszám: %s Cikknév %s ",
+                            box.getArticles().get(0).getNumber(), box.getTitle()));
                 }
                 StringBuilder firstLine = new StringBuilder(words[0]);
                 int wordSplit;
@@ -143,7 +144,8 @@ public class BoxRenderer {
                 }
                 if (wordSplit == words.length) {
                     g2.drawString(firstLine.toString(), boxTextStart, 13);
-                    throw new ValidationException(WARN, "Sikerült kiírni a címsort, de nagyon közel áll a végéhez.");
+                    throw new ValidationException(WARN, "Sikerült kiírni a címsort, de nagyon közel áll a végéhez. " +
+                            box.getArticles().get(0).getNumber());
                 }
                 StringBuilder secondLine = new StringBuilder(words[wordSplit]);
                 for (int i = wordSplit + 1; i < words.length; i++) {
@@ -151,11 +153,12 @@ public class BoxRenderer {
                     if (Util.getStringWidth(g2, nextString) > categoryStart - boxTextStart - 3) {
                         final Box.Article firstArticle = box.getArticles().get(0);
                         if (box.getArticles().size() == 1 && firstArticle.isEmptyItemText()) {
-                            String newItemText = StringUtils.join(words, ' ', i, words.length);
+                            String newItemText = join(words, ' ', i, words.length);
                             box.getArticles().set(0, new Box.Article(firstArticle.getNumber(), firstArticle.getPrice(),
                                     firstArticle.getDescription() + newItemText, false));
                         } else {
-                            userSession.addErrorItem(WARN, "Túl hosszú a címsor, le kellett vágni a második sorban " + box);
+                            userSession.addErrorItem(WARN, String.format("Túl hosszú a címsor, le kellett vágni a második sorban. " +
+                                    "Cikkszám: %s. Teljes címsor: %s", box.getArticles().get(0).getNumber(), box.getTitle()));
                         }
                         break;
                     }
@@ -165,16 +168,23 @@ public class BoxRenderer {
 
             }
         } catch (ValidationException e) {
-            userSession.addErrorItem(e, box);
+            userSession.addErrorItem(e);
         }
 
         try {
             int currentLine = 0;
-            for (Box.Article article : box.getArticles()) {
-                // item number
+            List<Box.Article> articles = box.getArticles();
+            for (int i = 0; i < articles.size(); i++) {
+                Box.Article article = articles.get(i);
+                if (currentLine >= TEXT_BOX_LINE_COUNT) {
+                    throw new ValidationException(ERROR, "Nem sikerült a tördelés, túl sok egybe függő cikk. Levágott cikkek " +
+                            join(articles.stream().skip(i).map(Box.Article::getNumber).toArray(), ' '));
+                }
+                // product number
                 g2.setPaint(Color.black);
                 g2.setFont(new Font(FONT, Font.BOLD, 8));
-                drawStringWithBothVectorizedAndPlain(g2, article.getNumber(), boxTextStart, getLineYBaseLine(currentLine));
+                drawStringWithShadow(g2, article.getNumber(), boxTextStart,
+                        getLineYBaseLine(currentLine), userRequest.isDraftMode());
                 float middleBoxStart = boxTextStart + Util.getStringWidth(g2, article.getNumber()) + 3;
 
                 // price
@@ -189,7 +199,9 @@ public class BoxRenderer {
                 g2.setFont(new Font(FONT, Font.PLAIN, 7));
                 StringBuilder sb = null;
 
-                for (String word : article.getDescription().split(" ")) {
+                final String[] words = article.getDescription().split(" ");
+                for (int j = 0; j < words.length; j++) {
+                    String word = words[j];
                     if (sb == null) {
                         sb = new StringBuilder(word);
                     } else if (Util.getStringWidth(g2, sb.toString() + " " + word) < middleBoxEnd - middleBoxStart) {
@@ -198,8 +210,11 @@ public class BoxRenderer {
                         g2.drawString(sb.toString(), middleBoxStart, getLineYBaseLine(currentLine));
                         sb = new StringBuilder(word);
                         currentLine++;
-                        if (currentLine > TEXT_BOX_LINE_COUNT) {
-                            throw new ValidationException(ERROR, "Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
+                        if (currentLine >= TEXT_BOX_LINE_COUNT) {
+                            throw new ValidationException(ERROR, String.format(
+                                    "Nem sikerült a tördelés, túl hosszú cikknév vagy túl sok egybe függő cikk. " +
+                                    "Cikkszám: %s. Levágott tartalom: \"%s\" Ezen kívül még a nem megjelenített cikkek: %d",
+                                    article.getNumber(), join(words, ' ', j, words.length), articles.size() - i - 1));
                         }
                     }
                 }
@@ -207,12 +222,9 @@ public class BoxRenderer {
                     g2.drawString(sb.toString(), middleBoxStart, getLineYBaseLine(currentLine));
                 }
                 currentLine++;
-                if (currentLine > TEXT_BOX_LINE_COUNT) {
-                    throw new ValidationException(ERROR, "Nem sikerült a tördelés, túl hosszú cikktörzs vagy túl sok egybe függő cikk");
-                }
             }
         } catch (ValidationException e) {
-            userSession.addErrorItem(e, box);
+            userSession.addErrorItem(e);
         }
 
         // bottom line
@@ -221,11 +233,13 @@ public class BoxRenderer {
         g2.draw(new Line2D.Float(5, BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, BOX_HEIGHT));
     }
 
-    private void drawStringWithBothVectorizedAndPlain(Graphics2D g2, String str, float x, float y) {
+    private void drawStringWithShadow(Graphics2D g2, String str, float x, float y, boolean draftMode) {
         g2.drawString(str, x, y);
-        ((PdfBoxGraphics2D)g2).setVectoringText(false);
-        g2.drawString(str, x, y);
-        ((PdfBoxGraphics2D)g2).setVectoringText(true);
+        if (draftMode) {
+            ((PdfBoxGraphics2D) g2).setVectoringText(false);
+            g2.drawString(str, x, y);
+            ((PdfBoxGraphics2D) g2).setVectoringText(true);
+        }
     }
 
     private float getLineYBaseLine(int line) {

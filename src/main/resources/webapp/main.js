@@ -1,10 +1,12 @@
 var app=angular.module('app', ['ngFileUpload', 'ui.bootstrap']);
 
 app.controller('controller', function($scope, Upload, $interval, $http) {
-    $scope.pagesPerDocument = "2147483647";
+    $scope.draftMode = "true";
     $scope.send = function() {
         $scope.errorMessage = null;
         $scope.requestId = null;
+        $scope.errorCount = 0;
+        $scope.warningCount = 0;
         if (!$scope.catalogueCsvFile) {
             $scope.errorMessage = "Válassz ki egy CSV fájlt!"
             return;
@@ -18,8 +20,7 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             data: {
                 'file': $scope.catalogueCsvFile,
                 'title': $scope.catalogueTitle,
-                'imageIncluded': !$scope.imageIncluded ? false : true,
-                'pagesPerDocument': $scope.pagesPerDocument
+                'draftMode': $scope.draftMode
             }
         }).then(function (resp) {
             $scope.requestId = resp.data.requestId;
@@ -58,9 +59,11 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
                     break;
                 case "WARN":
                     style = "warning";
+                    $scope.warningCount++;
                     break;
                 case "ERROR":
                     style = "danger";
+                    $scope.errorCount++;
                     break
                 default:
                     style = "info";

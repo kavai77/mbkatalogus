@@ -38,14 +38,14 @@ public class ItemToBoxConverter {
 
     private Box.Article convertItemToArticle(Item item, String boxTitle) {
         StringBuilder descriptionBuilder = new StringBuilder();
-        descriptionBuilder.append(item.getKiskerar()).append(",- ");
+        descriptionBuilder.append(remove(item.getNagykerar(),'\u00a0')).append(",- ");
         if (isNotBlank(item.getM1()) || isNotBlank(item.getM2()) || isNotBlank(item.getM3())) {
             descriptionBuilder.append(String.format("(Min:%s%s/%s/%s) ", stripToEmpty(item.getM1()),
                     stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3())));
         }
         final String itemText = strip(removeStart(item.getCikknev(), boxTitle), " ;");
         descriptionBuilder.append(itemText);
-        return new Box.Article(item.getCikkszam(), item.getNagykerar(), descriptionBuilder.toString(), isBlank(itemText));
+        return new Box.Article(item.getCikkszam(), remove(item.getKiskerar(), '\u00a0'), descriptionBuilder.toString(), isBlank(itemText));
     }
 
     private String getBoxTitle(List<Item> items, UserRequest userRequest) {

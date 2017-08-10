@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import static com.himadri.Settings.PAGES_PER_DOCUMENT_IN_QUALITY_MODE;
 import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
@@ -39,10 +40,11 @@ public class DocumentRenderer {
 
     public void renderDocument(List<Page> pages, UserRequest userRequest) throws IOException {
         int previousDocumentStartPage = 1;
+        int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : PAGES_PER_DOCUMENT_IN_QUALITY_MODE;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
         for (int i = 0; i < pages.size(); i++) {
-            if (i > 0 && i % userRequest.getPagesPerDocument() == 0) {
+            if (i > 0 && i % pagesPerDocument == 0) {
                 closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
                 previousDocumentStartPage = i + 1;
                 doc = new PDDocument();
