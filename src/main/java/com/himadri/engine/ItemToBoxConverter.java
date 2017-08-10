@@ -1,10 +1,7 @@
 package com.himadri.engine;
 
 import com.google.common.cache.Cache;
-import com.himadri.model.Box;
-import com.himadri.model.Item;
-import com.himadri.model.UserRequest;
-import com.himadri.model.UserSession;
+import com.himadri.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,35 +33,37 @@ public class ItemToBoxConverter {
 
     }
 
-    private Box.Article convertItemToArticle(Item item, String boxTitle) {
+    Box.Article convertItemToArticle(Item item, String boxTitle) {
         StringBuilder descriptionBuilder = new StringBuilder();
-        descriptionBuilder.append(remove(item.getNagykerar(),'\u00a0')).append(",- ");
+        if (isNotBlank(item.getNagykerar())) {
+            descriptionBuilder.append(remove(item.getNagykerar(), '\u00a0')).append(",- ");
+        }
         if (isNotBlank(item.getM1()) || isNotBlank(item.getM2()) || isNotBlank(item.getM3())) {
             descriptionBuilder.append(String.format("(Min:%s%s/%s/%s) ", stripToEmpty(item.getM1()),
                     stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3())));
         }
-        final String itemText = strip(removeStart(item.getCikknev(), boxTitle), " ;");
+        final String itemText = stripToEmpty(stripStart(removeStart(item.getCikknev(), boxTitle), " ;"));
         descriptionBuilder.append(itemText);
         return new Box.Article(item.getCikkszam(), remove(item.getKiskerar(), '\u00a0'), descriptionBuilder.toString(), isBlank(itemText));
     }
 
-    private String getBoxTitle(List<Item> items, UserRequest userRequest) {
+    String getBoxTitle(List<Item> items, UserRequest userRequest) {
+        String boxTitle;
         if (items.size() == 1) {
-            return stripToEmpty(substringBefore(items.get(0).getCikknev(), ";"));
+            boxTitle = substringBefore(items.get(0).getCikknev(), ";");
         } else {
             final String[] titles = toStringArray(items.stream().map(Item::getCikknev).collect(Collectors.toList()).toArray());
-            String commonPrefix = getCommonPrefix(titles);
-            if (!endsWithAny(commonPrefix, " ", ";")) {
-                final int lastSeparator = lastIndexOfAny(commonPrefix, " ", ";");
-                if(lastSeparator > 0) {
-                    commonPrefix = substring(commonPrefix, 0, lastSeparator);
-                }
+            boxTitle = getCommonPrefix(titles);
+            if (contains(boxTitle, ';')) {
+                boxTitle = substringBeforeLast(boxTitle, ";");
+            } else if (!endsWith(boxTitle, " ")) {
+                boxTitle = substringBeforeLast(boxTitle, " ");
             }
-            if (isEmpty(commonPrefix)) {
-                userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(UserSession.Severity.ERROR,
-                        "Az összevont cikkeknek nincs egységes kezdetük: " + Arrays.toString(titles));
+            if (isBlank(boxTitle)) {
+                userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(ErrorItem.Severity.ERROR,
+                        ErrorItem.ErrorCategory.FORMATTING, "Az összevont cikkeknek nincs egységes kezdetük: " + Arrays.toString(titles));
             }
-            return strip(commonPrefix, " ;");
         }
+        return stripToEmpty(boxTitle);
     }
 }

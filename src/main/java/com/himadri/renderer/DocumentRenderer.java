@@ -2,6 +2,7 @@ package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
 import com.himadri.Settings;
+import com.himadri.model.ErrorItem;
 import com.himadri.model.Page;
 import com.himadri.model.UserRequest;
 import com.himadri.model.UserSession;
@@ -66,7 +67,7 @@ public class DocumentRenderer {
         }
 
         closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
-        userSession.addErrorItem(UserSession.Severity.INFO,
+        userSession.addErrorItem(ErrorItem.Severity.INFO, ErrorItem.ErrorCategory.INFO,
                 userSession.isCancelled() ? "A dokumentum készítés megszakítva" : "A dokumentum készítés kész.");
     }
 

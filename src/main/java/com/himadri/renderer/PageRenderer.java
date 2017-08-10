@@ -13,7 +13,8 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
-import static com.himadri.model.UserSession.Severity.ERROR;
+import static com.himadri.model.ErrorItem.ErrorCategory.RUNTIME;
+import static com.himadri.model.ErrorItem.Severity.ERROR;
 import static com.himadri.renderer.Util.getStringWidth;
 
 @Component
@@ -103,7 +104,7 @@ public class PageRenderer {
 
         //drawing the boxes
         if (page.getBoxes().size() > BOX_PER_PAGE) {
-            errorCollector.addErrorItem(ERROR, "Több doboz van az oldalon, mint megengedett " + BOX_PER_PAGE);
+            errorCollector.addErrorItem(ERROR, RUNTIME, "Több doboz van az oldalon, mint megengedett " + BOX_PER_PAGE);
         }
         g2.translate(marginLeft, MARGIN_TOP);
         g2.translate(BOX_WIDTH+7.5f, -BOX_HEIGHT);

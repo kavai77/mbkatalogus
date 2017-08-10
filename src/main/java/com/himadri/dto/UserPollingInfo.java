@@ -1,17 +1,18 @@
 package com.himadri.dto;
 
+import com.himadri.model.ErrorItem;
 import com.himadri.model.UserSession;
 
 import java.util.List;
 
 public class UserPollingInfo {
-    private final List<UserSession.ErrorItem> errorItems;
+    private final List<ErrorItem> errorItems;
     private final List<String> generatedDocuments;
     private final int totalPageCount;
     private final int currentPageNumber;
     private final boolean done;
 
-    private UserPollingInfo(List<UserSession.ErrorItem> errorItems, List<String> generatedDocuments, int totalPageCount, int currentPageNumber, boolean done) {
+    private UserPollingInfo(List<ErrorItem> errorItems, List<String> generatedDocuments, int totalPageCount, int currentPageNumber, boolean done) {
         this.errorItems = errorItems;
         this.generatedDocuments = generatedDocuments;
         this.totalPageCount = totalPageCount;
@@ -24,7 +25,7 @@ public class UserPollingInfo {
                 userSession.getTotalPageCount(), userSession.getCurrentPageNumber(), userSession.isDone());
     }
 
-    public List<UserSession.ErrorItem> getErrorItems() {
+    public List<ErrorItem> getErrorItems() {
         return errorItems;
     }
 

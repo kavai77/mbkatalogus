@@ -1,16 +1,22 @@
 package com.himadri;
 
-import com.himadri.model.UserSession;
+import com.himadri.model.ErrorItem;
 
 public class ValidationException extends Exception {
-    private final UserSession.Severity severity;
+    private final ErrorItem.Severity severity;
+    private final ErrorItem.ErrorCategory errorCategory;
 
-    public ValidationException(UserSession.Severity severity, String message) {
+    public ValidationException(ErrorItem.Severity severity, ErrorItem.ErrorCategory errorCategory, String message) {
         super(message);
         this.severity = severity;
+        this.errorCategory = errorCategory;
     }
 
-    public UserSession.Severity getSeverity() {
+    public ErrorItem.Severity getSeverity() {
         return severity;
+    }
+
+    public ErrorItem.ErrorCategory getErrorCategory() {
+        return errorCategory;
     }
 }

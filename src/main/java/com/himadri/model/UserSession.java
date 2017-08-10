@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class UserSession {
-    public enum Severity {INFO, WARN, ERROR}
 
     private final Queue<ErrorItem> errorItems = new ConcurrentLinkedQueue<>();
     private final Queue<String> generatedDocuments = new ConcurrentLinkedQueue<>();
@@ -19,12 +18,13 @@ public class UserSession {
     private final AtomicBoolean done = new AtomicBoolean();
     private final AtomicBoolean cancelled = new AtomicBoolean();
 
-    public void addErrorItem(Severity severity, String message) {
-        errorItems.add(new ErrorItem(severity, message));
+    public void addErrorItem(ErrorItem.Severity severity, ErrorItem.ErrorCategory errorCategory, String message) {
+        errorItems.add(new ErrorItem(severity, errorCategory, message));
     }
 
     public void addErrorItem(ValidationException validationException) {
-        errorItems.add(new ErrorItem(validationException.getSeverity(), validationException.getMessage()));
+        errorItems.add(new ErrorItem(validationException.getSeverity(), validationException.getErrorCategory(),
+                validationException.getMessage()));
     }
 
     public void addGeneratedDocument(String fileName) {
@@ -76,21 +76,4 @@ public class UserSession {
         cancelled.set(true);
     }
 
-    public static class ErrorItem {
-        private final Severity severity;
-        private final String message;
-
-        public ErrorItem(Severity severity, String message) {
-            this.severity = severity;
-            this.message = message;
-        }
-
-        public Severity getSeverity() {
-            return severity;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-    }
 }

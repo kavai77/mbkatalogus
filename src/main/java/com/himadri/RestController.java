@@ -5,10 +5,7 @@ import com.himadri.dto.RequestId;
 import com.himadri.dto.UserPollingInfo;
 import com.himadri.engine.CatalogueReader;
 import com.himadri.engine.ModelTransformerEngine;
-import com.himadri.model.Item;
-import com.himadri.model.Page;
-import com.himadri.model.UserRequest;
-import com.himadri.model.UserSession;
+import com.himadri.model.*;
 import com.himadri.renderer.DocumentRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,10 +58,10 @@ public class RestController {
                     LOGGER.info("Pages generated " + pages.size());
                     documentRenderer.renderDocument(pages, userRequest);
                 } catch (IOException e) {
-                    userSession.addErrorItem(UserSession.Severity.ERROR, "IO hiba történt: " + e.getMessage());
+                    userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "IO hiba történt: " + e.getMessage());
                     LOGGER.error("IOException in main worker thread", e);
                 } catch (RuntimeException e) {
-                    userSession.addErrorItem(UserSession.Severity.ERROR, "Ismeretlen hiba történt: " + e.getMessage());
+                    userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "Ismeretlen hiba történt: " + e.getMessage());
                     LOGGER.error("RuntimeException in main worker thread", e);
                 } finally {
                     userSession.setDone();

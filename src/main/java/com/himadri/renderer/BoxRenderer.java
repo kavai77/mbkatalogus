@@ -25,8 +25,10 @@ import java.util.List;
 
 import static com.himadri.Settings.IMAGE_LOCATION;
 import static com.himadri.Settings.LOGO_IMAGE_LOCATION;
-import static com.himadri.model.UserSession.Severity.ERROR;
-import static com.himadri.model.UserSession.Severity.WARN;
+import static com.himadri.model.ErrorItem.ErrorCategory.FORMATTING;
+import static com.himadri.model.ErrorItem.ErrorCategory.IMAGE;
+import static com.himadri.model.ErrorItem.Severity.ERROR;
+import static com.himadri.model.ErrorItem.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
 import static org.apache.commons.lang3.StringUtils.*;
 
@@ -56,7 +58,7 @@ public class BoxRenderer {
         // draw image
         final File imageFile = new File(IMAGE_LOCATION, stripToEmpty(box.getImage()));
         if (!imageFile.exists() || !imageFile.isFile()) {
-            //userSession.addErrorItem(WARN, "Nem található a kép: " + box.getImage());
+            userSession.addErrorItem(WARN, IMAGE, "Nem található a kép: " + box.getImage());
         } else if (!userRequest.isDraftMode()) {
             AffineTransform transform = g2.getTransform();
             try (InputStream fis = new FileInputStream(imageFile)) {
@@ -67,7 +69,7 @@ public class BoxRenderer {
                 g2.scale(scale, scale);
                 g2.drawImage(image, posX, posY, image.getWidth(), image.getHeight(), null);
             } catch (IOException e) {
-                userSession.addErrorItem(ERROR, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
+                userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
                         box.getImage(), e.getMessage()));
                 LOGGER.error("Could not paint image {}", box, e);
             } finally {
@@ -78,7 +80,7 @@ public class BoxRenderer {
         // draw the logo
         final File logoImageFile = new File(LOGO_IMAGE_LOCATION, stripToEmpty(box.getBrandImage()));
         if (!logoImageFile.exists() || !logoImageFile.isFile()) {
-            userSession.addErrorItem(WARN, "Nem található a logo file kép: " + box.getBrandImage());
+            userSession.addErrorItem(WARN, IMAGE, "Nem található a logo file kép: " + box.getBrandImage());
         } else if (!userRequest.isDraftMode()) {
             AffineTransform transform = g2.getTransform();
             try {
@@ -87,7 +89,7 @@ public class BoxRenderer {
                 g2.scale(scale, scale);
                 g2.drawImage(logoImage, (int)(3f / scale), (int)(3f / scale), logoImage.getWidth(), logoImage.getHeight(), null);
             } catch (IOException e) {
-                userSession.addErrorItem(ERROR, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
+                userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
                         box.getImage(), e.getMessage()));
                 LOGGER.error("Could not paint logo image", e);
             } finally {
@@ -125,9 +127,9 @@ public class BoxRenderer {
             if (Util.getStringWidth(g2, box.getTitle()) <= boxTextEnd - boxTextStart) {
                 g2.drawString(box.getTitle(), boxTextStart, 13);
             } else {
-                String[] words = split(box.getTitle(),' ');
+                String[] words = splitByWholeSeparator(box.getTitle(),null);
                 if (words.length == 1) {
-                    throw new ValidationException(ERROR, String.format(
+                    throw new ValidationException(ERROR, FORMATTING, String.format(
                             "A cikknév egyetlen hosszú szóbál áll, amit nem lehetett tördelni. Cikkszám: %s Cikknév %s ",
                             box.getArticles().get(0).getNumber(), box.getTitle()));
                 }
@@ -144,7 +146,7 @@ public class BoxRenderer {
                 }
                 if (wordSplit == words.length) {
                     g2.drawString(firstLine.toString(), boxTextStart, 13);
-                    throw new ValidationException(WARN, "Sikerült kiírni a címsort, de nagyon közel áll a végéhez. " +
+                    throw new ValidationException(WARN, FORMATTING, "Sikerült kiírni a címsort, de nagyon közel áll a végéhez. " +
                             box.getArticles().get(0).getNumber());
                 }
                 StringBuilder secondLine = new StringBuilder(words[wordSplit]);
@@ -157,7 +159,7 @@ public class BoxRenderer {
                             box.getArticles().set(0, new Box.Article(firstArticle.getNumber(), firstArticle.getPrice(),
                                     firstArticle.getDescription() + newItemText, false));
                         } else {
-                            userSession.addErrorItem(WARN, String.format("Túl hosszú a címsor, le kellett vágni a második sorban. " +
+                            userSession.addErrorItem(WARN, IMAGE, String.format("Túl hosszú a címsor, le kellett vágni a második sorban. " +
                                     "Cikkszám: %s. Teljes címsor: %s", box.getArticles().get(0).getNumber(), box.getTitle()));
                         }
                         break;
@@ -177,8 +179,10 @@ public class BoxRenderer {
             for (int i = 0; i < articles.size(); i++) {
                 Box.Article article = articles.get(i);
                 if (currentLine >= TEXT_BOX_LINE_COUNT) {
-                    throw new ValidationException(ERROR, "Nem sikerült a tördelés, túl sok egybe függő cikk. Levágott cikkek " +
-                            join(articles.stream().skip(i).map(Box.Article::getNumber).toArray(), ' '));
+                    throw new ValidationException(ERROR, FORMATTING, String.format("Nem sikerült a tördelés, túl sok egybe függő cikk. " +
+                            "Megjelenített cikkek: %s. Levágott cikkek: %s",
+                            join(articles.stream().limit(i).map(Box.Article::getNumber).toArray(), ' '),
+                            join(articles.stream().skip(i).map(Box.Article::getNumber).toArray(), ' ')));
                 }
                 // product number
                 g2.setPaint(Color.black);
@@ -199,7 +203,7 @@ public class BoxRenderer {
                 g2.setFont(new Font(FONT, Font.PLAIN, 7));
                 StringBuilder sb = null;
 
-                final String[] words = article.getDescription().split(" ");
+                final String[] words = splitByWholeSeparator(article.getDescription(), null);
                 for (int j = 0; j < words.length; j++) {
                     String word = words[j];
                     if (sb == null) {
@@ -211,10 +215,17 @@ public class BoxRenderer {
                         sb = new StringBuilder(word);
                         currentLine++;
                         if (currentLine >= TEXT_BOX_LINE_COUNT) {
-                            throw new ValidationException(ERROR, String.format(
-                                    "Nem sikerült a tördelés, túl hosszú cikknév vagy túl sok egybe függő cikk. " +
-                                    "Cikkszám: %s. Levágott tartalom: \"%s\" Ezen kívül még a nem megjelenített cikkek: %d",
-                                    article.getNumber(), join(words, ' ', j, words.length), articles.size() - i - 1));
+                            if (i + 1 < articles.size()) {
+                                throw new ValidationException(ERROR, FORMATTING, String.format(
+                                        "Nem sikerült a tördelés, túl hosszú cikknév és túl sok egybe függő cikk. " +
+                                                "Cikkszám: %s. Levágott tartalom: \"%s\". Ezen kívül még a nem megjelenített cikkek: %s",
+                                        article.getNumber(), join(words, ' ', j, words.length),
+                                        join(articles.stream().skip(i + 1).map(Box.Article::getNumber).toArray(), ' ')));
+                            } else {
+                                throw new ValidationException(ERROR, FORMATTING, String.format(
+                                        "Nem sikerült a tördelés, túl hosszú cikknév. Cikkszám: %s. Levágott tartalom: \"%s\"",
+                                        article.getNumber(), join(words, ' ', j, words.length)));
+                            }
                         }
                     }
                 }
