@@ -7,6 +7,7 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
         $scope.requestId = null;
         $scope.errorCount = 0;
         $scope.warningCount = 0;
+        $scope.errorItems = new Array();
         if (!$scope.catalogueCsvFile) {
             $scope.errorMessage = "Válassz ki egy CSV fájlt!"
             return;
@@ -50,26 +51,22 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
         $http.get('/service/cancel?requestId=' + $scope.requestId);
     }
 
+    $scope.errorStyle = new Object();
+    $scope.errorStyle["INFO"] = "alert alert-success";
+    $scope.errorStyle["WARN"] = "alert alert-warning";
+    $scope.errorStyle["ERROR"] = "alert alert-danger";
+    $scope.hiddenErrorItems = new Object();
+
     $scope.appendErrorItems = function(errorItems) {
         for (i = 0; i < errorItems.length;i++) {
-            var style;
             switch (errorItems[i].severity) {
-                case "INFO":
-                    style = "success";
-                    break;
                 case "WARN":
-                    style = "warning";
                     $scope.warningCount++;
                     break;
                 case "ERROR":
-                    style = "danger";
                     $scope.errorCount++;
-                    break
-                default:
-                    style = "info";
             }
-            $('#errorsPlaceholder').append("<div class=\"alert alert-" + style + "\" role=\"alert\">" + errorItems[i].message + "</div>");
+            $scope.errorItems.push(errorItems[i]);
         }
     }
-
 });

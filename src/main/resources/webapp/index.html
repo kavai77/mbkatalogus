@@ -74,7 +74,18 @@
     <hr class="my-4">
     <span class="bg-warning text-white" ng-show="warningCount > 0">{{warningCount}} figyelmeztetés</span>
     <span class="bg-danger text-white" ng-show="errorCount > 0">{{errorCount}} hiba</span>
-    <p id="errorsPlaceholder"></p>
+    <div style="padding: 5px 0px">
+        <span>Hibák elrejtése:</span>
+        <label class="form-check-label">
+            <input type="checkbox" class="form-check-input" ng-model="hiddenErrorItems['IMAGE']">
+            Képek
+        </label>
+        <label class="form-check-label">
+            <input type="checkbox" class="form-check-input" ng-model="hiddenErrorItems['FORMATTING']">
+            Formázás
+        </label>
+    </div>
+    <div ng-repeat="errorItem in errorItems" ng-class="errorStyle[errorItem.severity]" ng-hide="hiddenErrorItems[errorItem.category]">{{errorItem.message}}</div>
 </div>
 
 <!-- jQuery first, then Tether, then Bootstrap JS. -->
