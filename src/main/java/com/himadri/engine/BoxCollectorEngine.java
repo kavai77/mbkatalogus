@@ -1,8 +1,8 @@
 package com.himadri.engine;
 
-import com.himadri.model.Box;
-import com.himadri.model.Item;
-import com.himadri.model.UserRequest;
+import com.himadri.dto.UserRequest;
+import com.himadri.model.rendering.Box;
+import com.himadri.model.rendering.Item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

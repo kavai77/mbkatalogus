@@ -1,7 +1,7 @@
 package com.himadri.engine;
 
-import com.himadri.model.Box;
-import com.himadri.model.Page;
+import com.himadri.model.rendering.Box;
+import com.himadri.model.rendering.Page;
 import com.himadri.renderer.PageRenderer;
 import org.springframework.stereotype.Component;
 

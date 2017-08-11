@@ -1,7 +1,6 @@
 package com.himadri.dto;
 
-import com.himadri.model.ErrorItem;
-import com.himadri.model.UserSession;
+import com.himadri.model.service.UserSession;
 
 import java.util.List;
 

@@ -2,10 +2,10 @@ package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
 import com.himadri.Settings;
-import com.himadri.model.ErrorItem;
-import com.himadri.model.Page;
-import com.himadri.model.UserRequest;
-import com.himadri.model.UserSession;
+import com.himadri.dto.ErrorItem;
+import com.himadri.dto.UserRequest;
+import com.himadri.model.rendering.Page;
+import com.himadri.model.service.UserSession;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DColorMapper;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DFontApplier;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DImageEncoder;

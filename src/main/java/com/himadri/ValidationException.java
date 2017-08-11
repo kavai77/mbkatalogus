@@ -1,6 +1,6 @@
 package com.himadri;
 
-import com.himadri.model.ErrorItem;
+import com.himadri.dto.ErrorItem;
 
 public class ValidationException extends Exception {
     private final ErrorItem.Severity severity;

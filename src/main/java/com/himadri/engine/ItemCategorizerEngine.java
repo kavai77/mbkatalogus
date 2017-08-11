@@ -1,6 +1,6 @@
 package com.himadri.engine;
 
-import com.himadri.model.Item;
+import com.himadri.model.rendering.Item;
 import org.springframework.stereotype.Component;
 
 import java.util.*;

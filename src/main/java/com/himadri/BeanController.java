@@ -2,7 +2,7 @@ package com.himadri;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.himadri.model.UserSession;
+import com.himadri.model.service.UserSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 

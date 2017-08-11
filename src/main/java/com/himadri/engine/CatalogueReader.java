@@ -1,7 +1,7 @@
 package com.himadri.engine;
 
-import com.himadri.model.Item;
-import com.himadri.model.UserRequest;
+import com.himadri.dto.UserRequest;
+import com.himadri.model.rendering.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

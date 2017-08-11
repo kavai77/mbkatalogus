@@ -1,4 +1,4 @@
-package com.himadri.model;
+package com.himadri.model.rendering;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.himadri.model;
+package com.himadri.dto;
 
 public class ErrorItem {
     private final Severity severity;

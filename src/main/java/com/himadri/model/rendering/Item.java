@@ -1,4 +1,4 @@
-package com.himadri.model;
+package com.himadri.model.rendering;
 
 public class Item {
     private String cikkszam;

@@ -82,7 +82,7 @@
         </label>
         <label class="form-check-label">
             <input type="checkbox" class="form-check-input" ng-model="hiddenErrorItems['FORMATTING']">
-            Formázás
+            Tördelés
         </label>
     </div>
     <div ng-repeat="errorItem in errorItems" ng-class="errorStyle[errorItem.severity]" ng-hide="hiddenErrorItems[errorItem.category]">{{errorItem.message}}</div>

@@ -1,6 +1,7 @@
-package com.himadri.model;
+package com.himadri.model.service;
 
 import com.himadri.ValidationException;
+import com.himadri.dto.ErrorItem;
 
 import java.util.ArrayList;
 import java.util.List;

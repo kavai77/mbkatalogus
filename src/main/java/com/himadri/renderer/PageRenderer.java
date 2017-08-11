@@ -2,9 +2,9 @@ package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableMap;
-import com.himadri.model.Page;
-import com.himadri.model.UserRequest;
-import com.himadri.model.UserSession;
+import com.himadri.dto.UserRequest;
+import com.himadri.model.rendering.Page;
+import com.himadri.model.service.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +13,8 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
-import static com.himadri.model.ErrorItem.ErrorCategory.RUNTIME;
-import static com.himadri.model.ErrorItem.Severity.ERROR;
+import static com.himadri.dto.ErrorItem.ErrorCategory.RUNTIME;
+import static com.himadri.dto.ErrorItem.Severity.ERROR;
 import static com.himadri.renderer.Util.getStringWidth;
 
 @Component

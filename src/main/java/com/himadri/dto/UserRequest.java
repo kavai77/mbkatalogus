@@ -1,4 +1,4 @@
-package com.himadri.model;
+package com.himadri.dto;
 
 import java.io.InputStream;
 

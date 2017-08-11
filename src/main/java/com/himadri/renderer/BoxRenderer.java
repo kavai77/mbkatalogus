@@ -2,9 +2,9 @@ package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
 import com.himadri.ValidationException;
-import com.himadri.model.Box;
-import com.himadri.model.UserRequest;
-import com.himadri.model.UserSession;
+import com.himadri.dto.UserRequest;
+import com.himadri.model.rendering.Box;
+import com.himadri.model.service.UserSession;
 import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +25,10 @@ import java.util.List;
 
 import static com.himadri.Settings.IMAGE_LOCATION;
 import static com.himadri.Settings.LOGO_IMAGE_LOCATION;
-import static com.himadri.model.ErrorItem.ErrorCategory.FORMATTING;
-import static com.himadri.model.ErrorItem.ErrorCategory.IMAGE;
-import static com.himadri.model.ErrorItem.Severity.ERROR;
-import static com.himadri.model.ErrorItem.Severity.WARN;
+import static com.himadri.dto.ErrorItem.ErrorCategory.FORMATTING;
+import static com.himadri.dto.ErrorItem.ErrorCategory.IMAGE;
+import static com.himadri.dto.ErrorItem.Severity.ERROR;
+import static com.himadri.dto.ErrorItem.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
 import static org.apache.commons.lang3.StringUtils.*;
 

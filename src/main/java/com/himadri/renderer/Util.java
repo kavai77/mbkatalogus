@@ -1,6 +1,6 @@
 package com.himadri.renderer;
 
-import com.himadri.model.Box;
+import com.himadri.model.rendering.Box;
 
 import java.awt.*;
 
