@@ -1,7 +1,6 @@
 package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
-import com.himadri.Settings;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
 import com.himadri.model.rendering.Page;
@@ -20,15 +19,16 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static com.himadri.Settings.PAGES_PER_DOCUMENT_IN_QUALITY_MODE;
 import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
@@ -39,9 +39,26 @@ public class DocumentRenderer {
     @Autowired
     private Cache<String, UserSession> userSessionCache;
 
+    @Value("${renderingLocation}")
+    private String renderingLocation;
+
+    @Value("${pagesPerDocumentInQualityMode}")
+    private int pagesPerDocumentInQualityMode;
+
+    @PostConstruct
+    public void init() {
+        final File renderingLocationFile = new File(renderingLocation);
+        if (!renderingLocationFile.exists()) {
+            final boolean successful = renderingLocationFile.mkdirs();
+            if (!successful) {
+                throw new RuntimeException("Could not create the path for rendering location: " + renderingLocation);
+            }
+        }
+    }
+
     public void renderDocument(List<Page> pages, UserRequest userRequest) throws IOException {
         int previousDocumentStartPage = 1;
-        int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : PAGES_PER_DOCUMENT_IN_QUALITY_MODE;
+        int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
         for (int i = 0; i < pages.size(); i++) {
@@ -76,7 +93,7 @@ public class DocumentRenderer {
         final String fileName = String.format("%s-%d-%d.pdf", docPrefix, previousDocumentStartPage,
                 userSession.getCurrentPageNumber());
         userSession.addGeneratedDocument(fileName);
-        doc.save(new File(Settings.RENDERING_LOCATION, fileName));
+        doc.save(new File(renderingLocation, fileName));
         doc.close();
     }
 

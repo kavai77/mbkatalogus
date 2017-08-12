@@ -9,8 +9,10 @@ import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -23,8 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import static com.himadri.Settings.IMAGE_LOCATION;
-import static com.himadri.Settings.LOGO_IMAGE_LOCATION;
 import static com.himadri.dto.ErrorItem.ErrorCategory.FORMATTING;
 import static com.himadri.dto.ErrorItem.ErrorCategory.IMAGE;
 import static com.himadri.dto.ErrorItem.Severity.ERROR;
@@ -52,11 +52,30 @@ public class BoxRenderer {
     @Autowired
     private Cache<String, UserSession> userSessionCache;
 
+    @Value("${imageLocation}")
+    private String imageLocation;
+
+    @Value("${logoImageLocation}")
+    private String logoImageLocation;
+
+    @PostConstruct
+    public void init() {
+        File imageLocationFile = new File(imageLocation);
+        if (!imageLocationFile.exists() || !imageLocationFile.isDirectory()) {
+            throw new RuntimeException(String.format("The configured path for image location %s does not exist", imageLocation));
+        }
+
+        File logoImageLocationFile = new File(logoImageLocation);
+        if (!logoImageLocationFile.exists() || !logoImageLocationFile.isDirectory()) {
+            throw new RuntimeException(String.format("The configured path for logo image location %s does not exist", logoImageLocation));
+        }
+    }
+
     public void drawBox(Graphics2D g2, Box box, UserRequest userRequest) {
         final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
-        final File imageFile = new File(IMAGE_LOCATION, stripToEmpty(box.getImage()));
+        final File imageFile = new File(imageLocation, stripToEmpty(box.getImage()));
         if (!imageFile.exists() || !imageFile.isFile()) {
             userSession.addErrorItem(WARN, IMAGE, "Nem található a kép: " + box.getImage());
         } else if (!userRequest.isDraftMode()) {
@@ -78,7 +97,7 @@ public class BoxRenderer {
         }
 
         // draw the logo
-        final File logoImageFile = new File(LOGO_IMAGE_LOCATION, stripToEmpty(box.getBrandImage()));
+        final File logoImageFile = new File(logoImageLocation, stripToEmpty(box.getBrandImage()));
         if (!logoImageFile.exists() || !logoImageFile.isFile()) {
             userSession.addErrorItem(WARN, IMAGE, "Nem található a logo file kép: " + box.getBrandImage());
         } else if (!userRequest.isDraftMode()) {
