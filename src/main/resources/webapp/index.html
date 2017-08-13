@@ -23,9 +23,9 @@
         {{errorMessage}}
     </div>
     <div class="jumbotron">
-        <h1 class="display-3">Madal Bal Katalógus</h1>
+        <ng-include src="'headline.html'"></ng-include>
         <p class="lead">Használd ezt az alkalmazást, hogy egyszerűen készíts PDF katalógust!</p>
-        <hr class="my-4">
+        <hr>
         <form ng-submit="send()">
             <div class="form-group">
                 <label for="catalogueTitle">Katalógus címe</label>
@@ -59,10 +59,9 @@
 
 <div class="container" ng-show="requestId">
     <div class="jumbotron">
-        <h1 class="display-3">Madal Bal Katalógus</h1>
+        <ng-include src="'headline.html'"></ng-include>
         <p class="lead">A dokumentum generálása folyamatban...</p>
-
-        <uib-progressbar class="progress active" value="currentPageNumber" max="totalPageCount" type="success">
+        <uib-progressbar class="progress active mb-4" value="currentPageNumber" max="totalPageCount" type="success">
             <span style="white-space: nowrap;">{{currentPageNumber}} / {{totalPageCount}} oldal kirajzolva</span>
         </uib-progressbar>
         <div ng-repeat="doc in generatedDocuments">
@@ -70,11 +69,10 @@
         </div>
     </div>
     <button class="btn btn-outline-danger btn-sm" ng-show="!done" ng-click="cancel()">Leállítás</button>
-
-    <hr class="my-4">
+    <hr>
     <span class="bg-warning text-white" ng-show="warningCount > 0">{{warningCount}} figyelmeztetés</span>
     <span class="bg-danger text-white" ng-show="errorCount > 0">{{errorCount}} hiba</span>
-    <div style="padding: 5px 0px">
+    <div class="my-4">
         <span>Hibák elrejtése:</span>
         <label class="form-check-label">
             <input type="checkbox" class="form-check-input" ng-model="hiddenErrorItems['IMAGE']">

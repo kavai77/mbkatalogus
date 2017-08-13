@@ -18,6 +18,10 @@ public class Util {
     }
 
     public static Color getBoxMainColor(Box box) {
-        return PRODUCT_GROUP_COLORS[box.getIndexOfProductGroup() % PRODUCT_GROUP_COLORS.length];
+        return getProductGroupMainColor(box.getIndexOfProductGroup());
+    }
+
+    public static Color getProductGroupMainColor(int indexOfProductGroup) {
+        return PRODUCT_GROUP_COLORS[indexOfProductGroup % PRODUCT_GROUP_COLORS.length];
     }
 }

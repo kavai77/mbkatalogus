@@ -3,6 +3,7 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
+import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DColorMapper;
@@ -27,12 +28,15 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.function.Consumer;
 
 import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
 public class DocumentRenderer {
+    @Autowired
+    private TableOfContentRenderer tableOfContentRenderer;
+
     @Autowired
     private PageRenderer pageRenderer;
 
@@ -56,27 +60,20 @@ public class DocumentRenderer {
         }
     }
 
-    public void renderDocument(List<Page> pages, UserRequest userRequest) throws IOException {
+    public void renderDocument(Document document, UserRequest userRequest) throws IOException {
         int previousDocumentStartPage = 1;
         int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
-        for (int i = 0; i < pages.size(); i++) {
+        renderObject(doc, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
+        for (int i = 0; i < document.getPages().size(); i++) {
             if (i > 0 && i % pagesPerDocument == 0) {
                 closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
                 previousDocumentStartPage = i + 1;
                 doc = new PDDocument();
             }
-            Page page = pages.get(i);
-            PDPage pdPage = new PDPage(PDRectangle.A4);
-            PdfBoxGraphics2D g2 = new PdfBoxGraphics2D(doc, PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight());
-            doc.addPage(pdPage);
-            setCommonGraphics(g2);
-            pageRenderer.drawPage(g2, page, userRequest);
-            g2.dispose();
-            PDPageContentStream contentStream = new PDPageContentStream(doc, pdPage);
-            contentStream.drawForm(g2.getXFormObject());
-            contentStream.close();
+            final Page page = document.getPages().get(i);
+            renderObject(doc, g2 -> pageRenderer.drawPage(g2, page, userRequest));
             userSession.incrementCurrentPageNumber();
             if (userSession.isCancelled()) {
                 break;
@@ -86,6 +83,18 @@ public class DocumentRenderer {
         closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
         userSession.addErrorItem(ErrorItem.Severity.INFO, ErrorItem.ErrorCategory.INFO,
                 userSession.isCancelled() ? "A dokumentum készítés megszakítva" : "A dokumentum készítés kész.");
+    }
+
+    private void renderObject(PDDocument doc, Consumer<Graphics2D> consumer) throws IOException {
+        PDPage pdPage = new PDPage(PDRectangle.A4);
+        PdfBoxGraphics2D g2 = new PdfBoxGraphics2D(doc, PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight());
+        doc.addPage(pdPage);
+        setCommonGraphics(g2);
+        consumer.accept(g2);
+        g2.dispose();
+        PDPageContentStream contentStream = new PDPageContentStream(doc, pdPage);
+        contentStream.drawForm(g2.getXFormObject());
+        contentStream.close();
     }
 
     private void closeDocument(PDDocument doc, UserRequest userRequest, UserSession userSession, int previousDocumentStartPage) throws IOException {

@@ -7,8 +7,8 @@ import com.himadri.dto.UserPollingInfo;
 import com.himadri.dto.UserRequest;
 import com.himadri.engine.CatalogueReader;
 import com.himadri.engine.ModelTransformerEngine;
+import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Item;
-import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.DocumentRenderer;
 import org.slf4j.Logger;
@@ -58,9 +58,9 @@ public class RestController {
             public void run() {
                 try {
                     final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);
-                    final List<Page> pages = modelTransformerEngine.createPagesFromItems(items, userRequest);
-                    LOGGER.info("Pages generated " + pages.size());
-                    documentRenderer.renderDocument(pages, userRequest);
+                    final Document document = modelTransformerEngine.createDocumentFromItems(items, userRequest);
+                    LOGGER.debug("Pages generated " + document.getPages().size());
+                    documentRenderer.renderDocument(document, userRequest);
                 } catch (IOException e) {
                     userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "IO hiba történt: " + e.getMessage());
                     LOGGER.error("IOException in main worker thread", e);
