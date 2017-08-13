@@ -32,8 +32,8 @@ public class ModelTransformerEngine {
                 .itemsPerProductGroupPerBox(items);
         final List<Box> boxes = boxCollectorEngine.collectBoxes(itemsPerProductGroupPerBox, userRequest);
         final List<Page> pages = pageCollectorEngine.createPages(boxes, userRequest.getCatalogueTitle());
-        userSessionCache.getIfPresent(userRequest.getRequestId()).setTotalPageCount(pages.size());
         final TableOfContent tableOfContent = tableOfContentEngine.createTableOfContent(pages);
+        userSessionCache.getIfPresent(userRequest.getRequestId()).setTotalPageCount(pages.size() + 1);
         return new Document(pages, tableOfContent);
     }
 }

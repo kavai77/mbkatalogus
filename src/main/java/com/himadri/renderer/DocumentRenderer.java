@@ -66,6 +66,7 @@ public class DocumentRenderer {
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
         renderObject(doc, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
+        userSession.incrementCurrentPageNumber();
         for (int i = 0; i < document.getPages().size(); i++) {
             if (i > 0 && i % pagesPerDocument == 0) {
                 closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
