@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class UserSession {
 
     private final Queue<ErrorItem> errorItems = new ConcurrentLinkedQueue<>();
-    private final Queue<String> generatedDocuments = new ConcurrentLinkedQueue<>();
+    private final Queue<GeneratedDocument> generatedDocuments = new ConcurrentLinkedQueue<>();
     private final AtomicInteger totalPageCount = new AtomicInteger();
     private final AtomicInteger currentPageNumber = new AtomicInteger();
     private final AtomicBoolean done = new AtomicBoolean();
@@ -28,11 +28,11 @@ public class UserSession {
                 validationException.getMessage()));
     }
 
-    public void addGeneratedDocument(String fileName) {
-        generatedDocuments.add(fileName);
+    public void addGeneratedDocument(String relativeUrl, String displayName) {
+        generatedDocuments.add(new GeneratedDocument(relativeUrl, displayName));
     }
 
-    public List<String> getAllGeneratedDocuments() {
+    public List<GeneratedDocument> getAllGeneratedDocuments() {
         return new ArrayList<>(generatedDocuments);
     }
 

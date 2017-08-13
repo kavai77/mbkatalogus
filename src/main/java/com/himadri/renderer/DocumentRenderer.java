@@ -90,11 +90,12 @@ public class DocumentRenderer {
 
     private void closeDocument(PDDocument doc, UserRequest userRequest, UserSession userSession, int previousDocumentStartPage) throws IOException {
         String docPrefix = deleteWhitespace(stripAccents(lowerCase(userRequest.getCatalogueTitle())));
-        final String fileName = String.format("%s-%d-%d.pdf", docPrefix, previousDocumentStartPage,
-                userSession.getCurrentPageNumber());
-        userSession.addGeneratedDocument(fileName);
-        doc.save(new File(renderingLocation, fileName));
+        final File pdfFile = File.createTempFile(String.format("%s-%d-%d-", docPrefix, previousDocumentStartPage,
+                userSession.getCurrentPageNumber()),".pdf", new File(renderingLocation));
+        doc.save(pdfFile);
         doc.close();
+        userSession.addGeneratedDocument(pdfFile.getName(), String.format("%d-%d", previousDocumentStartPage,
+                userSession.getCurrentPageNumber()));
     }
 
     private static void setCommonGraphics(PdfBoxGraphics2D g2) {
