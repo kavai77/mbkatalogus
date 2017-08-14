@@ -1,7 +1,9 @@
 package com.himadri.engine;
 
+import com.google.common.cache.Cache;
 import com.himadri.dto.UserRequest;
 import com.himadri.model.rendering.Item;
+import com.himadri.model.service.UserSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,18 +12,29 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.collect.ImmutableList.of;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ItemToBoxConverterTest {
+    private static final String USER_REQUEST_ID = "USER_REQUEST_ID";
 
     @Mock
     private UserRequest userRequest;
+
+    @Mock
+    private Cache<String, UserSession> userSessionCacheMock;
+
+    @Mock
+    private UserSession userSessionMock;
 
     private ItemToBoxConverter sut;
 
     @Before
     public void setUp() throws Exception {
         sut = new ItemToBoxConverter();
+        sut.userSessionCache = userSessionCacheMock;
+        when(userRequest.getRequestId()).thenReturn(USER_REQUEST_ID);
+        when(userSessionCacheMock.getIfPresent(USER_REQUEST_ID)).thenReturn(userSessionMock);
     }
 
     @Test

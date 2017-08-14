@@ -23,7 +23,7 @@ public class ItemToBoxConverter {
     public static final String BRAND_EXTENSION = ".psd";
 
     @Autowired
-    private Cache<String, UserSession> userSessionCache;
+    Cache<String, UserSession> userSessionCache;
 
     public Box createBox(List<Item> items, int indexOfProductGroup, UserRequest userRequest) {
         List<Box.Article> articleList = new ArrayList<>(items.size());
@@ -52,6 +52,7 @@ public class ItemToBoxConverter {
     }
 
     String getBoxTitle(List<Item> items, UserRequest userRequest) {
+        final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         String boxTitle;
         if (items.size() == 1) {
             boxTitle = substringBefore(items.get(0).getCikknev(), ";");
@@ -60,12 +61,19 @@ public class ItemToBoxConverter {
             boxTitle = getCommonPrefix(titles);
             if (contains(boxTitle, ';')) {
                 boxTitle = substringBeforeLast(boxTitle, ";");
-            } else if (!endsWith(boxTitle, " ")) {
-                boxTitle = substringBeforeLast(boxTitle, " ");
-            }
-            if (isBlank(boxTitle)) {
-                userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(ErrorItem.Severity.ERROR,
-                        ErrorItem.ErrorCategory.FORMATTING, "Az összevont cikkeknek nincs egységes kezdetük: " + Arrays.toString(titles));
+            } else {
+                if (!endsWith(boxTitle, " ")) {
+                    boxTitle = substringBeforeLast(boxTitle, " ");
+                }
+                if (isBlank(boxTitle)) {
+                    userSession.addErrorItem(ErrorItem.Severity.ERROR,
+                            ErrorItem.ErrorCategory.FORMATTING, String.format("Az összevont cikkeknek nincs egységes kezdetük. " +
+                                    "Első cikkszám: %s. Cikknevek: %s ", items.get(0).getCikkszam(), Arrays.toString(titles)));
+                } else {
+                    userSession.addErrorItem(ErrorItem.Severity.WARN, ErrorItem.ErrorCategory.FORMATTING, String.format(
+                            "Az összevont cikkek közös kezdetében nincs pontosvessző, így az elválasztás automatikusan történik. " +
+                                    "Első cikkszám: %s. Cikknevek: %s", items.get(0).getCikkszam(), Arrays.toString(titles)));
+                }
             }
         }
         return stripToEmpty(boxTitle);

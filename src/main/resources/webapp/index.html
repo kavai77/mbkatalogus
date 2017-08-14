@@ -82,8 +82,12 @@
             <input type="checkbox" class="form-check-input" ng-model="hiddenErrorItems['FORMATTING']">
             Tördelés
         </label>
+        <label class="form-check-label">
+            <input type="checkbox" class="form-check-input" ng-model="hiddenErrorItems['WARN']">
+            Figyelmeztetések
+        </label>
     </div>
-    <div ng-repeat="errorItem in errorItems" ng-class="errorStyle[errorItem.severity]" ng-hide="hiddenErrorItems[errorItem.category]">{{errorItem.message}}</div>
+    <div ng-repeat="errorItem in errorItems" ng-class="errorStyle[errorItem.severity]" ng-hide="hiddenErrorItems[errorItem.category] || hiddenErrorItems[errorItem.severity]">{{errorItem.message}}</div>
 </div>
 
 <!-- jQuery first, then Tether, then Bootstrap JS. -->

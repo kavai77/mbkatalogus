@@ -177,8 +177,12 @@ public class BoxRenderer {
                             String newItemText = join(words, ' ', i, words.length);
                             box.getArticles().set(0, new Box.Article(firstArticle.getNumber(), firstArticle.getPrice(),
                                     firstArticle.getDescription() + newItemText, false));
+                            userSession.addErrorItem(WARN, FORMATTING, String.format("Nincs pontosvesszős elválasztás a cikknévben, " +
+                                    "így autmatikus tördelést alkalmaztunk a címsor és a leírás között. " +
+                                    "Cikkszám: %s. Címsor: %s. Leírás: %s", box.getArticles().get(0).getNumber(),
+                                    join(firstLine, " ", secondLine), newItemText));
                         } else {
-                            userSession.addErrorItem(WARN, IMAGE, String.format("Túl hosszú a címsor, le kellett vágni a második sorban. " +
+                            userSession.addErrorItem(ERROR, FORMATTING, String.format("Túl hosszú a címsor, le kellett vágni a második sorban. " +
                                     "Cikkszám: %s. Teljes címsor: %s", box.getArticles().get(0).getNumber(), box.getTitle()));
                         }
                         break;
