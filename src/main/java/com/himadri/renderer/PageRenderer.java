@@ -44,7 +44,8 @@ public class PageRenderer {
                MARGIN_LEFT.get(Page.Orientation.RIGHT) + MARGIN_RIGHT.get(Page.Orientation.RIGHT);
     }
 
-    private static final String PAGE_FONT = "Avenir";
+    private static final String PAGE_FONT = "Arial";
+    private static final String PAGE_FONT_BOLD = "Arial Black";
 
     @Autowired
     private BoxRenderer boxRenderer;
@@ -124,7 +125,7 @@ public class PageRenderer {
         g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 12));
         g2.drawString(OLDAL, pageStartPosX.calculatePosX(g2, OLDAL),HEIGHT - MARGIN_BOTTOM + 3 + 12);
         g2.setPaint(Color.black);
-        g2.setFont(new Font(PAGE_FONT, Font.BOLD, 12));
+        g2.setFont(new Font(PAGE_FONT_BOLD, Font.PLAIN, 12));
         g2.drawString(number, numberStartPosX.calculatePosX(g2, number), HEIGHT - MARGIN_BOTTOM + 3 + 12);
     }
 

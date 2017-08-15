@@ -3,6 +3,7 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
+import com.himadri.engine.PDFontService;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
@@ -11,7 +12,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDFontFactory;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
@@ -38,6 +39,9 @@ public class DocumentRenderer {
 
     @Autowired
     private Cache<String, UserSession> userSessionCache;
+
+    @Autowired
+    private PDFontService pdFontService;
 
     @Value("${renderingLocation}")
     private String renderingLocation;
@@ -104,7 +108,8 @@ public class DocumentRenderer {
                 userSession.getCurrentPageNumber()));
     }
 
-    private static void setCommonGraphics(PdfBoxGraphics2D g2) {
+    private void setCommonGraphics(PdfBoxGraphics2D g2) {
+        g2.setVectoringText(false);
         g2.setColorMapper((pdPageContentStream, color) -> {
             if (color == null)
                 return new PDColor(new float[] { 0, 0, 0, 1f }, PDDeviceCMYK.INSTANCE);
@@ -129,7 +134,8 @@ public class DocumentRenderer {
             }
         });
         g2.setFontApplier((document, contentStream, font) -> {
-            contentStream.setFont(PDFontFactory.createDefaultFont(), 1);
+            final PDFont pdFont = pdFontService.getPDFont(document, font);
+            contentStream.setFont(pdFont, font.getSize());
         });
     }
 }

@@ -22,8 +22,8 @@ public class TableOfContentRenderer {
     private static final int BOX_HEIGHT = 20;
     private static final int PAGE_BOX_WIDTH = 30;
     private static final String TITLE = "TARTALOMJEGYZÉK";
-    private static final Font TITLE_FONT = new Font("Arial", Font.BOLD, 18);
-    private static final Font PAGE_FONT = new Font("Arial", Font.BOLD + Font.ITALIC, 10);
+    private static final Font TITLE_FONT = new Font("Arial Black", Font.PLAIN, 18);
+    private static final Font PAGE_FONT = new Font("Arial Black", Font.ITALIC, 10);
     private static final Font CONTENT_FONT = new Font("Arial", Font.PLAIN, 10);
 
 

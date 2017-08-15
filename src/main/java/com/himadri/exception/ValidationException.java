@@ -1,4 +1,4 @@
-package com.himadri;
+package com.himadri.exception;
 
 import com.himadri.dto.ErrorItem;
 

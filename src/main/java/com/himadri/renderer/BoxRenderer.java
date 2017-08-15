@@ -1,11 +1,10 @@
 package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
-import com.himadri.ValidationException;
 import com.himadri.dto.UserRequest;
+import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.service.UserSession;
-import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -210,8 +209,7 @@ public class BoxRenderer {
                 // product number
                 g2.setPaint(Color.black);
                 g2.setFont(new Font(FONT, Font.BOLD, 8));
-                drawStringWithShadow(g2, article.getNumber(), boxTextStart,
-                        getLineYBaseLine(currentLine), userRequest.isDraftMode());
+                g2.drawString(article.getNumber(), boxTextStart, getLineYBaseLine(currentLine));
                 float middleBoxStart = boxTextStart + Util.getStringWidth(g2, article.getNumber()) + 3;
 
                 // price
@@ -265,15 +263,6 @@ public class BoxRenderer {
         g2.setColor(Color.lightGray);
         g2.setStroke(new BasicStroke(.5f));
         g2.draw(new Line2D.Float(5, BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, BOX_HEIGHT));
-    }
-
-    private void drawStringWithShadow(Graphics2D g2, String str, float x, float y, boolean draftMode) {
-        g2.drawString(str, x, y);
-        if (draftMode) {
-            ((PdfBoxGraphics2D) g2).setVectoringText(false);
-            g2.drawString(str, x, y);
-            ((PdfBoxGraphics2D) g2).setVectoringText(true);
-        }
     }
 
     private float getLineYBaseLine(int line) {
