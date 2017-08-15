@@ -135,7 +135,7 @@ public class DocumentRenderer {
         });
         g2.setFontApplier((document, contentStream, font) -> {
             final PDFont pdFont = pdFontService.getPDFont(document, font);
-            contentStream.setFont(pdFont, font.getSize());
+            contentStream.setFont(pdFont, font.getSize2D());
         });
     }
 }

@@ -3,13 +3,15 @@ package com.himadri.engine;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.himadri.exception.FontFileNotFoundException;
-import com.himadri.model.service.DocumentFont;
+import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.io.IOException;
 
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 import static org.apache.commons.lang3.StringUtils.replace;
@@ -17,14 +19,17 @@ import static org.apache.commons.lang3.StringUtils.replace;
 @Component
 public class PDFontService {
     @Autowired
-    private LoadingCache<DocumentFont, PDFont> pdFontCache;
+    private LoadingCache<String, TrueTypeFont> trueTypeFontLoadingCache;
 
     public PDFont getPDFont(PDDocument pdDocument, Font font) throws FontFileNotFoundException {
         final String fontFileName = getFontFileName(font);
         try {
-            return pdFontCache.getUnchecked(new DocumentFont(pdDocument, fontFileName));
+            final TrueTypeFont typeFont = trueTypeFontLoadingCache.getUnchecked(fontFileName);
+            return PDType0Font.load(pdDocument, typeFont, true);
         } catch (UncheckedExecutionException e) {
             throw new FontFileNotFoundException("Could not load font file: " + fontFileName, e);
+        } catch (IOException e) {
+            throw new FontFileNotFoundException("Could not embed true type font: " + fontFileName, e);
         }
     }
 

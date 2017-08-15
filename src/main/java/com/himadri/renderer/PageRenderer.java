@@ -3,28 +3,29 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableMap;
 import com.himadri.dto.UserRequest;
+import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
-import static com.himadri.dto.ErrorItem.ErrorCategory.RUNTIME;
-import static com.himadri.dto.ErrorItem.Severity.ERROR;
 import static com.himadri.renderer.Util.getStringWidth;
 
 @Component
 public class PageRenderer {
-    private static final int WIDTH = 595;
-    private static final int HEIGHT = 842;
+    private static final int WIDTH = (int) Math.round(PDRectangle.A4.getWidth());
+    private static final int HEIGHT = (int) Math.round(PDRectangle.A4.getHeight());
     private static final int MARGIN_TOP = 30;
     private static final int MARGIN_BOTTOM = 20;
-    private static final int VERTICAL_BOX_PER_PAGE = 8;
-    public static final int BOX_PER_PAGE = VERTICAL_BOX_PER_PAGE * 2;
+    public static final int BOX_ROWS_PER_PAGE = 8;
+    public static final int BOX_COLUMNS_PER_PAGE = 2;
 
     private static final Map<Page.Orientation, Integer> MARGIN_LEFT = ImmutableMap.of(
             Page.Orientation.LEFT,40,
@@ -36,7 +37,7 @@ public class PageRenderer {
             Page.Orientation.RIGHT,40
     );
     public static final float BOX_WIDTH = (WIDTH - MARGIN_LEFT.get(Page.Orientation.LEFT) - MARGIN_RIGHT.get(Page.Orientation.LEFT)) / 2; // 262.5
-    public static final float BOX_HEIGHT = (HEIGHT - MARGIN_TOP - MARGIN_BOTTOM) / VERTICAL_BOX_PER_PAGE; //99f;
+    public static final float BOX_HEIGHT = (HEIGHT - MARGIN_TOP - MARGIN_BOTTOM) / BOX_ROWS_PER_PAGE; //99f;
     private static final String OLDAL = "oldal";
 
     static {
@@ -104,18 +105,10 @@ public class PageRenderer {
         g2.drawString(page.getCategory(), categoryStartX, MARGIN_TOP - 7);
 
         //drawing the boxes
-        if (page.getBoxes().size() > BOX_PER_PAGE) {
-            errorCollector.addErrorItem(ERROR, RUNTIME, "Több doboz van az oldalon, mint megengedett " + BOX_PER_PAGE);
-        }
-        g2.translate(marginLeft, MARGIN_TOP);
-        g2.translate(BOX_WIDTH+7.5f, -BOX_HEIGHT);
-        for (int i = 0; i < Math.min(page.getBoxes().size(), BOX_PER_PAGE); i++) {
-            if (i % 2 == 0) {
-                g2.translate(-BOX_WIDTH-7.5f, BOX_HEIGHT);
-            } else {
-                g2.translate(BOX_WIDTH+7.5f, 0);
-            }
-            boxRenderer.drawBox(g2, page.getBoxes().get(i), userRequest);
+        for (Box box: page.getBoxes()) {
+            g2.setTransform(AffineTransform.getTranslateInstance(marginLeft + box.getColumn() * (BOX_WIDTH + 7.5f),
+                    MARGIN_TOP + box.getRow() * BOX_HEIGHT));
+            boxRenderer.drawBox(g2, box, userRequest);
         }
 
     }

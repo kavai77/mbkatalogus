@@ -33,7 +33,7 @@ public class ItemToBoxConverter {
         }
         Item firstItem = items.get(0);
         return new Box(firstItem.getKepnev(), firstItem.getGyarto() + BRAND_EXTENSION, boxTitle,
-                firstItem.getCikkfajta(), firstItem.getCikkcsoportnev(), indexOfProductGroup, 1, articleList);
+                firstItem.getCikkfajta(), firstItem.getCikkcsoportnev(), indexOfProductGroup, getOccupiedSpace(), articleList);
 
     }
 
@@ -77,5 +77,9 @@ public class ItemToBoxConverter {
             }
         }
         return stripToEmpty(boxTitle);
+    }
+
+    private int getOccupiedSpace() {
+        return 1;
     }
 }

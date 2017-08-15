@@ -1,6 +1,7 @@
 package com.himadri.renderer;
 
 import com.himadri.model.rendering.TableOfContent;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -14,8 +15,8 @@ import static com.himadri.renderer.Util.getStringWidth;
 
 @Component
 public class TableOfContentRenderer {
-    private static final int WIDTH = 595;
-    private static final int HEIGHT = 842;
+    private static final int WIDTH = (int) Math.round(PDRectangle.A4.getWidth());
+    private static final int HEIGHT = (int) Math.round(PDRectangle.A4.getHeight());
     private static final int MARGIN_X = 50;
     private static final int MARGIN_Y = 50;
     private static final int COLUMN_GAP = 10;

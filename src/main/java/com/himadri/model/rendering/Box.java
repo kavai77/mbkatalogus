@@ -10,9 +10,12 @@ public class Box {
     private final String productGroup;
     private final int indexOfProductGroup;
     private final int occupiedSpace;
+    private int row;
+    private int column;
     private final List<Article> articles;
 
-    public Box(String image, String brandImage, String title, String category, String productGroup, int indexOfProductGroup, int occupiedSpace, List<Article> articles) {
+    public Box(String image, String brandImage, String title, String category, String productGroup,
+               int indexOfProductGroup, int occupiedSpace, List<Article> articles) {
         this.image = image;
         this.brandImage = brandImage;
         this.title = title;
@@ -20,6 +23,8 @@ public class Box {
         this.productGroup = productGroup;
         this.indexOfProductGroup = indexOfProductGroup;
         this.occupiedSpace = occupiedSpace;
+        this.row = row;
+        this.column = column;
         this.articles = articles;
     }
 
@@ -49,6 +54,19 @@ public class Box {
 
     public int getOccupiedSpace() {
         return occupiedSpace;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public int getColumn() {
+        return column;
+    }
+
+    public void setDimensions(int row, int column) {
+        this.row = row;
+        this.column = column;
     }
 
     public List<Article> getArticles() {
@@ -103,6 +121,8 @@ public class Box {
                 ", category='" + category + '\'' +
                 ", indexOfProductGroup='" + indexOfProductGroup + '\'' +
                 ", occupiedSpace='" + occupiedSpace + '\'' +
+                ", row='" + row + '\'' +
+                ", column='" + column + '\'' +
                 ", articles=" + articles +
                 '}';
     }

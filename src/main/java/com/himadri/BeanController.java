@@ -4,10 +4,9 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.himadri.model.service.DocumentFont;
 import com.himadri.model.service.UserSession;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.fontbox.ttf.TTFParser;
+import org.apache.fontbox.ttf.TrueTypeFont;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 
@@ -23,13 +22,13 @@ public class BeanController {
     }
 
     @Bean
-    public LoadingCache<DocumentFont, PDFont> pdFontCache() {
+    public LoadingCache<String, TrueTypeFont> trueTypeFontLoadingCache() {
         return CacheBuilder.newBuilder()
                 .expireAfterAccess(60, TimeUnit.MINUTES)
-                .build(new CacheLoader<DocumentFont, PDFont>() {
+                .build(new CacheLoader<String, TrueTypeFont>() {
                     @Override
-                    public PDFont load(DocumentFont key) throws Exception {
-                        return PDType0Font.load(key.getPdDocument(), BeanController.class.getResourceAsStream(key.getFontName()));
+                    public TrueTypeFont load(String key) throws Exception {
+                        return new TTFParser().parse(BeanController.class.getResourceAsStream(key));
                     }
                 });
     }

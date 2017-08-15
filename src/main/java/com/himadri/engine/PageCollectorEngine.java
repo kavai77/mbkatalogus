@@ -12,16 +12,25 @@ import java.util.List;
 public class PageCollectorEngine {
     public List<Page> createPages(List<Box> boxList, String title) {
         List<Page> pageList = new ArrayList<>();
-        int occupiedSpaceInPage = 0;
         List<Box> pageBoxes = new ArrayList<>();
+        int row = 0;
+        int column = 0;
         for (Box box: boxList) {
-            if (occupiedSpaceInPage + box.getOccupiedSpace() > PageRenderer.BOX_PER_PAGE) {
-                addNewPage(pageList, pageBoxes, title);
-                pageBoxes = new ArrayList<>();
-                occupiedSpaceInPage = 0;
+            if (box.getOccupiedSpace() > PageRenderer.BOX_ROWS_PER_PAGE) {
+                throw new RuntimeException("Túl sok egybefüggő cikk a dobozban, nem fér ki egy hasábra: " + box.getArticles().get(0).getNumber());
             }
-            occupiedSpaceInPage += box.getOccupiedSpace();
+            if (row + box.getOccupiedSpace() > PageRenderer.BOX_ROWS_PER_PAGE) {
+                row = 0;
+                column++;
+                if (column == PageRenderer.BOX_COLUMNS_PER_PAGE) {
+                    addNewPage(pageList, pageBoxes, title);
+                    pageBoxes = new ArrayList<>();
+                    column = 0;
+                }
+            }
+            box.setDimensions(row, column);
             pageBoxes.add(box);
+            row += box.getOccupiedSpace();
         }
         addNewPage(pageList, pageBoxes, title);
         return pageList;
