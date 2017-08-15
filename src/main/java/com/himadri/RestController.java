@@ -53,23 +53,19 @@ public class RestController {
         final UserSession userSession = new UserSession();
         userSessionCache.put(id, userSession);
         final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, draftMode);
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);
-                    final Document document = modelTransformerEngine.createDocumentFromItems(items, userRequest);
-                    LOGGER.debug("Pages generated " + document.getPages().size());
-                    documentRenderer.renderDocument(document, userRequest);
-                } catch (IOException e) {
-                    userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "IO hiba történt: " + e.getMessage());
-                    LOGGER.error("IOException in main worker thread", e);
-                } catch (RuntimeException e) {
-                    userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "Ismeretlen hiba történt: " + e.getMessage());
-                    LOGGER.error("RuntimeException in main worker thread", e);
-                } finally {
-                    userSession.setDone();
-                }
+        executorService.submit(() -> {
+            try {
+                final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);
+                final Document document = modelTransformerEngine.createDocumentFromItems(items, userRequest);
+                documentRenderer.renderDocument(document, userRequest);
+            } catch (IOException e) {
+                userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "IO hiba történt: " + e.getMessage());
+                LOGGER.error("IOException in main worker thread", e);
+            } catch (Throwable e) {
+                userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "Ismeretlen hiba történt: " + e.getMessage());
+                LOGGER.error("Unexpected exception in main worker thread", e);
+            } finally {
+                userSession.setDone();
             }
         });
 
