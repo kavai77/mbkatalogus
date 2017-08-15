@@ -16,6 +16,8 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,7 @@ import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
 public class DocumentRenderer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentRenderer.class);
     @Autowired
     private TableOfContentRenderer tableOfContentRenderer;
 
@@ -62,7 +65,7 @@ public class DocumentRenderer {
 
     public void renderDocument(Document document, UserRequest userRequest) throws IOException {
         int previousDocumentStartPage = 1;
-        int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
+        int pagesPerDocument = userRequest.isDraftMode() ? 1 : pagesPerDocumentInQualityMode;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
         renderObject(doc, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
@@ -74,6 +77,7 @@ public class DocumentRenderer {
                 doc = new PDDocument();
             }
             final Page page = document.getPages().get(i);
+            LOGGER.info("Rendering page:" + page.getPageNumber());
             renderObject(doc, g2 -> pageRenderer.drawPage(g2, page, userRequest));
             userSession.incrementCurrentPageNumber();
             if (userSession.isCancelled()) {

@@ -16,8 +16,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
-import static com.himadri.renderer.Util.getStringWidth;
-
 @Component
 public class PageRenderer {
     private static final int WIDTH = (int) Math.round(PDRectangle.A4.getWidth());
@@ -54,11 +52,14 @@ public class PageRenderer {
     @Autowired
     private Cache<String, UserSession> userSessionCache;
 
+    @Autowired
+    private Util util;
+
     public void drawPage(Graphics2D g2, Page page, UserRequest userRequest) {
         final UserSession errorCollector = userSessionCache.getIfPresent(userRequest.getRequestId());
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
         float marginRight = MARGIN_RIGHT.get(page.getOrientation());
-        Color mainColor = Util.getBoxMainColor(page.getBoxes().get(0));
+        Color mainColor = util.getBoxMainColor(page.getBoxes().get(0));
 
         // draw middle line
         g2.setPaint(Color.lightGray);
@@ -95,13 +96,13 @@ public class PageRenderer {
         g2.setPaint(mainColor);
         g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 15));
         final float headLineStartX = page.getOrientation() == Page.Orientation.LEFT ? marginLeft :
-                WIDTH - marginRight - getStringWidth(g2, page.getHeadLine());
+                WIDTH - marginRight - util.getStringWidth(g2, page.getHeadLine());
         g2.drawString(page.getHeadLine(), headLineStartX, MARGIN_TOP - 7);
 
         //drawing category
         g2.setPaint(Color.lightGray);
         final float categoryStartX = page.getOrientation() ==  Page.Orientation.LEFT ?
-                WIDTH - marginRight - getStringWidth(g2, page.getCategory()) : marginLeft;
+                WIDTH - marginRight - util.getStringWidth(g2, page.getCategory()) : marginLeft;
         g2.drawString(page.getCategory(), categoryStartX, MARGIN_TOP - 7);
 
         //drawing the boxes
@@ -122,7 +123,7 @@ public class PageRenderer {
         g2.drawString(number, numberStartPosX.calculatePosX(g2, number), HEIGHT - MARGIN_BOTTOM + 3 + 12);
     }
 
-    private static class PositionWithAlignment {
+    private class PositionWithAlignment {
         private final float position;
         private final boolean leftPos;
 
@@ -132,7 +133,7 @@ public class PageRenderer {
         }
 
         private float calculatePosX(Graphics2D g2,  String str) {
-            return leftPos ? position : position - getStringWidth(g2, str);
+            return leftPos ? position : position - util.getStringWidth(g2, str);
         }
     }
 
