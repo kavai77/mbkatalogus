@@ -9,6 +9,7 @@ import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
+import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -64,7 +65,7 @@ public class DocumentRenderer {
         int previousDocumentStartPage = 1;
         int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
-        PDDocument doc = new PDDocument();
+        PDDocument doc = new PDDocument(MemoryUsageSetting.setupMixed(100 * 2^20));
         renderPDFPage(doc, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
         userSession.incrementCurrentPageNumber();
         for (int i = 0; i < document.getPages().size(); i++) {

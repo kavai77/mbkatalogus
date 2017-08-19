@@ -25,7 +25,6 @@ public class PdfBoxGraphics {
 
     private PDFont currentFont;
     private float currentFontSize;
-    private float lineWidth;
 
     public PdfBoxGraphics(PDDocument document, PDPage page, PDFontService fontService, PDColorTranslator colorTranslator) {
         this.document = document;
