@@ -1,14 +1,12 @@
 package com.himadri.renderer;
 
+import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.TableOfContent;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
 @Component
@@ -29,40 +27,46 @@ public class TableOfContentRenderer {
     private Util util;
 
 
-    public void renderTableOfContent(Graphics2D g2, TableOfContent tableOfContent) {
-        g2.setPaint(Color.black);
-        g2.setStroke(new BasicStroke(.5f));
-        g2.translate(MARGIN_X, MARGIN_Y);
+    public void renderTableOfContent(PdfBoxGraphics g2, TableOfContent tableOfContent) {
+        g2.saveGraphicsState();
+        float tx = MARGIN_X;
+        float ty = MARGIN_Y;
+        g2.transform(tx, ty);
         drawPageNbAndBaseLine(g2);
         int i = 0;
         for (Map.Entry<String, Integer> entry: tableOfContent.getTableOfContent().entrySet()) {
-            if (g2.getTransform().getTranslateY() + BOX_HEIGHT > HEIGHT - MARGIN_Y) {
-                g2.setTransform(new AffineTransform());
-                g2.translate((WIDTH + COLUMN_GAP) / 2, MARGIN_Y);
+            if (ty + BOX_HEIGHT > HEIGHT - MARGIN_Y) {
+                g2.transform(-tx, -ty);
+                tx = (WIDTH + COLUMN_GAP) / 2;
+                ty = MARGIN_Y;
+                g2.transform(tx, ty);
                 drawPageNbAndBaseLine(g2);
             }
-            g2.translate(0, BOX_HEIGHT);
-            g2.setPaint(util.getProductGroupMainColor(i));
-            g2.fill(new Rectangle2D.Float(-0.25f, 0.25f - BOX_HEIGHT, PAGE_BOX_WIDTH,  BOX_HEIGHT - 0.5f));
-            g2.setPaint(Color.black);
-            g2.draw(new Line2D.Float(0, 0, (WIDTH - COLUMN_GAP) / 2f  - MARGIN_X, 0));
-            g2.draw(new Line2D.Float(PAGE_BOX_WIDTH, 0, PAGE_BOX_WIDTH, -BOX_HEIGHT));
+            ty += BOX_HEIGHT;
+            g2.transform(0, BOX_HEIGHT);
+            g2.setNonStrokingColor(util.getProductGroupMainColor(i));
+            g2.fillRect(-0.25f, 0.25f - BOX_HEIGHT, PAGE_BOX_WIDTH,  BOX_HEIGHT - 0.5f);
+            g2.setStrokingColor(Color.black);
+            g2.drawLine(0, 0, (WIDTH - COLUMN_GAP) / 2f  - MARGIN_X, 0);
+            g2.drawLine(PAGE_BOX_WIDTH, 0, PAGE_BOX_WIDTH, -BOX_HEIGHT);
             String pageString = entry.getValue() + ".";
+            g2.setNonStrokingColor(Color.black);
             g2.setFont(PAGE_FONT);
             g2.drawString(pageString, PAGE_BOX_WIDTH - 5 - util.getStringWidth(g2, pageString), -5);
             g2.setFont(CONTENT_FONT);
             g2.drawString(entry.getKey(), PAGE_BOX_WIDTH + 5, -5);
             i++;
         }
-        g2.setTransform(new AffineTransform());
+        g2.transform(-tx, -ty);
         g2.setFont(TITLE_FONT);
-        g2.translate(MARGIN_X - 10, MARGIN_Y + util.getStringWidth(g2, TITLE));
-        g2.rotate(- Math.PI / 2);
-        g2.drawString(TITLE, 0, 0);
+        g2.drawString(TITLE, MARGIN_X - 10, MARGIN_Y + util.getStringWidth(g2, TITLE),- Math.PI / 2);
+        g2.restoreGraphicsState();
     }
 
-    private void drawPageNbAndBaseLine(Graphics2D g2) {
-        g2.draw(new Line2D.Float(0, 0, (WIDTH - COLUMN_GAP) / 2f  - MARGIN_X, 0));
+    private void drawPageNbAndBaseLine(PdfBoxGraphics g2) {
+        g2.setStrokingColor(Color.black);
+        g2.setLineWidth(.5f);
+        g2.drawLine(0, 0, (WIDTH - COLUMN_GAP) / 2f  - MARGIN_X, 0);
         g2.setFont(PAGE_FONT);
         g2.drawString("Oldalszám", 5, -5);
     }

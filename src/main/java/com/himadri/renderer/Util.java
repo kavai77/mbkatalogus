@@ -1,6 +1,7 @@
 package com.himadri.renderer;
 
-import com.himadri.engine.PDFontService;
+import com.himadri.graphics.pdfbox.PDFontService;
+import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Box;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +24,16 @@ public class Util {
     };
     private PDDocument pdDocument = new PDDocument();
 
-    public int getStringWidth(Graphics2D g2, String text) {
+    public int getStringWidth(PdfBoxGraphics g2, String text) {
         try {
-            return Math.round(pdFontService.getPDFont(pdDocument, g2.getFont()).getStringWidth(text) / 1000f * g2.getFont().getSize2D());
+            return Math.round(g2.getFont().getStringWidth(text) / 1000f * g2.getFontSize());
         } catch (IOException e) {
-            return g2.getFontMetrics(g2.getFont()).stringWidth(text);
+            throw new RuntimeException(e);
         }
+    }
+
+    public int getStringWidth(Graphics2D g2, String text) {
+        return 0;
     }
 
     public Color getBoxMainColor(Box box) {

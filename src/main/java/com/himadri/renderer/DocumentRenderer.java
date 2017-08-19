@@ -3,19 +3,15 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
-import com.himadri.engine.PDFontService;
+import com.himadri.graphics.pdfbox.PDColorTranslator;
+import com.himadri.graphics.pdfbox.PDFontService;
+import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
-import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
-import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
-import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -46,6 +40,9 @@ public class DocumentRenderer {
     @Autowired
     private PDFontService pdFontService;
 
+    @Autowired
+    private PDColorTranslator pdColorTranslator;
+
     @Value("${renderingLocation}")
     private String renderingLocation;
 
@@ -65,10 +62,10 @@ public class DocumentRenderer {
 
     public void renderDocument(Document document, UserRequest userRequest) throws IOException {
         int previousDocumentStartPage = 1;
-        int pagesPerDocument = userRequest.isDraftMode() ? 1 : pagesPerDocumentInQualityMode;
+        int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument();
-        renderObject(doc, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
+        renderPDFPage(doc, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
         userSession.incrementCurrentPageNumber();
         for (int i = 0; i < document.getPages().size(); i++) {
             if (i > 0 && i % pagesPerDocument == 0) {
@@ -77,8 +74,8 @@ public class DocumentRenderer {
                 doc = new PDDocument();
             }
             final Page page = document.getPages().get(i);
-            LOGGER.info("Rendering page:" + page.getPageNumber());
-            renderObject(doc, g2 -> pageRenderer.drawPage(g2, page, userRequest));
+            LOGGER.debug("Rendering page:" + page.getPageNumber());
+            renderPDFPage(doc, g -> pageRenderer.drawPage(g, page, userRequest));
             userSession.incrementCurrentPageNumber();
             if (userSession.isCancelled()) {
                 break;
@@ -90,16 +87,12 @@ public class DocumentRenderer {
                 userSession.isCancelled() ? "A dokumentum készítés megszakítva" : "A dokumentum készítés kész.");
     }
 
-    private void renderObject(PDDocument doc, Consumer<Graphics2D> consumer) throws IOException {
+    private void renderPDFPage(PDDocument doc, Consumer<PdfBoxGraphics> consumer) throws IOException {
         PDPage pdPage = new PDPage(PDRectangle.A4);
-        PdfBoxGraphics2D g2 = new PdfBoxGraphics2D(doc, PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight());
         doc.addPage(pdPage);
-        setCommonGraphics(g2);
-        consumer.accept(g2);
-        g2.dispose();
-        PDPageContentStream contentStream = new PDPageContentStream(doc, pdPage);
-        contentStream.drawForm(g2.getXFormObject());
-        contentStream.close();
+        PdfBoxGraphics graphics = new PdfBoxGraphics(doc, pdPage, pdFontService, pdColorTranslator);
+        consumer.accept(graphics);
+        graphics.closeStream();
     }
 
     private void closeDocument(PDDocument doc, UserRequest userRequest, UserSession userSession, int previousDocumentStartPage) throws IOException {
@@ -110,36 +103,5 @@ public class DocumentRenderer {
         doc.close();
         userSession.addGeneratedDocument(pdfFile.getName(), String.format("%d-%d", previousDocumentStartPage,
                 userSession.getCurrentPageNumber()));
-    }
-
-    private void setCommonGraphics(PdfBoxGraphics2D g2) {
-        g2.setVectoringText(false);
-        g2.setColorMapper((pdPageContentStream, color) -> {
-            if (color == null)
-                return new PDColor(new float[] { 0, 0, 0, 1f }, PDDeviceCMYK.INSTANCE);
-
-            float[] c = color.getRGBColorComponents(null);
-            float k = 1 - Math.max(c[0], Math.max(c[1], c[2]));
-            if (k == 1) {
-                return new PDColor(new float[]{0, 0, 0, 1}, PDDeviceCMYK.INSTANCE);
-            } else {
-                return new PDColor(new float[]{
-                        (1 - c[0] - k) / (1 - k),
-                        (1 - c[1] - k) / (1 - k),
-                        (1 - c[2] - k) / (1 - k),
-                        k}, PDDeviceCMYK.INSTANCE);
-            }
-        });
-        g2.setImageEncoder((document, contentStream, image) -> {
-            try {
-                return LosslessFactory.createFromImage(document, (BufferedImage) image);
-            } catch (IOException e) {
-                throw new RuntimeException("Could not encode Image", e);
-            }
-        });
-        g2.setFontApplier((document, contentStream, font) -> {
-            final PDFont pdFont = pdFontService.getPDFont(document, font);
-            contentStream.setFont(pdFont, font.getSize2D());
-        });
     }
 }

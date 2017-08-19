@@ -3,6 +3,7 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.himadri.dto.UserRequest;
 import com.himadri.exception.ValidationException;
+import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.service.UserSession;
 import org.slf4j.Logger;
@@ -14,9 +15,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,8 +33,8 @@ import static org.apache.commons.lang3.StringUtils.*;
 public class BoxRenderer {
     private static final Logger LOGGER = LoggerFactory.getLogger(BoxRenderer.class);
 
-    private static final float IMAGE_WIDTH_MAX = 99f;
-    private static final float IMAGE_HEIGHT_MAX = 99f;
+    private static final float IMAGE_WIDTH_MAX = 95f;
+    private static final float IMAGE_HEIGHT_MAX = 89f;
     private static final float LOGO_IMAGE_WIDTH_MAX = 33f;
     private static final float TEXT_BOX_X = 105f;
     private static final float TEXT_BOX_WIDTH = 150f;
@@ -73,7 +71,7 @@ public class BoxRenderer {
         }
     }
 
-    public void drawBox(Graphics2D g2, Box box, UserRequest userRequest) {
+    public void drawBox(PdfBoxGraphics g2, Box box, UserRequest userRequest) {
         final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
@@ -81,20 +79,16 @@ public class BoxRenderer {
         if (!imageFile.exists() || !imageFile.isFile()) {
             userSession.addErrorItem(WARN, IMAGE, "Nem található a kép: " + box.getImage());
         } else if (!userRequest.isDraftMode()) {
-            AffineTransform transform = g2.getTransform();
             try (InputStream fis = new FileInputStream(imageFile)) {
                 BufferedImage image = ImageIO.read(fis);
                 float scale = Math.min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight());
-                int posX = (int) (TEXT_BOX_X / scale - image.getWidth()) / 2;
-                int posY = (int) (BOX_HEIGHT / scale - image.getHeight()) / 2;
-                g2.scale(scale, scale);
-                g2.drawImage(image, posX, posY, image.getWidth(), image.getHeight(), null);
+                float posX = (TEXT_BOX_X - image.getWidth() * scale) / 2;
+                float posY = (BOX_HEIGHT - image.getHeight() * scale) / 2;
+                g2.drawImage(image, posX, posY, image.getWidth() * scale, image.getHeight() * scale);
             } catch (IOException e) {
                 userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
                         box.getImage(), e.getMessage()));
                 LOGGER.error("Could not paint image {}", box, e);
-            } finally {
-                g2.setTransform(transform);
             }
         }
 
@@ -103,47 +97,44 @@ public class BoxRenderer {
         if (!logoImageFile.exists() || !logoImageFile.isFile()) {
             userSession.addErrorItem(WARN, IMAGE, "Nem található a logo file kép: " + box.getBrandImage());
         } else if (!userRequest.isDraftMode()) {
-            AffineTransform transform = g2.getTransform();
             try {
                 BufferedImage logoImage = logoImageCache.getLogoImage(logoImageFile);
                 float scale = Math.min(1f, LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth());
-                g2.scale(scale, scale);
-                g2.drawImage(logoImage, (int)(3f / scale), (int)(3f / scale), logoImage.getWidth(), logoImage.getHeight(), null);
+                g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
             } catch (IOException e) {
                 userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
                         box.getImage(), e.getMessage()));
                 LOGGER.error("Could not paint logo image", e);
-            } finally {
-                g2.setTransform(transform);
             }
         }
 
         // headline box
         final Color mainColor = util.getBoxMainColor(box);
-        g2.setPaint(new LinearGradientPaint(TEXT_BOX_X, TEXT_BOX_HEAD_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, 0,
-                new float[]{0.0f, 0.5f, 1f}, new Color[]{mainColor, Color.white, mainColor}));
-        g2.fill(new Rectangle2D.Float(TEXT_BOX_X, 0, TEXT_BOX_WIDTH, TEXT_BOX_HEAD_HEIGHT));
+        g2.setNonStrokingColor(mainColor);
+//        g2.setPaint(new LinearGradientPaint(TEXT_BOX_X, TEXT_BOX_HEAD_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, 0,
+//                new float[]{0.0f, 0.5f, 1f}, new Color[]{mainColor, Color.white, mainColor}));
+        g2.fillRect(TEXT_BOX_X, 0, TEXT_BOX_WIDTH, TEXT_BOX_HEAD_HEIGHT);
 
         // text boxes
         Color grayBackground = new Color(224, 224, 244);
         for (int i = 0; i < TEXT_BOX_LINE_COUNT; i++) {
-            g2.setPaint(i % 2 == 1 ? Color.white : grayBackground);
-            g2.fill(new Rectangle2D.Float(TEXT_BOX_X, TEXT_BOX_HEAD_HEIGHT + i * TEXT_BOX_LINE_HEIGHT, TEXT_BOX_WIDTH,
-                    TEXT_BOX_LINE_HEIGHT));
+            g2.setNonStrokingColor(i % 2 == 1 ? Color.white : grayBackground);
+            g2.fillRect(TEXT_BOX_X, TEXT_BOX_HEAD_HEIGHT + i * TEXT_BOX_LINE_HEIGHT, TEXT_BOX_WIDTH,
+                    TEXT_BOX_LINE_HEIGHT);
         }
 
         float boxTextStart = TEXT_BOX_X + 3;
         float boxTextEnd = TEXT_BOX_X + TEXT_BOX_WIDTH - 3;
 
         // category
-        g2.setPaint(new Color(38, 66, 140));
+        g2.setNonStrokingColor(new Color(38, 66, 140));
         g2.setFont(new Font(FONT, Font.PLAIN, 8));
         float categoryStart = boxTextEnd - util.getStringWidth(g2, box.getCategory());
         g2.drawString(box.getCategory(), categoryStart, 22);
 
         // heading text
         try {
-            g2.setPaint(Color.black);
+            g2.setNonStrokingColor(Color.black);
             g2.setFont(new Font(FONT, Font.BOLD, 9));
             if (util.getStringWidth(g2, box.getTitle()) <= boxTextEnd - boxTextStart) {
                 g2.drawString(box.getTitle(), boxTextStart, 13);
@@ -210,20 +201,20 @@ public class BoxRenderer {
                             join(articles.stream().skip(i).map(Box.Article::getNumber).toArray(), ' ')));
                 }
                 // product number
-                g2.setPaint(Color.black);
+                g2.setNonStrokingColor(Color.black);
                 g2.setFont(new Font(FONT, Font.BOLD, 8));
                 g2.drawString(article.getNumber(), boxTextStart, getLineYBaseLine(currentLine));
                 float middleBoxStart = boxTextStart + util.getStringWidth(g2, article.getNumber()) + 3;
 
                 // price
-                g2.setPaint(Color.black);
+                g2.setNonStrokingColor(Color.black);
                 g2.setFont(new Font(FONT, Font.BOLD, 8));
                 int priceStringWidth = util.getStringWidth(g2, article.getPrice());
                 g2.drawString(article.getPrice(), boxTextEnd - priceStringWidth, getLineYBaseLine(currentLine));
                 float middleBoxEnd = boxTextEnd - priceStringWidth - 3;
 
                 // description
-                g2.setPaint(Color.black);
+                g2.setNonStrokingColor(Color.black);
                 g2.setFont(new Font(FONT, Font.PLAIN, 7));
                 StringBuilder sb = null;
 
@@ -263,9 +254,9 @@ public class BoxRenderer {
         }
 
         // bottom line
-        g2.setColor(Color.lightGray);
-        g2.setStroke(new BasicStroke(.5f));
-        g2.draw(new Line2D.Float(5, BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, BOX_HEIGHT));
+        g2.setStrokingColor(Color.lightGray);
+        g2.setLineWidth(.5f);
+        g2.drawLine(5, BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, BOX_HEIGHT);
     }
 
     private float getLineYBaseLine(int line) {
