@@ -10,6 +10,7 @@ import org.supercsv.cellprocessor.ParseLong;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.comment.CommentMatches;
 import org.supercsv.io.CsvBeanReader;
 import org.supercsv.io.ICsvBeanReader;
 import org.supercsv.prefs.CsvPreference;
@@ -23,11 +24,16 @@ import java.util.List;
 public class CatalogueReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(CatalogueReader.class);
 
+    public static final CsvPreference EXCEL_NORTH_EUROPE_PREFERENCE = new CsvPreference.Builder('"',
+            ';', "\n")
+            .skipComments(new CommentMatches(";+"))
+            .build();
+
     public List<Item> readWithCsvBeanReader(UserRequest userRequest) throws IOException {
 
         final List<Item> beanArrayList = new ArrayList<>();
         try (ICsvBeanReader beanReader = new CsvBeanReader(new InputStreamReader(userRequest.getCsvInputStream()),
-                CsvPreference.EXCEL_NORTH_EUROPE_PREFERENCE)) {
+                EXCEL_NORTH_EUROPE_PREFERENCE)) {
             final String[] header = beanReader.getHeader(true);
             final CellProcessor[] processors = getProcessors();
 
