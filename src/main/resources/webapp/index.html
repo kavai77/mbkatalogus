@@ -38,13 +38,28 @@
                 <div class="form-check">
                     <label class="form-check-label">
                         <input type="radio" class="form-check-input" ng-model="draftMode" value="true">
-                        Előnézet (képek nélkül, kereshető szövegekkel, egy PDF lapon)
+                        Előnézet (képek nélkül, egy PDF dokumentumban)
                     </label>
                 </div>
                 <div class="form-check">
                     <label class="form-check-label">
                         <input type="radio" class="form-check-input" ng-model="draftMode" value="false">
-                        Nyomdai (minden tartalommal, csak vektorizált szövegek, nagy méret, több PDF dokumentumra tördelve)
+                        Nyomdai (minden tartalommal, nagy méret, több PDF dokumentumra tördelve)
+                    </label>
+                </div>
+            </fieldset>
+            <fieldset class="form-group">
+                <legend>Formátum</legend>
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input type="radio" class="form-check-input" ng-model="wholeSaleFormat" value="true">
+                        Nagyker katalógus (nagyker ár, M1, M2, M3 mennyiségek)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input type="radio" class="form-check-input" ng-model="wholeSaleFormat" value="false">
+                        Kisker katalógus
                     </label>
                 </div>
             </fieldset>

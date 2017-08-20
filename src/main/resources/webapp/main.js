@@ -2,6 +2,7 @@ var app=angular.module('app', ['ngFileUpload', 'ui.bootstrap']);
 
 app.controller('controller', function($scope, Upload, $interval, $http) {
     $scope.draftMode = "true";
+    $scope.wholeSaleFormat = "true";
     $scope.send = function() {
         $scope.errorMessage = null;
         $scope.requestId = null;
@@ -21,7 +22,8 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             data: {
                 'file': $scope.catalogueCsvFile,
                 'title': $scope.catalogueTitle,
-                'draftMode': $scope.draftMode
+                'draftMode': $scope.draftMode,
+                'wholeSaleFormat': $scope.wholeSaleFormat,
             }
         }).then(function (resp) {
             $scope.requestId = resp.data.requestId;
