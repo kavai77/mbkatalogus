@@ -7,6 +7,7 @@ import com.himadri.dto.UserPollingInfo;
 import com.himadri.dto.UserRequest;
 import com.himadri.engine.CatalogueReader;
 import com.himadri.engine.ModelTransformerEngine;
+import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Item;
 import com.himadri.model.service.UserSession;
@@ -58,6 +59,8 @@ public class RestController {
                 final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);
                 final Document document = modelTransformerEngine.createDocumentFromItems(items, userRequest);
                 documentRenderer.renderDocument(document, userRequest);
+            } catch (ValidationException e) {
+                userSession.addErrorItem(e);
             } catch (IOException e) {
                 userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "IO hiba történt: " + e.getMessage());
                 LOGGER.error("IOException in main worker thread", e);

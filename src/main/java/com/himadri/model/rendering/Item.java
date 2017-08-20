@@ -14,7 +14,7 @@ public class Item {
     private String termekinfo;
     private String me;
     private String cikkcsopsorrend;
-    private String cikksorrend;
+    private Long cikksorrend;
     private String kepnev;
     private String gyartokepnev;
 
@@ -125,11 +125,11 @@ public class Item {
         this.cikkcsopsorrend = cikkcsopsorrend;
     }
 
-    public String getCikksorrend() {
+    public Long getCikksorrend() {
         return cikksorrend;
     }
 
-    public void setCikksorrend(String cikksorrend) {
+    public void setCikksorrend(Long cikksorrend) {
         this.cikksorrend = cikksorrend;
     }
 

@@ -2,6 +2,7 @@ package com.himadri.engine;
 
 import com.google.common.cache.Cache;
 import com.himadri.dto.UserRequest;
+import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.*;
 import com.himadri.model.service.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,9 @@ import java.util.List;
 
 @Component
 public class ModelTransformerEngine {
+    @Autowired
+    private ItemSorterEngine itemSorterEngine;
+
     @Autowired
     private ItemCategorizerEngine itemCategorizerEngine;
 
@@ -27,7 +31,8 @@ public class ModelTransformerEngine {
     @Autowired
     private Cache<String, UserSession> userSessionCache;
 
-    public Document createDocumentFromItems(List<Item> items, UserRequest userRequest) {
+    public Document createDocumentFromItems(List<Item> items, UserRequest userRequest) throws ValidationException {
+        itemSorterEngine.sortItems(items);
         final Collection<Collection<List<Item>>> itemsPerProductGroupPerBox = itemCategorizerEngine
                 .itemsPerProductGroupPerBox(items);
         final List<Box> boxes = boxCollectorEngine.collectBoxes(itemsPerProductGroupPerBox, userRequest);

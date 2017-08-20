@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.supercsv.cellprocessor.Optional;
+import org.supercsv.cellprocessor.ParseLong;
 import org.supercsv.cellprocessor.constraint.StrNotNullOrEmpty;
 import org.supercsv.cellprocessor.constraint.UniqueHashCode;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -54,7 +55,7 @@ public class CatalogueReader {
                 new Optional(), // termekinfo
                 new Optional(), // me
                 new Optional(), // cikkcsopsorrend
-                new Optional(), // cikksorrend
+                new Optional(new ParseLong()), // cikksorrend
                 new Optional(), // kepnev
                 new Optional(), // gyartokepnev
         };

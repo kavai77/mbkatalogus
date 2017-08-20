@@ -32,10 +32,6 @@ public class Util {
         }
     }
 
-    public int getStringWidth(Graphics2D g2, String text) {
-        return 0;
-    }
-
     public Color getBoxMainColor(Box box) {
         return getProductGroupMainColor(box.getIndexOfProductGroup());
     }
