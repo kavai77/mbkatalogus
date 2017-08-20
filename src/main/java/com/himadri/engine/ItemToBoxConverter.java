@@ -29,7 +29,7 @@ public class ItemToBoxConverter {
         List<Box.Article> articleList = new ArrayList<>(items.size());
         final String boxTitle = getBoxTitle(items, userRequest);
         for (Item item: items) {
-            articleList.add(convertItemToArticle(item, boxTitle));
+            articleList.add(convertItemToArticle(item, boxTitle, userRequest));
         }
         Item firstItem = items.get(0);
         return new Box(firstItem.getKepnev(), firstItem.getGyarto() + BRAND_EXTENSION, boxTitle,
@@ -37,14 +37,16 @@ public class ItemToBoxConverter {
 
     }
 
-    Box.Article convertItemToArticle(Item item, String boxTitle) {
+    Box.Article convertItemToArticle(Item item, String boxTitle, UserRequest userRequest) {
         StringBuilder descriptionBuilder = new StringBuilder();
-        if (isNotBlank(item.getNagykerar())) {
-            descriptionBuilder.append(remove(item.getNagykerar(), '\u00a0')).append(",- ");
-        }
-        if (isNotBlank(item.getM1()) || isNotBlank(item.getM2()) || isNotBlank(item.getM3())) {
-            descriptionBuilder.append(String.format("(Min:%s%s/%s/%s) ", stripToEmpty(item.getM1()),
-                    stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3())));
+        if (userRequest.isWholeSaleFormat()) {
+            if (isNotBlank(item.getNagykerar())) {
+                descriptionBuilder.append(remove(item.getNagykerar(), '\u00a0')).append(",- ");
+            }
+            if (isNotBlank(item.getM1()) || isNotBlank(item.getM2()) || isNotBlank(item.getM3())) {
+                descriptionBuilder.append(String.format("(Min:%s%s/%s/%s) ", stripToEmpty(item.getM1()),
+                        stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3())));
+            }
         }
         final String itemText = stripToEmpty(stripStart(removeStart(item.getCikknev(), boxTitle), " ;"));
         descriptionBuilder.append(itemText);

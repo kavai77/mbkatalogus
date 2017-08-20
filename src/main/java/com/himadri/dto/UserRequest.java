@@ -7,12 +7,15 @@ public class UserRequest {
     private final InputStream csvInputStream;
     private final String catalogueTitle;
     private final boolean draftMode;
+    private final boolean wholeSaleFormat;
 
-    public UserRequest(String requestId, InputStream csvInputStream, String catalogueTitle, boolean draftMode) {
+    public UserRequest(String requestId, InputStream csvInputStream, String catalogueTitle, boolean draftMode,
+                       boolean wholeSaleFormat) {
         this.requestId = requestId;
         this.csvInputStream = csvInputStream;
         this.catalogueTitle = catalogueTitle;
         this.draftMode = draftMode;
+        this.wholeSaleFormat = wholeSaleFormat;
     }
 
     public String getRequestId() {
@@ -29,5 +32,9 @@ public class UserRequest {
 
     public boolean isDraftMode() {
         return draftMode;
+    }
+
+    public boolean isWholeSaleFormat() {
+        return wholeSaleFormat;
     }
 }

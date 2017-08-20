@@ -49,11 +49,12 @@ public class RestController {
     @ResponseBody
     public RequestId csvRendering(@RequestParam MultipartFile file,
                                   @RequestParam String title,
-                                  @RequestParam boolean draftMode) throws IOException {
+                                  @RequestParam boolean draftMode,
+                                  @RequestParam boolean wholeSaleFormat) throws IOException {
         String id = UUID.randomUUID().toString();
         final UserSession userSession = new UserSession();
         userSessionCache.put(id, userSession);
-        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, draftMode);
+        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, draftMode, wholeSaleFormat);
         executorService.submit(() -> {
             try {
                 final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);

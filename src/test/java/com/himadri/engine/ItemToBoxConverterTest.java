@@ -68,15 +68,15 @@ public class ItemToBoxConverterTest {
         assertEquals("szár átm:3,05mm",
                 sut.convertItemToArticle(itemWithCikkNev(
                         "szeg fejjel a 8865042 pneumatikus tűzőgéphez, 480 db; szár átm:3,05mm"),
-                        "szeg fejjel a 8865042 pneumatikus tűzőgéphez, 480 db").getDescription());
+                        "szeg fejjel a 8865042 pneumatikus tűzőgéphez, 480 db", userRequest).getDescription());
         assertEquals("szár átm:3,05mm",
                 sut.convertItemToArticle(itemWithCikkNev(
                         "szeg fejjel a 8865042 pneumatikus tűzőgéphez, 480 db ; szár átm:3,05mm"),
-                        "szeg fejjel a 8865042 pneumatikus tűzőgéphez, 480 db").getDescription());
+                        "szeg fejjel a 8865042 pneumatikus tűzőgéphez, 480 db", userRequest).getDescription());
         assertEquals("",
                 sut.convertItemToArticle(itemWithCikkNev(
                         "szeg fejjel a 8865042"),
-                        "szeg fejjel a 8865042").getDescription());
+                        "szeg fejjel a 8865042", userRequest).getDescription());
     }
 
     private Item itemWithCikkNev(String cikkNev) {
