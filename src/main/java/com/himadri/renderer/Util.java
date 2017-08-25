@@ -1,20 +1,15 @@
 package com.himadri.renderer;
 
-import com.himadri.graphics.pdfbox.PDFontService;
-import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Box;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
-import java.io.IOException;
 
 @Component
 public class Util {
-    @Autowired
-    private PDFontService pdFontService;
+    private static Logger LOG = LoggerFactory.getLogger(Util.class);
 
     private static final Color[] PRODUCT_GROUP_COLORS = new Color[] {
             new Color(124, 171, 185),
@@ -26,24 +21,6 @@ public class Util {
             new Color(253, 236, 215)
     };
 
-    public int getStringWidth(PdfBoxGraphics g2, String text) {
-        try {
-            return Math.round(g2.getFont().getStringWidth(text) / 1000f * g2.getFontSize());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public int getStringWidth(Font font, String text) {
-        try {
-            final PDDocument pdDocument = new PDDocument();
-            final PDFont pdFont = pdFontService.getPDFont(pdDocument, font);
-            return Math.round(pdFont.getStringWidth(text) / 1000f * font.getSize2D());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public Color getBoxMainColor(Box box) {
         return getProductGroupMainColor(box.getIndexOfProductGroup());
     }
@@ -51,4 +28,5 @@ public class Util {
     public Color getProductGroupMainColor(int indexOfProductGroup) {
         return PRODUCT_GROUP_COLORS[indexOfProductGroup % PRODUCT_GROUP_COLORS.length];
     }
+
 }

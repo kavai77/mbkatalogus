@@ -129,14 +129,14 @@ public class BoxRenderer {
         // category
         g2.setNonStrokingColor(new Color(38, 66, 140));
         g2.setFont(new Font(FONT, Font.PLAIN, 8));
-        float categoryStart = boxTextEnd - util.getStringWidth(g2, box.getCategory());
+        float categoryStart = boxTextEnd - g2.getStringWidth(box.getCategory());
         g2.drawString(box.getCategory(), categoryStart, 22);
 
         // heading text
         try {
             g2.setNonStrokingColor(Color.black);
             g2.setFont(new Font(FONT, Font.BOLD, 9));
-            if (util.getStringWidth(g2, box.getTitle()) <= boxTextEnd - boxTextStart) {
+            if (g2.getStringWidth(box.getTitle()) <= boxTextEnd - boxTextStart) {
                 g2.drawString(box.getTitle(), boxTextStart, 13);
             } else {
                 String[] words = splitByWholeSeparator(box.getTitle(),null);
@@ -149,7 +149,7 @@ public class BoxRenderer {
                 int wordSplit;
                 for (wordSplit = 1; wordSplit < words.length; wordSplit++) {
                     String nextString = firstLine.toString() + " " + words[wordSplit];
-                    if (util.getStringWidth(g2, nextString) <= boxTextEnd - boxTextStart) {
+                    if (g2.getStringWidth(nextString) <= boxTextEnd - boxTextStart) {
                         firstLine.append(" ").append(words[wordSplit]);
                     } else {
                         g2.drawString(firstLine.toString(), boxTextStart, 10);
@@ -164,7 +164,7 @@ public class BoxRenderer {
                 StringBuilder secondLine = new StringBuilder(words[wordSplit]);
                 for (int i = wordSplit + 1; i < words.length; i++) {
                     String nextString = secondLine.toString() + " " + words[i];
-                    if (util.getStringWidth(g2, nextString) > categoryStart - boxTextStart - 3) {
+                    if (g2.getStringWidth(nextString) > categoryStart - boxTextStart - 3) {
                         final Box.Article firstArticle = box.getArticles().get(0);
                         if (box.getArticles().size() == 1 && firstArticle.isEmptyItemText()) {
                             String newItemText = join(words, ' ', i, words.length);
@@ -204,12 +204,12 @@ public class BoxRenderer {
                 g2.setNonStrokingColor(Color.black);
                 g2.setFont(new Font(FONT, Font.BOLD, 8));
                 g2.drawString(article.getNumber(), boxTextStart, getLineYBaseLine(currentLine));
-                float middleBoxStart = boxTextStart + util.getStringWidth(g2, article.getNumber()) + 3;
+                float middleBoxStart = boxTextStart + g2.getStringWidth(article.getNumber()) + 3;
 
                 // price
                 g2.setNonStrokingColor(Color.black);
                 g2.setFont(new Font(FONT, Font.BOLD, 8));
-                int priceStringWidth = util.getStringWidth(g2, article.getPrice());
+                int priceStringWidth = g2.getStringWidth(article.getPrice());
                 g2.drawString(article.getPrice(), boxTextEnd - priceStringWidth, getLineYBaseLine(currentLine));
                 float middleBoxEnd = boxTextEnd - priceStringWidth - 3;
 
@@ -223,7 +223,7 @@ public class BoxRenderer {
                     String word = words[j];
                     if (sb == null) {
                         sb = new StringBuilder(word);
-                    } else if (util.getStringWidth(g2, sb.toString() + " " + word) < middleBoxEnd - middleBoxStart) {
+                    } else if (g2.getStringWidth(sb.toString() + " " + word) < middleBoxEnd - middleBoxStart) {
                         sb.append(" ").append(word);
                     } else {
                         g2.drawString(sb.toString(), middleBoxStart, getLineYBaseLine(currentLine));

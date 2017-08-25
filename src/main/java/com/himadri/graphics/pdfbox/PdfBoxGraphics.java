@@ -1,5 +1,9 @@
 package com.himadri.graphics.pdfbox;
 
+import com.himadri.dto.ErrorItem;
+import com.himadri.model.service.UserSession;
+import com.himadri.renderer.Util;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -8,33 +12,34 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.util.Matrix;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 public class PdfBoxGraphics {
+    private static Logger LOG = LoggerFactory.getLogger(Util.class);
+
     private final PDDocument document;
     private final PDPage page;
     private final PDPageContentStream contentStream;
     private final float pageHeight;
     private final PDFontService fontService;
     private final PDColorTranslator colorTranslator;
-    private final AffineTransform baseTransform;
+    private final UserSession userSession;
 
     private PDFont currentFont;
     private float currentFontSize;
 
-    public PdfBoxGraphics(PDDocument document, PDPage page, PDFontService fontService, PDColorTranslator colorTranslator) {
+    public PdfBoxGraphics(PDDocument document, PDPage page, PDFontService fontService, PDColorTranslator colorTranslator, UserSession userSession) {
         this.document = document;
         this.page = page;
         this.fontService = fontService;
         this.pageHeight = page.getMediaBox().getHeight();
         this.colorTranslator = colorTranslator;
-        baseTransform = new AffineTransform();
-        baseTransform.translate(0, pageHeight);
-        baseTransform.scale(1, -1);
+        this.userSession = userSession;
 
         try {
             this.contentStream = new PDPageContentStream(document, page);
@@ -83,7 +88,7 @@ public class PdfBoxGraphics {
         try {
             contentStream.beginText();
             contentStream.setTextMatrix(Matrix.getTranslateInstance(x, pageHeight - y));
-            contentStream.showText(text);
+            contentStream.showText(removeSpecialCharacters(currentFont, text));
             contentStream.endText();
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
@@ -97,10 +102,28 @@ public class PdfBoxGraphics {
             matrix.translate(x, pageHeight - y);
             matrix.rotate(-rotate);
             contentStream.setTextMatrix(matrix);
-            contentStream.showText(text);
+            contentStream.showText(removeSpecialCharacters(currentFont, text));
             contentStream.endText();
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
+        }
+    }
+
+    public int getStringWidth(String text) {
+        try {
+            return Math.round(currentFont.getStringWidth(removeSpecialCharacters(currentFont, text)) / 1000f * currentFontSize);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public int getStringWidth(Font font, String text) {
+        try {
+            final PDDocument pdDocument = new PDDocument();
+            final PDFont pdFont = fontService.getPDFont(pdDocument, font);
+            return Math.round(pdFont.getStringWidth(removeSpecialCharacters(pdFont, text)) / 1000f * font.getSize2D());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -171,5 +194,25 @@ public class PdfBoxGraphics {
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
         }
+    }
+
+    private String removeSpecialCharacters(PDFont pdFont, String text) {
+        final int[] specialChars = text.chars().filter(value -> {
+            try {
+                pdFont.encode(String.valueOf((char) value));
+                return false;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalArgumentException e) {
+                return true;
+            }
+        }).toArray();
+        for (int ch: specialChars) {
+            userSession.addErrorItem(ErrorItem.Severity.WARN, ErrorItem.ErrorCategory.FORMATTING,
+                    String.format("Egy speciális karaktert töröltünk %s mivel az nem megjeleníthető a jelenlegi betűtípussal: %s",
+                            String.valueOf((char) ch), text));
+            text = StringUtils.remove(text, (char) ch);
+        }
+        return text;
     }
 }

@@ -66,7 +66,7 @@ public class DocumentRenderer {
         int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
         PDDocument doc = new PDDocument(MemoryUsageSetting.setupMixed(100 * 2^20));
-        renderPDFPage(doc, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
+        renderPDFPage(doc, userSession, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
         userSession.incrementCurrentPageNumber();
         for (int i = 0; i < document.getPages().size(); i++) {
             if (i > 0 && i % pagesPerDocument == 0) {
@@ -76,7 +76,7 @@ public class DocumentRenderer {
             }
             final Page page = document.getPages().get(i);
             LOGGER.debug("Rendering page:" + page.getPageNumber());
-            renderPDFPage(doc, g -> pageRenderer.drawPage(g, page, userRequest));
+            renderPDFPage(doc, userSession, g -> pageRenderer.drawPage(g, page, userRequest));
             userSession.incrementCurrentPageNumber();
             if (userSession.isCancelled()) {
                 break;
@@ -88,10 +88,10 @@ public class DocumentRenderer {
                 userSession.isCancelled() ? "A dokumentum készítés megszakítva" : "A dokumentum készítés kész.");
     }
 
-    private void renderPDFPage(PDDocument doc, Consumer<PdfBoxGraphics> consumer) throws IOException {
+    private void renderPDFPage(PDDocument doc, UserSession userRequest, Consumer<PdfBoxGraphics> consumer) throws IOException {
         PDPage pdPage = new PDPage(PDRectangle.A4);
         doc.addPage(pdPage);
-        PdfBoxGraphics graphics = new PdfBoxGraphics(doc, pdPage, pdFontService, pdColorTranslator);
+        PdfBoxGraphics graphics = new PdfBoxGraphics(doc, pdPage, pdFontService, pdColorTranslator, userRequest);
         consumer.accept(graphics);
         graphics.closeStream();
     }

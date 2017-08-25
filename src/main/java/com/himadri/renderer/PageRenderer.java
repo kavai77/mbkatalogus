@@ -93,13 +93,13 @@ public class PageRenderer {
         g2.setNonStrokingColor(mainColor);
         g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 15));
         final float headLineStartX = page.getOrientation() == Page.Orientation.LEFT ? marginLeft :
-                WIDTH - marginRight - util.getStringWidth(g2, page.getHeadLine());
+                WIDTH - marginRight - g2.getStringWidth(page.getHeadLine());
         g2.drawString(page.getHeadLine(), headLineStartX, MARGIN_TOP - 7);
 
         //drawing category
         g2.setNonStrokingColor(Color.lightGray);
         final float categoryStartX = page.getOrientation() ==  Page.Orientation.LEFT ?
-                WIDTH - marginRight - util.getStringWidth(g2, page.getCategory()) : marginLeft;
+                WIDTH - marginRight - g2.getStringWidth(page.getCategory()) : marginLeft;
         g2.drawString(page.getCategory(), categoryStartX, MARGIN_TOP - 7);
 
         //drawing the boxes
@@ -132,7 +132,7 @@ public class PageRenderer {
         }
 
         private float calculatePosX(PdfBoxGraphics g2,  String str) {
-            return leftPos ? position : position - util.getStringWidth(g2, str);
+            return leftPos ? position : position - g2.getStringWidth(str);
         }
     }
 

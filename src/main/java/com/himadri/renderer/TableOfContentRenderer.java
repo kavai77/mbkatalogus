@@ -52,14 +52,14 @@ public class TableOfContentRenderer {
             String pageString = entry.getValue() + ".";
             g2.setNonStrokingColor(Color.black);
             g2.setFont(PAGE_FONT);
-            g2.drawString(pageString, PAGE_BOX_WIDTH - 5 - util.getStringWidth(g2, pageString), -5);
+            g2.drawString(pageString, PAGE_BOX_WIDTH - 5 - g2.getStringWidth(pageString), -5);
             g2.setFont(CONTENT_FONT);
             g2.drawString(entry.getKey(), PAGE_BOX_WIDTH + 5, -5);
             i++;
         }
         g2.transform(-tx, -ty);
         g2.setFont(TITLE_FONT);
-        g2.drawString(TITLE, MARGIN_X - 10, MARGIN_Y + util.getStringWidth(g2, TITLE),- Math.PI / 2);
+        g2.drawString(TITLE, MARGIN_X - 10, MARGIN_Y + g2.getStringWidth(TITLE),- Math.PI / 2);
         g2.restoreGraphicsState();
     }
 
