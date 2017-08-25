@@ -54,7 +54,6 @@ public class PageRenderer {
     private Util util;
 
     public void drawPage(PdfBoxGraphics g2, Page page, UserRequest userRequest) {
-        final UserSession errorCollector = userSessionCache.getIfPresent(userRequest.getRequestId());
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
         float marginRight = MARGIN_RIGHT.get(page.getOrientation());
         Color mainColor = util.getBoxMainColor(page.getBoxes().get(0));

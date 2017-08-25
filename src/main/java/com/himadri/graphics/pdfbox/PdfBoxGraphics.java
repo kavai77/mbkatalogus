@@ -1,5 +1,6 @@
 package com.himadri.graphics.pdfbox;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.himadri.dto.ErrorItem;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.Util;
@@ -196,7 +197,8 @@ public class PdfBoxGraphics {
         }
     }
 
-    private String removeSpecialCharacters(PDFont pdFont, String text) {
+    @VisibleForTesting
+    String removeSpecialCharacters(PDFont pdFont, String text) {
         final int[] specialChars = text.chars().filter(value -> {
             try {
                 pdFont.encode(String.valueOf((char) value));
