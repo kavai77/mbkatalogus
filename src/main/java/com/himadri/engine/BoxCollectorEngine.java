@@ -20,8 +20,8 @@ public class BoxCollectorEngine {
         int indexOfProductGroup = 0;
         for (Collection<List<Item>> productGroupItemsPerBox: itemsPerProductGroupPerBox) {
             for (List<Item> boxItems: productGroupItemsPerBox) {
-                final Box box = itemToBoxConverter.createBox(boxItems, indexOfProductGroup, userRequest);
-                boxes.add(box);
+                final List<Box> itemBoxes = itemToBoxConverter.createBox(boxItems, indexOfProductGroup, userRequest);
+                boxes.addAll(itemBoxes);
             }
             indexOfProductGroup++;
         }

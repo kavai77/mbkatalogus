@@ -3,14 +3,21 @@ package com.himadri.engine;
 import com.google.common.cache.Cache;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
+import com.himadri.graphics.pdfbox.PDFontService;
+import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Item;
 import com.himadri.model.service.UserSession;
+import com.himadri.renderer.BoxRenderer;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,20 +27,54 @@ import static org.apache.commons.lang3.StringUtils.*;
 @Component
 public class ItemToBoxConverter {
 
-    public static final String BRAND_EXTENSION = ".psd";
+    private static final String BRAND_EXTENSION = ".psd";
 
     @Autowired
     Cache<String, UserSession> userSessionCache;
 
-    public Box createBox(List<Item> items, int indexOfProductGroup, UserRequest userRequest) {
+    @Autowired
+    BoxRenderer boxRenderer;
+
+    @Autowired
+    PDFontService pdFontService;
+
+    private PdfBoxGraphics pdfBoxGraphics;
+
+    @PostConstruct
+    public void init() {
+        final PDDocument document = new PDDocument();
+        final PDPage page = new PDPage();
+        document.addPage(page);
+        pdfBoxGraphics = new PdfBoxGraphics(document, page, pdFontService, null, null);
+    }
+
+    public List<Box> createBox(List<Item> items, int indexOfProductGroup, UserRequest userRequest) {
         List<Box.Article> articleList = new ArrayList<>(items.size());
         final String boxTitle = getBoxTitle(items, userRequest);
         for (Item item: items) {
             articleList.add(convertItemToArticle(item, boxTitle, userRequest));
         }
         Item firstItem = items.get(0);
-        return new Box(firstItem.getKepnev(), firstItem.getGyarto() + BRAND_EXTENSION, boxTitle,
-                firstItem.getCikkfajta(), firstItem.getCikkcsoportnev(), indexOfProductGroup, getOccupiedSpace(), articleList);
+        int articleStart = 0;
+        final List<Box> boxList = new ArrayList<>();
+        while (articleStart < articleList.size()) {
+            final BoxRenderer.RequiredOccupiedSpace requiredOccupiedSpace = boxRenderer.calculateRequiredOccupiedSpace(
+                    pdfBoxGraphics, articleList, articleStart);
+            if (articleStart == requiredOccupiedSpace.getIndexOfNextArticle()) {
+                final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
+                userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
+                        String.format("A %s leírása túlnyúlik egy oldalon, ezért a teljes boxot kihagytuk.",
+                                articleList.get(articleStart).getNumber()));
+                return Collections.emptyList();
+            }
+            boxList.add(new Box(firstItem.getKepnev(), firstItem.getGyarto() + BRAND_EXTENSION, boxTitle,
+                    firstItem.getCikkfajta(), firstItem.getCikkcsoportnev(), indexOfProductGroup,
+                    Math.max(1, requiredOccupiedSpace.getBoxSize()),
+                    articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle())));
+
+            articleStart = requiredOccupiedSpace.getIndexOfNextArticle();
+        }
+        return boxList;
 
     }
 

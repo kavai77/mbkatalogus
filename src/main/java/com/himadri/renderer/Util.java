@@ -1,15 +1,28 @@
 package com.himadri.renderer;
 
+import com.himadri.exception.OneWordCouldNotSplitException;
+import com.himadri.graphics.pdfbox.PDFontService;
+import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Box;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.lang.Math.min;
+import static org.apache.commons.lang3.StringUtils.splitByWholeSeparator;
 
 @Component
 public class Util {
     private static Logger LOG = LoggerFactory.getLogger(Util.class);
+
+    @Autowired
+    private PDFontService pdFontService;
 
     private static final Color[] PRODUCT_GROUP_COLORS = new Color[] {
             new Color(124, 171, 185),
@@ -28,5 +41,27 @@ public class Util {
     public Color getProductGroupMainColor(int indexOfProductGroup) {
         return PRODUCT_GROUP_COLORS[indexOfProductGroup % PRODUCT_GROUP_COLORS.length];
     }
+
+    public String[] splitGraphicsText(PdfBoxGraphics g2, Font font, String text, float... width) throws OneWordCouldNotSplitException {
+        List<String> lines = new ArrayList<>();
+        String[] words = splitByWholeSeparator(text,null);
+        PDFont pdFont = pdFontService.getPDFont(g2.getDocument(), font);
+        if (words.length == 1 && g2.getStringWidth(pdFont, font.getSize2D(), text) > width[0]) {
+            throw new OneWordCouldNotSplitException();
+        }
+        StringBuilder line = new StringBuilder(words[0]);
+        for (int wordSplit = 1; wordSplit < words.length; wordSplit++) {
+            String nextString = line.toString() + " " + words[wordSplit];
+            if (g2.getStringWidth(pdFont, font.getSize2D(), nextString) <= width[min(lines.size(), width.length - 1)]) {
+                line.append(" ").append(words[wordSplit]);
+            } else {
+                lines.add(line.toString());
+                line = new StringBuilder(words[wordSplit]);
+            }
+        }
+        lines.add(line.toString());
+        return lines.toArray(new String[lines.size()]);
+    }
+
 
 }

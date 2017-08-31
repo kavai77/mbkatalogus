@@ -45,8 +45,12 @@ public class PdfBoxGraphics {
         try {
             this.contentStream = new PDPageContentStream(document, page);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new PdfBoxGraphicsException(e);
         }
+    }
+
+    public PDDocument getDocument() {
+        return document;
     }
 
     public void setNonStrokingColor(Color color) {
@@ -111,20 +115,18 @@ public class PdfBoxGraphics {
     }
 
     public int getStringWidth(String text) {
-        try {
-            return Math.round(currentFont.getStringWidth(removeSpecialCharacters(currentFont, text)) / 1000f * currentFontSize);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return getStringWidth(currentFont, currentFontSize, text);
     }
 
     public int getStringWidth(Font font, String text) {
+        return getStringWidth(fontService.getPDFont(document, font), font.getSize2D(), text);
+    }
+
+    public int getStringWidth(PDFont pdFont, float fontSize, String text) {
         try {
-            final PDDocument pdDocument = new PDDocument();
-            final PDFont pdFont = fontService.getPDFont(pdDocument, font);
-            return Math.round(pdFont.getStringWidth(removeSpecialCharacters(pdFont, text)) / 1000f * font.getSize2D());
+            return Math.round(pdFont.getStringWidth(removeSpecialCharacters(pdFont, text)) / 1000f * fontSize);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new PdfBoxGraphicsException(e);
         }
     }
 
@@ -204,7 +206,7 @@ public class PdfBoxGraphics {
                 pdFont.encode(String.valueOf((char) value));
                 return false;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new PdfBoxGraphicsException(e);
             } catch (IllegalArgumentException e) {
                 return true;
             }
