@@ -14,9 +14,6 @@ import java.util.List;
 @Component
 public class ModelTransformerEngine {
     @Autowired
-    private ItemSorterEngine itemSorterEngine;
-
-    @Autowired
     private ItemCategorizerEngine itemCategorizerEngine;
 
     @Autowired
@@ -32,7 +29,6 @@ public class ModelTransformerEngine {
     private Cache<String, UserSession> userSessionCache;
 
     public Document createDocumentFromItems(List<Item> items, UserRequest userRequest) throws ValidationException {
-        itemSorterEngine.sortItems(items);
         final Collection<Collection<List<Item>>> itemsPerProductGroupPerBox = itemCategorizerEngine
                 .itemsPerProductGroupPerBox(items);
         final List<Box> boxes = boxCollectorEngine.collectBoxes(itemsPerProductGroupPerBox, userRequest);
