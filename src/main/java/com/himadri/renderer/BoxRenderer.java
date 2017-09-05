@@ -3,7 +3,6 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.google.common.primitives.Floats;
 import com.himadri.dto.UserRequest;
-import com.himadri.exception.OneWordCouldNotSplitException;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Box;
@@ -32,6 +31,7 @@ import static com.himadri.dto.ErrorItem.ErrorCategory.IMAGE;
 import static com.himadri.dto.ErrorItem.Severity.ERROR;
 import static com.himadri.dto.ErrorItem.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
+import static java.lang.Math.min;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.StringUtils.stripToEmpty;
 
@@ -42,6 +42,7 @@ public class BoxRenderer {
     private static final float IMAGE_WIDTH_MAX = 95f;
     private static final float IMAGE_HEIGHT_MAX = 89f;
     private static final float LOGO_IMAGE_WIDTH_MAX = 33f;
+    private static final float LOGO_IMAGE_HEIGHT_MAX = 33f;
     private static final float BOX_START = 5;
     private static final float TEXT_BOX_X = 105f;
     private static final float TEXT_BOX_WIDTH = 150f;
@@ -97,7 +98,7 @@ public class BoxRenderer {
         } else if (!userRequest.isDraftMode()) {
             try (InputStream fis = new FileInputStream(imageFile)) {
                 BufferedImage image = ImageIO.read(fis);
-                float scale = Math.min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight());
+                float scale = min(1f, min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight()));
                 float posX = (TEXT_BOX_X - image.getWidth() * scale) / 2;
                 float posY = (BOX_HEIGHT - image.getHeight() * scale) / 2;
                 g2.drawImage(image, posX, posY, image.getWidth() * scale, image.getHeight() * scale);
@@ -115,7 +116,7 @@ public class BoxRenderer {
         } else if (!userRequest.isDraftMode()) {
             try {
                 BufferedImage logoImage = logoImageCache.getLogoImage(logoImageFile);
-                float scale = Math.min(1f, LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth());
+                float scale = min(1f, min(LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth(), LOGO_IMAGE_HEIGHT_MAX / logoImage.getHeight()));
                 g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
             } catch (IOException e) {
                 userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
@@ -154,39 +155,33 @@ public class BoxRenderer {
         g2.drawString(box.getCategory(), categoryStart,22);
 
         // heading text
-        try {
-            g2.setNonStrokingColor(Color.black);
-            g2.setFont(HEADLINE_FONT);
-            String[] headingTextLines = util.splitGraphicsText(g2, HEADLINE_FONT, box.getTitle(),
-                    mainBoxPosition.getTextEnd() - mainBoxPosition.getTextStart(),
-                    categoryStart - mainBoxPosition.getTextStart() - TEXT_MARGIN);
-            if (headingTextLines.length == 0) {
-                userSession.addErrorItem(ERROR, FORMATTING, String.format("Nincs címsor: %s", box.getArticles().get(0).getNumber()));
-            } else if (headingTextLines.length == 1) {
-                g2.drawString(headingTextLines[0], mainBoxPosition.getTextStart(), 13);
-            } else {
-                g2.drawString(headingTextLines[0], mainBoxPosition.getTextStart(), 10);
-                g2.drawString(headingTextLines[1], mainBoxPosition.getTextStart(), 22);
-                if (headingTextLines.length > 2) {
-                    final Box.Article firstArticle = box.getArticles().get(0);
-                    if (box.getArticles().size() == 1 && firstArticle.isEmptyItemText()) {
-                        String newItemText = join(headingTextLines, ' ', 2, headingTextLines.length);
-                        box.getArticles().set(0, new Box.Article(firstArticle.getNumber(), firstArticle.getPrice(),
-                                firstArticle.getDescription() + newItemText, false));
-                        userSession.addErrorItem(WARN, FORMATTING, String.format("Nincs pontosvesszős elválasztás a cikknévben, " +
-                                        "így autmatikus tördelést alkalmaztunk a címsor és a leírás között. " +
-                                        "Cikkszám: %s. Címsor: %s. Leírás: %s", box.getArticles().get(0).getNumber(),
-                                join(headingTextLines[0], " ", headingTextLines[1]), newItemText));
-                    } else {
-                        userSession.addErrorItem(ERROR, FORMATTING, String.format("Túl hosszú a címsor, le kellett vágni a második sorban. " +
-                                "Cikkszám: %s. Teljes címsor: %s", box.getArticles().get(0).getNumber(), box.getTitle()));
-                    }
+        g2.setNonStrokingColor(Color.black);
+        g2.setFont(HEADLINE_FONT);
+        String[] headingTextLines = util.splitGraphicsText(g2, HEADLINE_FONT, box.getTitle(),
+                mainBoxPosition.getTextEnd() - mainBoxPosition.getTextStart(),
+                categoryStart - mainBoxPosition.getTextStart() - TEXT_MARGIN);
+        if (headingTextLines.length == 0) {
+            userSession.addErrorItem(ERROR, FORMATTING, String.format("Nincs címsor: %s", box.getArticles().get(0).getNumber()));
+        } else if (headingTextLines.length == 1) {
+            g2.drawString(headingTextLines[0], mainBoxPosition.getTextStart(), 13);
+        } else {
+            g2.drawString(headingTextLines[0], mainBoxPosition.getTextStart(), 10);
+            g2.drawString(headingTextLines[1], mainBoxPosition.getTextStart(), 22);
+            if (headingTextLines.length > 2) {
+                final Box.Article firstArticle = box.getArticles().get(0);
+                if (box.getArticles().size() == 1 && firstArticle.isEmptyItemText()) {
+                    String newItemText = join(headingTextLines, ' ', 2, headingTextLines.length);
+                    box.getArticles().set(0, new Box.Article(firstArticle.getNumber(), firstArticle.getPrice(),
+                            firstArticle.getDescription() + newItemText, false));
+                    userSession.addErrorItem(WARN, FORMATTING, String.format("Nincs pontosvesszős elválasztás a cikknévben, " +
+                                    "így autmatikus tördelést alkalmaztunk a címsor és a leírás között. " +
+                                    "Cikkszám: %s. Címsor: %s. Leírás: %s", box.getArticles().get(0).getNumber(),
+                            join(headingTextLines[0], " ", headingTextLines[1]), newItemText));
+                } else {
+                    userSession.addErrorItem(ERROR, FORMATTING, String.format("Túl hosszú a címsor, le kellett vágni a második sorban. " +
+                            "Cikkszám: %s. Teljes címsor: %s", box.getArticles().get(0).getNumber(), box.getTitle()));
                 }
             }
-        } catch (OneWordCouldNotSplitException e) {
-            userSession.addErrorItem(ERROR, FORMATTING, String.format(
-                    "A cikknév egyetlen hosszú szóbál áll, amit nem lehetett tördelni. Cikkszám: %s Cikknév %s ",
-                    box.getArticles().get(0).getNumber(), box.getTitle()));
         }
 
         // description
@@ -209,20 +204,13 @@ public class BoxRenderer {
             // description
             g2.setNonStrokingColor(Color.black);
             g2.setFont(DESCRIPTION_FONT);
-            try {
-                final String[] descriptionSplit = util.splitGraphicsText(g2, DESCRIPTION_FONT, article.getDescription(),
-                        getSplitWidths(boxPositions, articleIndex, currentLine));
-                for (String line: descriptionSplit) {
-                    g2.drawString(line, getBoxPositionForLine(boxPositions, currentLine).getDescriptionStart(),
-                            getLineYBaseLine(currentLine));
-                    currentLine++;
-                }
-            } catch (OneWordCouldNotSplitException e) {
-                userSession.addErrorItem(ERROR, FORMATTING, String.format(
-                        "A cikk leírás egyetlen hosszú szóbál áll, amit nem lehetett tördelni. Cikkszám: %s Cikknév %s ",
-                        article.getNumber(), box.getTitle()));
+            final String[] descriptionSplit = util.splitGraphicsText(g2, DESCRIPTION_FONT, article.getDescription(),
+                    getSplitWidths(boxPositions, articleIndex, currentLine));
+            for (String line: descriptionSplit) {
+                g2.drawString(line, getBoxPositionForLine(boxPositions, currentLine).getDescriptionStart(),
+                        getLineYBaseLine(currentLine));
+                currentLine++;
             }
-
         }
 
 
@@ -238,15 +226,12 @@ public class BoxRenderer {
         int lineCount = 0;
         float requiredSpace = TEXT_BOX_HEAD_HEIGHT;
         for (int i = articleStartIndex; i < articles.size(); i++) {
-            try {
-                final String[] descriptionSplit = util.splitGraphicsText(g2, DESCRIPTION_FONT, articles.get(i).getDescription(),
-                        getSplitWidths(boxPositions, i, lineCount));
-                requiredSpace += descriptionSplit.length * TEXT_BOX_LINE_HEIGHT;
-                lineCount += descriptionSplit.length;
-                if (requiredSpace > MAX_SPACE_PER_PAGE) {
-                    return new RequiredOccupiedSpace((int)Math.ceil((requiredSpace - descriptionSplit.length * TEXT_BOX_LINE_HEIGHT) / BOX_HEIGHT), i);
-                }
-            } catch (OneWordCouldNotSplitException ignored) {
+            final String[] descriptionSplit = util.splitGraphicsText(g2, DESCRIPTION_FONT, articles.get(i).getDescription(),
+                    getSplitWidths(boxPositions, i, lineCount));
+            requiredSpace += descriptionSplit.length * TEXT_BOX_LINE_HEIGHT;
+            lineCount += descriptionSplit.length;
+            if (requiredSpace > MAX_SPACE_PER_PAGE) {
+                return new RequiredOccupiedSpace((int)Math.ceil((requiredSpace - descriptionSplit.length * TEXT_BOX_LINE_HEIGHT) / BOX_HEIGHT), i);
             }
         }
         return new RequiredOccupiedSpace((int)Math.ceil(requiredSpace / BOX_HEIGHT), articles.size());

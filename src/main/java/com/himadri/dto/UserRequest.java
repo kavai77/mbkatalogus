@@ -8,14 +8,16 @@ public class UserRequest {
     private final String catalogueTitle;
     private final boolean draftMode;
     private final boolean wholeSaleFormat;
+    private final boolean autoLineBreakAfterMinQty;
 
     public UserRequest(String requestId, InputStream csvInputStream, String catalogueTitle, boolean draftMode,
-                       boolean wholeSaleFormat) {
+                       boolean wholeSaleFormat, boolean autoLineBreakAfterMinQty) {
         this.requestId = requestId;
         this.csvInputStream = csvInputStream;
         this.catalogueTitle = catalogueTitle;
         this.draftMode = draftMode;
         this.wholeSaleFormat = wholeSaleFormat;
+        this.autoLineBreakAfterMinQty = autoLineBreakAfterMinQty;
     }
 
     public String getRequestId() {
@@ -36,5 +38,9 @@ public class UserRequest {
 
     public boolean isWholeSaleFormat() {
         return wholeSaleFormat;
+    }
+
+    public boolean isAutoLineBreakAfterMinQty() {
+        return autoLineBreakAfterMinQty;
     }
 }

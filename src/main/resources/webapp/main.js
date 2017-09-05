@@ -3,6 +3,7 @@ var app=angular.module('app', ['ngFileUpload', 'ui.bootstrap']);
 app.controller('controller', function($scope, Upload, $interval, $http) {
     $scope.draftMode = "true";
     $scope.wholeSaleFormat = "true";
+    $scope.autoLineBreakAfterMinQty = false;
     $scope.send = function() {
         $scope.errorMessage = null;
         $scope.requestId = null;
@@ -24,6 +25,7 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
                 'title': $scope.catalogueTitle,
                 'draftMode': $scope.draftMode,
                 'wholeSaleFormat': $scope.wholeSaleFormat,
+                'autoLineBreakAfterMinQty': $scope.autoLineBreakAfterMinQty,
             }
         }).then(function (resp) {
             $scope.requestId = resp.data.requestId;

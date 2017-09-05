@@ -1,6 +1,5 @@
 package com.himadri.renderer;
 
-import com.himadri.exception.OneWordCouldNotSplitException;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.Box;
@@ -20,6 +19,8 @@ import static org.apache.commons.lang3.StringUtils.splitByWholeSeparator;
 @Component
 public class Util {
     private static Logger LOG = LoggerFactory.getLogger(Util.class);
+
+    public static final String FORCE_LINE_BREAK_CHARACTERS = ";;";
 
     @Autowired
     private PDFontService pdFontService;
@@ -42,26 +43,26 @@ public class Util {
         return PRODUCT_GROUP_COLORS[indexOfProductGroup % PRODUCT_GROUP_COLORS.length];
     }
 
-    public String[] splitGraphicsText(PdfBoxGraphics g2, Font font, String text, float... width) throws OneWordCouldNotSplitException {
+    public String[] splitGraphicsText(PdfBoxGraphics g2, Font font, String text, float... width) {
         List<String> lines = new ArrayList<>();
-        String[] words = splitByWholeSeparator(text,null);
+        String[] forcedLines = splitByWholeSeparator(text, FORCE_LINE_BREAK_CHARACTERS);
         PDFont pdFont = pdFontService.getPDFont(g2.getDocument(), font);
-        if (words.length == 1 && g2.getStringWidth(pdFont, font.getSize2D(), text) > width[0]) {
-            throw new OneWordCouldNotSplitException();
-        }
-        StringBuilder line = new StringBuilder(words[0]);
-        for (int wordSplit = 1; wordSplit < words.length; wordSplit++) {
-            String nextString = line.toString() + " " + words[wordSplit];
-            if (g2.getStringWidth(pdFont, font.getSize2D(), nextString) <= width[min(lines.size(), width.length - 1)]) {
-                line.append(" ").append(words[wordSplit]);
-            } else {
+        for (String forcedLine: forcedLines) {
+            String[] words = splitByWholeSeparator(forcedLine, null);
+            if (words.length > 0) {
+                StringBuilder line = new StringBuilder(words[0]);
+                for (int wordSplit = 1; wordSplit < words.length; wordSplit++) {
+                    String nextString = line.toString() + " " + words[wordSplit];
+                    if (g2.getStringWidth(pdFont, font.getSize2D(), nextString) <= width[min(lines.size(), width.length - 1)]) {
+                        line.append(" ").append(words[wordSplit]);
+                    } else {
+                        lines.add(line.toString());
+                        line = new StringBuilder(words[wordSplit]);
+                    }
+                }
                 lines.add(line.toString());
-                line = new StringBuilder(words[wordSplit]);
             }
         }
-        lines.add(line.toString());
         return lines.toArray(new String[lines.size()]);
     }
-
-
 }

@@ -9,6 +9,7 @@ import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Item;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.BoxRenderer;
+import com.himadri.renderer.Util;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ public class ItemToBoxConverter {
     public List<Box> createBox(List<Item> items, int indexOfProductGroup, UserRequest userRequest) {
         List<Box.Article> articleList = new ArrayList<>(items.size());
         final String boxTitle = getBoxTitle(items, userRequest);
-        for (Item item: items) {
+        for (Item item : items) {
             articleList.add(convertItemToArticle(item, boxTitle, userRequest));
         }
         Item firstItem = items.get(0);
@@ -88,6 +89,9 @@ public class ItemToBoxConverter {
                 descriptionBuilder.append(String.format("(Min:%s%s/%s/%s) ", stripToEmpty(item.getM1()),
                         stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3())));
             }
+            if (descriptionBuilder.length() > 0 && userRequest.isAutoLineBreakAfterMinQty()) {
+                descriptionBuilder.append(Util.FORCE_LINE_BREAK_CHARACTERS);
+            }
         }
         final String itemText = stripToEmpty(stripStart(removeStart(item.getCikknev(), boxTitle), " ;"));
         descriptionBuilder.append(itemText);
@@ -120,9 +124,5 @@ public class ItemToBoxConverter {
             }
         }
         return stripToEmpty(boxTitle);
-    }
-
-    private int getOccupiedSpace() {
-        return 1;
     }
 }
