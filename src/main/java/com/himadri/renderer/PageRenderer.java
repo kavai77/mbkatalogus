@@ -9,6 +9,7 @@ import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -34,15 +35,14 @@ public class PageRenderer {
     );
     public static final float BOX_WIDTH = (WIDTH - MARGIN_LEFT.get(Page.Orientation.LEFT) - MARGIN_RIGHT.get(Page.Orientation.LEFT)) / 2; // 262.5
     public static final float BOX_HEIGHT = (HEIGHT - MARGIN_TOP - MARGIN_BOTTOM) / BOX_ROWS_PER_PAGE; //99f;
-    private static final String OLDAL = "oldal";
 
     static {
         assert MARGIN_LEFT.get(Page.Orientation.LEFT) + MARGIN_RIGHT.get(Page.Orientation.LEFT) ==
                MARGIN_LEFT.get(Page.Orientation.RIGHT) + MARGIN_RIGHT.get(Page.Orientation.RIGHT);
     }
 
-    private static final String PAGE_FONT = "Arial";
-    private static final String PAGE_FONT_BOLD = "Arial Black";
+    public static final String PAGE_FONT = "Arial";
+    public static final String PAGE_FONT_BOLD = "Arial Black";
 
     @Autowired
     private BoxRenderer boxRenderer;
@@ -52,6 +52,9 @@ public class PageRenderer {
 
     @Autowired
     private Util util;
+
+    @Value("${${lang}.pageName}")
+    private String pageName;
 
     public void drawPage(PdfBoxGraphics g2, Page page, UserRequest userRequest) {
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
@@ -115,7 +118,7 @@ public class PageRenderer {
     private void drawPageNumber(PdfBoxGraphics g2, String number, PositionWithAlignment pageStartPosX, PositionWithAlignment numberStartPosX) {
         g2.setNonStrokingColor(Color.lightGray);
         g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 12));
-        g2.drawString(OLDAL, pageStartPosX.calculatePosX(g2, OLDAL),HEIGHT - MARGIN_BOTTOM + 3 + 12);
+        g2.drawString(pageName, pageStartPosX.calculatePosX(g2, pageName),HEIGHT - MARGIN_BOTTOM + 3 + 12);
         g2.setNonStrokingColor(Color.black);
         g2.setFont(new Font(PAGE_FONT_BOLD, Font.PLAIN, 12));
         g2.drawString(number, numberStartPosX.calculatePosX(g2, number), HEIGHT - MARGIN_BOTTOM + 3 + 12);

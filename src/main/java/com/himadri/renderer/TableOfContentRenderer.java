@@ -4,6 +4,7 @@ import com.himadri.graphics.pdfbox.PdfBoxGraphics;
 import com.himadri.model.rendering.TableOfContent;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -18,7 +19,6 @@ public class TableOfContentRenderer {
     private static final int COLUMN_GAP = 10;
     private static final int BOX_HEIGHT = 20;
     private static final int PAGE_BOX_WIDTH = 30;
-    private static final String TITLE = "TARTALOMJEGYZÉK";
     private static final Font TITLE_FONT = new Font("Arial Black", Font.PLAIN, 18);
     private static final Font PAGE_FONT = new Font("Arial Black", Font.ITALIC, 10);
     private static final Font CONTENT_FONT = new Font("Arial", Font.PLAIN, 10);
@@ -26,6 +26,11 @@ public class TableOfContentRenderer {
     @Autowired
     private Util util;
 
+    @Value("${${lang}.tableOfContentTitle}")
+    private String tableOfContentTitle;
+
+    @Value("${${lang}.tableOfContentPageNb}")
+    private String tableOfContentPageNb;
 
     public void renderTableOfContent(PdfBoxGraphics g2, TableOfContent tableOfContent) {
         g2.saveGraphicsState();
@@ -59,7 +64,7 @@ public class TableOfContentRenderer {
         }
         g2.transform(-tx, -ty);
         g2.setFont(TITLE_FONT);
-        g2.drawString(TITLE, MARGIN_X - 10, MARGIN_Y + g2.getStringWidth(TITLE),- Math.PI / 2);
+        g2.drawString(tableOfContentTitle, MARGIN_X - 10, MARGIN_Y + g2.getStringWidth(tableOfContentTitle),- Math.PI / 2);
         g2.restoreGraphicsState();
     }
 
@@ -68,6 +73,6 @@ public class TableOfContentRenderer {
         g2.setLineWidth(.5f);
         g2.drawLine(0, 0, (WIDTH - COLUMN_GAP) / 2f  - MARGIN_X, 0);
         g2.setFont(PAGE_FONT);
-        g2.drawString("Oldalszám", 5, -5);
+        g2.drawString(tableOfContentPageNb, 5, -5);
     }
 }
