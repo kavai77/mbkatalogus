@@ -3,7 +3,7 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableMap;
 import com.himadri.dto.UserRequest;
-import com.himadri.graphics.pdfbox.PdfBoxGraphics;
+import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
@@ -53,10 +53,10 @@ public class PageRenderer {
     @Autowired
     private Util util;
 
-    @Value("${${lang}.pageName}")
+    @Value("${${pdfLang}.pageName}")
     private String pageName;
 
-    public void drawPage(PdfBoxGraphics g2, Page page, UserRequest userRequest) {
+    public void drawPage(PdfBoxPageGraphics g2, Page page, UserRequest userRequest) {
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
         float marginRight = MARGIN_RIGHT.get(page.getOrientation());
         Color mainColor = util.getBoxMainColor(page.getBoxes().get(0));
@@ -115,7 +115,7 @@ public class PageRenderer {
 
     }
 
-    private void drawPageNumber(PdfBoxGraphics g2, String number, PositionWithAlignment pageStartPosX, PositionWithAlignment numberStartPosX) {
+    private void drawPageNumber(PdfBoxPageGraphics g2, String number, PositionWithAlignment pageStartPosX, PositionWithAlignment numberStartPosX) {
         g2.setNonStrokingColor(Color.lightGray);
         g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 12));
         g2.drawString(pageName, pageStartPosX.calculatePosX(g2, pageName),HEIGHT - MARGIN_BOTTOM + 3 + 12);
@@ -133,7 +133,7 @@ public class PageRenderer {
             this.leftPos = leftPos;
         }
 
-        private float calculatePosX(PdfBoxGraphics g2,  String str) {
+        private float calculatePosX(PdfBoxPageGraphics g2, String str) {
             return leftPos ? position : position - g2.getStringWidth(str);
         }
     }

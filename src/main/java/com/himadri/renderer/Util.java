@@ -1,7 +1,7 @@
 package com.himadri.renderer;
 
 import com.himadri.graphics.pdfbox.PDFontService;
-import com.himadri.graphics.pdfbox.PdfBoxGraphics;
+import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ public class Util {
         return PRODUCT_GROUP_COLORS[indexOfProductGroup % PRODUCT_GROUP_COLORS.length];
     }
 
-    public String[] splitGraphicsText(PdfBoxGraphics g2, Font font, String text, float... width) {
+    public String[] splitGraphicsText(PdfBoxPageGraphics g2, Font font, String text, float... width) {
         List<String> lines = new ArrayList<>();
         String[] forcedLines = splitByWholeSeparator(text, FORCE_LINE_BREAK_CHARACTERS);
         PDFont pdFont = pdFontService.getPDFont(g2.getDocument(), font);

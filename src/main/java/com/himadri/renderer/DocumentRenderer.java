@@ -5,14 +5,12 @@ import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
 import com.himadri.graphics.pdfbox.PDColorTranslator;
 import com.himadri.graphics.pdfbox.PDFontService;
-import com.himadri.graphics.pdfbox.PdfBoxGraphics;
+import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +32,9 @@ public class DocumentRenderer {
 
     @Autowired
     private PageRenderer pageRenderer;
+
+    @Autowired
+    private IndecesRenderer indecesRenderer;
 
     @Autowired
     private Cache<String, UserSession> userSessionCache;
@@ -82,16 +83,18 @@ public class DocumentRenderer {
                 break;
             }
         }
+        if (!userSession.isCancelled()) {
+            indecesRenderer.renderProductNumberIndex(doc, document.getIndex(), userRequest);
+            indecesRenderer.renderProductNameIndex(doc, document.getIndex(), userRequest);
+        }
 
         closeDocument(doc, userRequest, userSession, previousDocumentStartPage);
         userSession.addErrorItem(ErrorItem.Severity.INFO, ErrorItem.ErrorCategory.INFO,
                 userSession.isCancelled() ? "A dokumentum készítés megszakítva" : "A dokumentum készítés kész.");
     }
 
-    private void renderPDFPage(PDDocument doc, UserSession userRequest, Consumer<PdfBoxGraphics> consumer) throws IOException {
-        PDPage pdPage = new PDPage(PDRectangle.A4);
-        doc.addPage(pdPage);
-        PdfBoxGraphics graphics = new PdfBoxGraphics(doc, pdPage, pdFontService, pdColorTranslator, userRequest);
+    private void renderPDFPage(PDDocument doc, UserSession userRequest, Consumer<PdfBoxPageGraphics> consumer) throws IOException {
+        PdfBoxPageGraphics graphics = new PdfBoxPageGraphics(doc, pdFontService, pdColorTranslator, userRequest);
         consumer.accept(graphics);
         graphics.closeStream();
     }

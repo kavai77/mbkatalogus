@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
@@ -16,15 +17,15 @@ import org.apache.pdfbox.util.Matrix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-public class PdfBoxGraphics {
+public class PdfBoxPageGraphics {
     private static Logger LOG = LoggerFactory.getLogger(Util.class);
 
     private final PDDocument document;
-    private final PDPage page;
     private final PDPageContentStream contentStream;
     private final float pageHeight;
     private final PDFontService fontService;
@@ -34,13 +35,16 @@ public class PdfBoxGraphics {
     private PDFont currentFont;
     private float currentFontSize;
 
-    public PdfBoxGraphics(PDDocument document, PDPage page, PDFontService fontService, PDColorTranslator colorTranslator, UserSession userSession) {
+    public PdfBoxPageGraphics(PDDocument document, PDFontService fontService, PDColorTranslator colorTranslator,
+                              @Nullable UserSession userSession) {
         this.document = document;
-        this.page = page;
         this.fontService = fontService;
-        this.pageHeight = page.getMediaBox().getHeight();
+        this.pageHeight = PDRectangle.A4.getHeight();
         this.colorTranslator = colorTranslator;
         this.userSession = userSession;
+
+        final PDPage page = new PDPage(PDRectangle.A4);
+        document.addPage(page);
 
         try {
             this.contentStream = new PDPageContentStream(document, page);
@@ -158,6 +162,14 @@ public class PdfBoxGraphics {
         }
     }
 
+    public void addRect(float x, float y, float width, float height) {
+        try {
+            contentStream.addRect(x, pageHeight - y - height, width, height);
+        } catch (IOException e) {
+            throw new PdfBoxGraphicsException(e);
+        }
+    }
+
     public void fillRect(float x, float y, float width, float height) {
         try {
             contentStream.addRect(x, pageHeight - y - height, width, height);
@@ -212,9 +224,11 @@ public class PdfBoxGraphics {
             }
         }).toArray();
         for (int ch: specialChars) {
-            userSession.addErrorItem(ErrorItem.Severity.WARN, ErrorItem.ErrorCategory.FORMATTING,
-                    String.format("Egy speciális karaktert töröltünk %s mivel az nem megjeleníthető a jelenlegi betűtípussal: %s",
-                            String.valueOf((char) ch), text));
+            if (userSession != null) {
+                userSession.addErrorItem(ErrorItem.Severity.WARN, ErrorItem.ErrorCategory.FORMATTING,
+                        String.format("Egy speciális karaktert töröltünk %s mivel az nem megjeleníthető a jelenlegi betűtípussal: %s",
+                                String.valueOf((char) ch), text));
+            }
             text = StringUtils.remove(text, (char) ch);
         }
         return text;

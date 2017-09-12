@@ -4,7 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.primitives.Floats;
 import com.himadri.dto.UserRequest;
 import com.himadri.graphics.pdfbox.PDFontService;
-import com.himadri.graphics.pdfbox.PdfBoxGraphics;
+import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.service.UserSession;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -51,7 +51,7 @@ public class BoxRenderer {
     private static final float TEXT_MARGIN = 3f;
     private static final int MAIN_TEXT_BOX_LINE_COUNT = 6;
     private static final float MAX_SPACE_PER_PAGE = PageRenderer.BOX_ROWS_PER_PAGE * BOX_HEIGHT;
-    private static final String FONT = "Arial Narrow";
+    public static final String FONT = "Arial Narrow";
     private static final Font DESCRIPTION_FONT = new Font(FONT, Font.PLAIN, 7);
     private static final Font PRICE_FONT = new Font(FONT, Font.BOLD, 8);
     private static final Font PRODUCT_NUMBER_FONT = new Font(FONT, Font.BOLD, 8);
@@ -88,7 +88,7 @@ public class BoxRenderer {
         }
     }
 
-    public void drawBox(PdfBoxGraphics g2, Box box, UserRequest userRequest) {
+    public void drawBox(PdfBoxPageGraphics g2, Box box, UserRequest userRequest) {
         final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
@@ -221,7 +221,7 @@ public class BoxRenderer {
                 box.getOccupiedSpace() * BOX_HEIGHT);
     }
 
-    public RequiredOccupiedSpace calculateRequiredOccupiedSpace(PdfBoxGraphics g2, List<Box.Article> articles, int articleStartIndex) {
+    public RequiredOccupiedSpace calculateRequiredOccupiedSpace(PdfBoxPageGraphics g2, List<Box.Article> articles, int articleStartIndex) {
         final BoxPositions boxPositions = calculateBoxPositions(g2, articles);
         int lineCount = 0;
         float requiredSpace = TEXT_BOX_HEAD_HEIGHT;
@@ -262,7 +262,7 @@ public class BoxRenderer {
         return TEXT_BOX_HEAD_HEIGHT + (line + 1) * TEXT_BOX_LINE_HEIGHT - TEXT_MARGIN;
     }
 
-    private BoxPositions calculateBoxPositions(PdfBoxGraphics g2, List<Box.Article> articles) {
+    private BoxPositions calculateBoxPositions(PdfBoxPageGraphics g2, List<Box.Article> articles) {
         final float mainBoxTextStart = TEXT_BOX_X + TEXT_MARGIN;
         final float boxTextEnd = TEXT_BOX_X + TEXT_BOX_WIDTH - TEXT_MARGIN;
         final float extendedBoxTextStart = BOX_START + TEXT_MARGIN;

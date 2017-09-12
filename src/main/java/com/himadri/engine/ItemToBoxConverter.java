@@ -4,14 +4,13 @@ import com.google.common.cache.Cache;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
 import com.himadri.graphics.pdfbox.PDFontService;
-import com.himadri.graphics.pdfbox.PdfBoxGraphics;
+import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Item;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.BoxRenderer;
 import com.himadri.renderer.Util;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -39,14 +38,11 @@ public class ItemToBoxConverter {
     @Autowired
     PDFontService pdFontService;
 
-    private PdfBoxGraphics pdfBoxGraphics;
+    private PdfBoxPageGraphics pdfBoxGraphics;
 
     @PostConstruct
     public void init() {
-        final PDDocument document = new PDDocument();
-        final PDPage page = new PDPage();
-        document.addPage(page);
-        pdfBoxGraphics = new PdfBoxGraphics(document, page, pdFontService, null, null);
+        pdfBoxGraphics = new PdfBoxPageGraphics(new PDDocument(), pdFontService, null, null);
     }
 
     public List<Box> createBox(List<Item> items, int indexOfProductGroup, UserRequest userRequest) {

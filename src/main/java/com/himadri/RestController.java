@@ -6,7 +6,7 @@ import com.himadri.dto.RequestId;
 import com.himadri.dto.UserPollingInfo;
 import com.himadri.dto.UserRequest;
 import com.himadri.engine.CatalogueReader;
-import com.himadri.engine.ModelTransformerEngine;
+import com.himadri.engine.DocumentEngine;
 import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Item;
@@ -35,7 +35,7 @@ public class RestController {
     private CatalogueReader catalogueReader;
 
     @Autowired
-    private ModelTransformerEngine modelTransformerEngine;
+    private DocumentEngine documentEngine;
 
     @Autowired
     private DocumentRenderer documentRenderer;
@@ -60,7 +60,7 @@ public class RestController {
         executorService.submit(() -> {
             try {
                 final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);
-                final Document document = modelTransformerEngine.createDocumentFromItems(items, userRequest);
+                final Document document = documentEngine.createDocumentFromItems(items, userRequest);
                 documentRenderer.renderDocument(document, userRequest);
             } catch (ValidationException e) {
                 userSession.addErrorItem(e);

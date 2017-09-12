@@ -1,6 +1,6 @@
 package com.himadri.renderer;
 
-import com.himadri.graphics.pdfbox.PdfBoxGraphics;
+import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.TableOfContent;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,13 +26,13 @@ public class TableOfContentRenderer {
     @Autowired
     private Util util;
 
-    @Value("${${lang}.tableOfContentTitle}")
+    @Value("${${pdfLang}.tableOfContentTitle}")
     private String tableOfContentTitle;
 
-    @Value("${${lang}.tableOfContentPageNb}")
+    @Value("${${pdfLang}.tableOfContentPageNb}")
     private String tableOfContentPageNb;
 
-    public void renderTableOfContent(PdfBoxGraphics g2, TableOfContent tableOfContent) {
+    public void renderTableOfContent(PdfBoxPageGraphics g2, TableOfContent tableOfContent) {
         g2.saveGraphicsState();
         float tx = MARGIN_X;
         float ty = MARGIN_Y;
@@ -68,7 +68,7 @@ public class TableOfContentRenderer {
         g2.restoreGraphicsState();
     }
 
-    private void drawPageNbAndBaseLine(PdfBoxGraphics g2) {
+    private void drawPageNbAndBaseLine(PdfBoxPageGraphics g2) {
         g2.setStrokingColor(Color.black);
         g2.setLineWidth(.5f);
         g2.drawLine(0, 0, (WIDTH - COLUMN_GAP) / 2f  - MARGIN_X, 0);
