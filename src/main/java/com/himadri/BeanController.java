@@ -5,8 +5,13 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.himadri.model.service.UserSession;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.fontbox.ttf.TTFParser;
 import org.apache.fontbox.ttf.TrueTypeFont;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 
@@ -31,5 +36,49 @@ public class BeanController {
                         return new TTFParser().parse(BeanController.class.getResourceAsStream(key));
                     }
                 });
+    }
+
+    @Bean
+    public LoadingCache<PDDocumentTrueTypeFont, PDFont> pdFontLoadingCache() {
+        return CacheBuilder.newBuilder()
+                .expireAfterAccess(60, TimeUnit.MINUTES)
+                .build(new CacheLoader<PDDocumentTrueTypeFont, PDFont>() {
+                    @Override
+                    public PDFont load(PDDocumentTrueTypeFont key) throws Exception {
+                        return PDType0Font.load(key.pdDocument, key.trueTypeFont, true);
+                    }
+                });
+    }
+
+    public static class PDDocumentTrueTypeFont {
+        private final PDDocument pdDocument;
+        private final TrueTypeFont trueTypeFont;
+
+        public PDDocumentTrueTypeFont(PDDocument pdDocument, TrueTypeFont trueTypeFont) {
+            this.pdDocument = pdDocument;
+            this.trueTypeFont = trueTypeFont;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+
+            if (o == null || getClass() != o.getClass()) return false;
+
+            PDDocumentTrueTypeFont that = (PDDocumentTrueTypeFont) o;
+
+            return new EqualsBuilder()
+                    .append(pdDocument, that.pdDocument)
+                    .append(trueTypeFont, that.trueTypeFont)
+                    .isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder()
+                    .append(pdDocument)
+                    .append(trueTypeFont)
+                    .toHashCode();
+        }
     }
 }
