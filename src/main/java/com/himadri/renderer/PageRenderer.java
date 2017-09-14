@@ -41,9 +41,6 @@ public class PageRenderer {
                MARGIN_LEFT.get(Page.Orientation.RIGHT) + MARGIN_RIGHT.get(Page.Orientation.RIGHT);
     }
 
-    public static final String PAGE_FONT = "Arial";
-    public static final String PAGE_FONT_BOLD = "Arial Black";
-
     @Autowired
     private BoxRenderer boxRenderer;
 
@@ -93,7 +90,7 @@ public class PageRenderer {
 
         // drawing headline
         g2.setNonStrokingColor(mainColor);
-        g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 15));
+        g2.setFont(Fonts.PAGE_CATALOGUE_TITLE_FONT);
         final float headLineStartX = page.getOrientation() == Page.Orientation.LEFT ? marginLeft :
                 WIDTH - marginRight - g2.getStringWidth(page.getHeadLine());
         g2.drawString(page.getHeadLine(), headLineStartX, MARGIN_TOP - 7);
@@ -117,10 +114,10 @@ public class PageRenderer {
 
     private void drawPageNumber(PdfBoxPageGraphics g2, String number, PositionWithAlignment pageStartPosX, PositionWithAlignment numberStartPosX) {
         g2.setNonStrokingColor(Color.lightGray);
-        g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 12));
+        g2.setFont(Fonts.PAGE_NB_OLDAL_FONT);
         g2.drawString(pageName, pageStartPosX.calculatePosX(g2, pageName),HEIGHT - MARGIN_BOTTOM + 3 + 12);
         g2.setNonStrokingColor(Color.black);
-        g2.setFont(new Font(PAGE_FONT_BOLD, Font.PLAIN, 12));
+        g2.setFont(Fonts.PAGE_NB_FONT);
         g2.drawString(number, numberStartPosX.calculatePosX(g2, number), HEIGHT - MARGIN_BOTTOM + 3 + 12);
     }
 

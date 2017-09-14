@@ -4,9 +4,11 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.himadri.model.service.UserSession;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.fontbox.ttf.OTFParser;
 import org.apache.fontbox.ttf.TTFParser;
 import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -15,10 +17,16 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Controller
 public class BeanController {
+    private static final String FONT_RESOURCE_PATH = "/fonts/";
+    private final Map<String, TTFParser> fontExtensionParser = ImmutableMap.of(
+            "ttf", new TTFParser(),
+            "otf", new OTFParser());
+
     @Bean
     public Cache<String, UserSession> userSessionCache() {
         return CacheBuilder.newBuilder()
@@ -33,7 +41,13 @@ public class BeanController {
                 .build(new CacheLoader<String, TrueTypeFont>() {
                     @Override
                     public TrueTypeFont load(String key) throws Exception {
-                        return new TTFParser().parse(BeanController.class.getResourceAsStream(key));
+                        for (Map.Entry<String, TTFParser> entry: fontExtensionParser.entrySet()) {
+                            String filePath = FONT_RESOURCE_PATH + key + "." + entry.getKey();
+                            if (BeanController.class.getResource(filePath) != null) {
+                                return entry.getValue().parse(BeanController.class.getResourceAsStream(filePath));
+                            }
+                        }
+                        throw new RuntimeException("Could not load extension + " + key);
                     }
                 });
     }

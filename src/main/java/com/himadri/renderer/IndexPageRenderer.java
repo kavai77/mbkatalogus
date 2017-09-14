@@ -8,8 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.awt.*;
 
-import static com.himadri.renderer.PageRenderer.PAGE_FONT;
-
 @Component
 public class IndexPageRenderer {
     private static final float WIDTH = Math.round(PDRectangle.A4.getWidth());
@@ -20,8 +18,6 @@ public class IndexPageRenderer {
     private static final float PAGE_COLUMN_WIDTH = 21f;
     private static final float BOX_HEIGHT = 14.5f;
     private static final float TEXT_MARGIN = 4f;
-    public static final Font CONTENT_FONT = new Font(BoxRenderer.FONT, Font.PLAIN, 8);
-    public static final Font CONTENT_TITLE = new Font(BoxRenderer.FONT, Font.BOLD, 8);
 
     @Autowired
     private Util util;
@@ -32,7 +28,7 @@ public class IndexPageRenderer {
                             int rowNb, int columnNb) {
         // drawing catalogue title
         g2.setNonStrokingColor(Color.lightGray);
-        g2.setFont(new Font(PAGE_FONT, Font.PLAIN, 15));
+        g2.setFont(Fonts.PAGE_CATALOGUE_TITLE_FONT);
         g2.drawString(catalogueTitle, MARGIN_LEFT_RIGHT, MARGIN_TOP - 15);
 
         //drawing index name
@@ -45,7 +41,7 @@ public class IndexPageRenderer {
         g2.setNonStrokingColor(Color.black);
         g2.setLineWidth(.5f);
         for (int col = 0; col < columnNb; col++) {
-            g2.setFont(CONTENT_TITLE);
+            g2.setFont(Fonts.INDEX_CONTENT_HEAD);
             if (keyName != null) {
                 g2.drawString(keyName, 2, -2);
             }
@@ -55,7 +51,7 @@ public class IndexPageRenderer {
 
             g2.addRect(0, 0, columnWidth, rowNb * BOX_HEIGHT);
             g2.drawLine(keyWidth, 0, keyWidth, rowNb * BOX_HEIGHT);
-            g2.setFont(CONTENT_FONT);
+            g2.setFont(Fonts.INDEX_CONTENT_FONT);
             for (int row = 0; row < rowNb; row++) {
                 if (row > 0) {
                     g2.drawLine(0, row * BOX_HEIGHT, columnWidth, row * BOX_HEIGHT);

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static com.himadri.renderer.IndexPageRenderer.CONTENT_FONT;
+import static com.himadri.renderer.Fonts.INDEX_CONTENT_FONT;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 @Component
@@ -51,7 +51,7 @@ public class IndexEngine {
     }
 
     private String getProductNameForIndex(PdfBoxPageGraphics g2, String boxTitle) {
-        final String[] splitTitle = util.splitGraphicsText(g2, CONTENT_FONT, boxTitle,
+        final String[] splitTitle = util.splitGraphicsText(g2, INDEX_CONTENT_FONT, boxTitle,
                 indexPageRenderer.calculateKeySplitWidth(IndecesRenderer.PRODUCT_NAME_BOX_COLUMN_NB));
         return removeEnd(removeEnd(splitTitle[0], ","), ";");
     }

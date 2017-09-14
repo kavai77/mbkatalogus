@@ -51,11 +51,6 @@ public class BoxRenderer {
     private static final float TEXT_MARGIN = 3f;
     private static final int MAIN_TEXT_BOX_LINE_COUNT = 6;
     private static final float MAX_SPACE_PER_PAGE = PageRenderer.BOX_ROWS_PER_PAGE * BOX_HEIGHT;
-    public static final String FONT = "Arial Narrow";
-    private static final Font DESCRIPTION_FONT = new Font(FONT, Font.PLAIN, 7);
-    private static final Font PRICE_FONT = new Font(FONT, Font.BOLD, 8);
-    private static final Font PRODUCT_NUMBER_FONT = new Font(FONT, Font.BOLD, 8);
-    private static final Font HEADLINE_FONT = new Font(FONT, Font.BOLD, 9);
 
     @Autowired
     private LogoImageCache logoImageCache;
@@ -150,14 +145,14 @@ public class BoxRenderer {
 
         // category
         g2.setNonStrokingColor(new Color(38, 66, 140));
-        g2.setFont(new Font(FONT, Font.PLAIN, 8));
+        g2.setFont(Fonts.BOX_PRODUCT_CATEGORY_FONT);
         final float categoryStart = mainBoxPosition.getTextEnd() - g2.getStringWidth(box.getCategory());
         g2.drawString(box.getCategory(), categoryStart,22);
 
         // heading text
         g2.setNonStrokingColor(Color.black);
-        g2.setFont(HEADLINE_FONT);
-        String[] headingTextLines = util.splitGraphicsText(g2, HEADLINE_FONT, box.getTitle(),
+        g2.setFont(Fonts.BOX_TITLE_FONT);
+        String[] headingTextLines = util.splitGraphicsText(g2, Fonts.BOX_TITLE_FONT, box.getTitle(),
                 mainBoxPosition.getTextEnd() - mainBoxPosition.getTextStart(),
                 categoryStart - mainBoxPosition.getTextStart() - TEXT_MARGIN);
         if (headingTextLines.length == 0) {
@@ -192,19 +187,19 @@ public class BoxRenderer {
 
             // product number
             g2.setNonStrokingColor(Color.black);
-            g2.setFont(PRODUCT_NUMBER_FONT);
+            g2.setFont(Fonts.BOX_PRODUCT_NUMBER_FONT);
             g2.drawString(article.getNumber(), boxPosition.getTextStart(), getLineYBaseLine(currentLine));
 
             // price
             g2.setNonStrokingColor(Color.black);
-            g2.setFont(PRICE_FONT);
+            g2.setFont(Fonts.BOX_PRICE_FONT);
             g2.drawString(article.getPrice(), boxPosition.getTextEnd() - g2.getStringWidth(article.getPrice()),
                     getLineYBaseLine(currentLine));
 
             // description
             g2.setNonStrokingColor(Color.black);
-            g2.setFont(DESCRIPTION_FONT);
-            final String[] descriptionSplit = util.splitGraphicsText(g2, DESCRIPTION_FONT, article.getDescription(),
+            g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
+            final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, article.getDescription(),
                     getSplitWidths(boxPositions, articleIndex, currentLine));
             for (String line: descriptionSplit) {
                 g2.drawString(line, getBoxPositionForLine(boxPositions, currentLine).getDescriptionStart(),
@@ -226,7 +221,7 @@ public class BoxRenderer {
         int lineCount = 0;
         float requiredSpace = TEXT_BOX_HEAD_HEIGHT;
         for (int i = articleStartIndex; i < articles.size(); i++) {
-            final String[] descriptionSplit = util.splitGraphicsText(g2, DESCRIPTION_FONT, articles.get(i).getDescription(),
+            final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, articles.get(i).getDescription(),
                     getSplitWidths(boxPositions, i, lineCount));
             requiredSpace += descriptionSplit.length * TEXT_BOX_LINE_HEIGHT;
             lineCount += descriptionSplit.length;
@@ -266,14 +261,14 @@ public class BoxRenderer {
         final float mainBoxTextStart = TEXT_BOX_X + TEXT_MARGIN;
         final float boxTextEnd = TEXT_BOX_X + TEXT_BOX_WIDTH - TEXT_MARGIN;
         final float extendedBoxTextStart = BOX_START + TEXT_MARGIN;
-        final PDFont productNumberFont = fontService.getPDFont(g2.getDocument(), PRODUCT_NUMBER_FONT);
+        final PDFont productNumberFont = fontService.getPDFont(g2.getDocument(), Fonts.BOX_PRODUCT_NUMBER_FONT);
         final float maxProductNumberWidth = (float) articles.stream().map(Box.Article::getNumber).mapToDouble(
-                a -> g2.getStringWidth(productNumberFont, PRODUCT_NUMBER_FONT.getSize2D(), a)).max().getAsDouble();
-        final PDFont priceFont = fontService.getPDFont(g2.getDocument(), PRICE_FONT);
+                a -> g2.getStringWidth(productNumberFont, Fonts.BOX_PRODUCT_NUMBER_FONT.getSize2D(), a)).max().getAsDouble();
+        final PDFont priceFont = fontService.getPDFont(g2.getDocument(), Fonts.BOX_PRICE_FONT);
         final float[] descriptionEnds = Floats.toArray(
                 articles.stream().
                 map(Box.Article::getPrice).
-                map(priceStr -> g2.getStringWidth(priceFont, PRICE_FONT.getSize2D(), priceStr)).
+                map(priceStr -> g2.getStringWidth(priceFont, Fonts.BOX_PRICE_FONT.getSize2D(), priceStr)).
                 map(priceWidth -> boxTextEnd - priceWidth - TEXT_MARGIN / 2).
                 collect(Collectors.toList()));
         final BoxPosition mainBoxPosition = new BoxPosition()
