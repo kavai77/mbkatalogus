@@ -12,11 +12,11 @@ import org.springframework.stereotype.Component;
 
 import java.awt.*;
 
-import static org.apache.commons.lang3.StringUtils.lowerCase;
 import static org.apache.commons.lang3.StringUtils.replace;
 
 @Component
 public class PDFontService {
+
     @Autowired
     private LoadingCache<String, TrueTypeFont> trueTypeFontLoadingCache;
 
@@ -24,25 +24,24 @@ public class PDFontService {
     private LoadingCache<BeanController.PDDocumentTrueTypeFont, PDFont> pdFontLoadingCache;
 
     public PDFont getPDFont(PDDocument pdDocument, Font font) throws FontFileNotFoundException {
-        final String fontFileName = getFontFileName(font);
+        final String fontKey = getFontKey(font);
         try {
-            final TrueTypeFont typeFont = trueTypeFontLoadingCache.getUnchecked(fontFileName);
+            final TrueTypeFont typeFont = trueTypeFontLoadingCache.getUnchecked(fontKey);
             return pdFontLoadingCache.getUnchecked(new BeanController.PDDocumentTrueTypeFont(pdDocument, typeFont));
         } catch (UncheckedExecutionException e) {
-            throw new FontFileNotFoundException("Could not load font file: " + fontFileName, e);
+            throw new FontFileNotFoundException("Could not load font file: " + fontKey, e);
         }
     }
 
-    private String getFontFileName(Font font) {
-        StringBuilder name = new StringBuilder("/fonts/");
-        name.append(replace(lowerCase(font.getName()), " ", "-"));
+    private String getFontKey(Font font) {
+        StringBuilder name = new StringBuilder(replace(font.getName(), " ", "-"));
         if (font.isBold()) {
-            name.append("-bold");
+            name.append("-Bold");
         }
         if (font.isItalic()) {
-            name.append("-italic");
+            name.append("-Italic");
         }
-        name.append(".ttf");
+
         return name.toString();
     }
 }
