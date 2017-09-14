@@ -5,6 +5,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.himadri.engine.CatalogueReader;
+import com.himadri.engine.CatalogueReaderWithOpenCsv;
 import com.himadri.model.service.UserSession;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -26,6 +28,11 @@ public class BeanController {
     private final Map<String, TTFParser> fontExtensionParser = ImmutableMap.of(
             "ttf", new TTFParser(),
             "otf", new OTFParser());
+
+    @Bean
+    public CatalogueReader catalogueReader() {
+        return new CatalogueReaderWithOpenCsv();
+    }
 
     @Bean
     public Cache<String, UserSession> userSessionCache() {

@@ -6,10 +6,10 @@ import org.supercsv.comment.CommentMatcher;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class CatalogueReaderTest {
+public class CatalogueReaderWithSuperCsvTest {
     @Test
     public void commentMatcherTest() throws Exception {
-        final CommentMatcher commentMatcher = CatalogueReader.EXCEL_NORTH_EUROPE_PREFERENCE.getCommentMatcher();
+        final CommentMatcher commentMatcher = CatalogueReaderWithSuperCsv.EXCEL_NORTH_EUROPE_PREFERENCE.getCommentMatcher();
         assertTrue(commentMatcher.isComment(";"));
         assertTrue(commentMatcher.isComment(";;;;;"));
         assertFalse(commentMatcher.isComment(""));

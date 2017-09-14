@@ -64,7 +64,8 @@ public class ItemToBoxConverter {
                                 articleList.get(articleStart).getNumber()));
                 return Collections.emptyList();
             }
-            boxList.add(new Box(firstItem.getKepnev(), firstItem.getGyarto() + BRAND_EXTENSION, boxTitle,
+            String brandImage = isNotBlank(firstItem.getGyarto()) ? stripToEmpty(firstItem.getGyarto()) + BRAND_EXTENSION : null;
+            boxList.add(new Box(firstItem.getKepnev(), brandImage, boxTitle,
                     firstItem.getCikkfajta(), firstItem.getCikkcsoportnev(), indexOfProductGroup,
                     Math.max(1, requiredOccupiedSpace.getBoxSize()),
                     articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle())));

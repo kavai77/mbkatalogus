@@ -32,8 +32,7 @@ import static com.himadri.dto.ErrorItem.Severity.ERROR;
 import static com.himadri.dto.ErrorItem.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
 import static java.lang.Math.min;
-import static org.apache.commons.lang3.StringUtils.join;
-import static org.apache.commons.lang3.StringUtils.stripToEmpty;
+import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
 public class BoxRenderer {
@@ -87,36 +86,40 @@ public class BoxRenderer {
         final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
-        final File imageFile = new File(imageLocation, stripToEmpty(box.getImage()));
-        if (!imageFile.exists() || !imageFile.isFile()) {
-            userSession.addErrorItem(WARN, IMAGE, "Nem található a kép: " + box.getImage());
-        } else if (!userRequest.isDraftMode()) {
-            try (InputStream fis = new FileInputStream(imageFile)) {
-                BufferedImage image = ImageIO.read(fis);
-                float scale = min(1f, min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight()));
-                float posX = (TEXT_BOX_X - image.getWidth() * scale) / 2;
-                float posY = (BOX_HEIGHT - image.getHeight() * scale) / 2;
-                g2.drawImage(image, posX, posY, image.getWidth() * scale, image.getHeight() * scale);
-            } catch (IOException e) {
-                userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
-                        box.getImage(), e.getMessage()));
-                LOGGER.error("Could not paint image {}", box, e);
+        if (isNotBlank(box.getImage())) {
+            final File imageFile = new File(imageLocation, stripToEmpty(box.getImage()));
+            if (!imageFile.exists() || !imageFile.isFile()) {
+                userSession.addErrorItem(WARN, IMAGE, "Nem található a kép: " + box.getImage());
+            } else if (!userRequest.isDraftMode()) {
+                try (InputStream fis = new FileInputStream(imageFile)) {
+                    BufferedImage image = ImageIO.read(fis);
+                    float scale = min(1f, min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight()));
+                    float posX = (TEXT_BOX_X - image.getWidth() * scale) / 2;
+                    float posY = (BOX_HEIGHT - image.getHeight() * scale) / 2;
+                    g2.drawImage(image, posX, posY, image.getWidth() * scale, image.getHeight() * scale);
+                } catch (IOException e) {
+                    userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
+                            box.getImage(), e.getMessage()));
+                    LOGGER.error("Could not paint image {}", box, e);
+                }
             }
         }
 
         // draw the logo
-        final File logoImageFile = new File(logoImageLocation, stripToEmpty(box.getBrandImage()));
-        if (!logoImageFile.exists() || !logoImageFile.isFile()) {
-            userSession.addErrorItem(WARN, IMAGE, "Nem található a logo file kép: " + box.getBrandImage());
-        } else if (!userRequest.isDraftMode()) {
-            try {
-                BufferedImage logoImage = logoImageCache.getLogoImage(logoImageFile);
-                float scale = min(1f, min(LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth(), LOGO_IMAGE_HEIGHT_MAX / logoImage.getHeight()));
-                g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
-            } catch (IOException e) {
-                userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
-                        box.getImage(), e.getMessage()));
-                LOGGER.error("Could not paint logo image", e);
+        if (isNotBlank(box.getBrandImage())) {
+            final File logoImageFile = new File(logoImageLocation, box.getBrandImage());
+            if (!logoImageFile.exists() || !logoImageFile.isFile()) {
+                userSession.addErrorItem(WARN, IMAGE, "Nem található a logo file kép: " + box.getBrandImage());
+            } else if (!userRequest.isDraftMode()) {
+                try {
+                    BufferedImage logoImage = logoImageCache.getLogoImage(logoImageFile);
+                    float scale = min(1f, min(LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth(), LOGO_IMAGE_HEIGHT_MAX / logoImage.getHeight()));
+                    g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
+                } catch (IOException e) {
+                    userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
+                            box.getImage(), e.getMessage()));
+                    LOGGER.error("Could not paint logo image", e);
+                }
             }
         }
 

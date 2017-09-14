@@ -1,21 +1,39 @@
 package com.himadri.model.rendering;
 
+import com.opencsv.bean.CsvBindByName;
+
 public class Item {
+    @CsvBindByName(required = true)
     private String cikkszam;
+    @CsvBindByName(required = true)
     private String cikknev;
+    @CsvBindByName
     private String cikkfajta;
+    @CsvBindByName(required = true)
     private String cikkcsoportnev;
+    @CsvBindByName
     private String gyarto;
+    @CsvBindByName(required = true)
     private String kiskerar;
+    @CsvBindByName
     private String nagykerar;
+    @CsvBindByName
     private String m1;
+    @CsvBindByName
     private String m2;
+    @CsvBindByName
     private String m3;
+    @CsvBindByName
     private String termekinfo;
+    @CsvBindByName
     private String me;
+    @CsvBindByName
     private String cikkcsopsorrend;
+    @CsvBindByName
     private Long cikksorrend;
+    @CsvBindByName
     private String kepnev;
+    @CsvBindByName
     private String gyartokepnev;
 
     public Item() {
