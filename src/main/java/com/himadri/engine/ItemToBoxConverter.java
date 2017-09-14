@@ -83,9 +83,13 @@ public class ItemToBoxConverter {
                 descriptionBuilder.append(remove(item.getNagykerar(), '\u00a0')).append(",- ");
             }
             if (isNotBlank(item.getM1()) || isNotBlank(item.getM2()) || isNotBlank(item.getM3())) {
-                descriptionBuilder.append(String.format("(Min:%s%s/%s/%s) ", stripToEmpty(item.getM1()),
-                        stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3())));
+                final String m1m2m3 = String.format("%s%s/%s/%s", stripToEmpty(item.getM1()),
+                        stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3()));
+                descriptionBuilder.append("(Min:")
+                    .append(removePattern(m1m2m3, "/*$"))
+                    .append(") ");
             }
+
             if (descriptionBuilder.length() > 0 && userRequest.isAutoLineBreakAfterMinQty()) {
                 descriptionBuilder.append(Util.FORCE_LINE_BREAK_CHARACTERS);
             }

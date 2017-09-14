@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.himadri.dto.UserRequest;
 import com.himadri.model.rendering.Item;
 import com.himadri.model.service.UserSession;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,6 +78,15 @@ public class ItemToBoxConverterTest {
                 sut.convertItemToArticle(itemWithCikkNev(
                         "szeg fejjel a 8865042"),
                         "szeg fejjel a 8865042", userRequest).getDescription());
+    }
+
+    @Test
+    public void testRemoveEndSlashed() throws Exception {
+        assertEquals("aaa", StringUtils.removePattern("aaa//", "/*$"));
+        assertEquals("aaa", StringUtils.removePattern("aaa/", "/*$"));
+        assertEquals("aaa/a", StringUtils.removePattern("aaa/a/", "/*$"));
+        assertEquals("aaa/a/a", StringUtils.removePattern("aaa/a/a", "/*$"));
+        assertEquals("aaa", StringUtils.removePattern("aaa", "/*$"));
     }
 
     private Item itemWithCikkNev(String cikkNev) {
