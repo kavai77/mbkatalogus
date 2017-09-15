@@ -9,6 +9,7 @@ import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
+import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
@@ -59,6 +60,12 @@ public class DocumentRenderer {
             if (!successful) {
                 throw new RuntimeException("Could not create the path for rendering location: " + renderingLocation);
             }
+        } else {
+            try {
+                FileUtils.cleanDirectory(renderingLocationFile);
+            } catch (IOException e) {
+                LOGGER.warn("Could not clean rendering tmp directory during startup", e);
+            }
         }
     }
 
@@ -66,7 +73,9 @@ public class DocumentRenderer {
         int previousDocumentStartPage = 1;
         int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
-        PDDocument doc = new PDDocument(MemoryUsageSetting.setupMixed(100 * 2^20));
+        final MemoryUsageSetting memUsageSetting = MemoryUsageSetting.setupMixed(100 * 2 ^ 20);
+        memUsageSetting.setTempDir(new File(renderingLocation));
+        PDDocument doc = new PDDocument(memUsageSetting);
         renderPDFPage(doc, userSession, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
         userSession.incrementCurrentPageNumber();
         for (int i = 0; i < document.getPages().size(); i++) {
@@ -103,6 +112,7 @@ public class DocumentRenderer {
         String docPrefix = deleteWhitespace(stripAccents(lowerCase(userRequest.getCatalogueTitle())));
         final File pdfFile = File.createTempFile(String.format("%s-%d-%d-", docPrefix, previousDocumentStartPage,
                 userSession.getCurrentPageNumber()),".pdf", new File(renderingLocation));
+        pdfFile.deleteOnExit();
         doc.save(pdfFile);
         doc.close();
         userSession.addGeneratedDocument(pdfFile.getName(), String.format("%d-%d", previousDocumentStartPage,
