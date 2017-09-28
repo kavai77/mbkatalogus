@@ -68,9 +68,9 @@ public class RestController {
                 userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "IO hiba történt: " + e.getMessage());
                 LOGGER.error("IOException in main worker thread", e);
             } catch (Throwable e) {
-                StringBuilder sb;
-                for (sb = new StringBuilder();e != null; e = e.getCause()) {
-                    sb.append(e.getMessage()).append(' ');
+                StringBuilder sb = new StringBuilder();
+                for (Throwable i = e;i != null; i = i.getCause()) {
+                    sb.append(i.getMessage()).append(' ');
                 }
                 userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "Ismeretlen hiba történt: " + sb.toString());
                 LOGGER.error("Unexpected exception in main worker thread", e);

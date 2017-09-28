@@ -4,6 +4,7 @@ import com.himadri.dto.UserRequest;
 import com.himadri.model.rendering.Item;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.CsvToBeanFilter;
+import com.opencsv.enums.CSVReaderNullFieldIndicator;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -18,12 +19,7 @@ public class CatalogueReaderWithOpenCsv implements CatalogueReader {
                 .withType(Item.class)
                 .withOrderedResults(true)
                 .withSeparator(';')
-                .withFilter(new CsvToBeanFilter() {
-                    @Override
-                    public boolean allowLine(String[] strings) {
-                        return Arrays.stream(strings).anyMatch(StringUtils::isNotBlank);
-                    }
-                })
+                .withFilter(strings -> Arrays.stream(strings).anyMatch(StringUtils::isNotBlank))
                 .build()
                 .parse();
     }
