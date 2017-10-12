@@ -159,7 +159,7 @@ public class BoxRenderer {
                 mainBoxPosition.getTextEnd() - mainBoxPosition.getTextStart(),
                 categoryStart - mainBoxPosition.getTextStart() - TEXT_MARGIN);
         if (headingTextLines.length == 0) {
-            userSession.addErrorItem(ERROR, FORMATTING, String.format("Nincs címsor: %s", box.getArticles().get(0).getNumber()));
+            userSession.addErrorItem(ERROR, FORMATTING, String.format("Nincs box fejléce (dtp megnevezés): %s", box.getArticles().get(0).getNumber()));
         } else if (headingTextLines.length == 1) {
             g2.drawString(headingTextLines[0], mainBoxPosition.getTextStart(), 13);
         } else {

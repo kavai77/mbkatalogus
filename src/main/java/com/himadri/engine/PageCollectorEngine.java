@@ -1,5 +1,6 @@
 package com.himadri.engine;
 
+import com.himadri.dto.UserRequest;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Page;
 import com.himadri.renderer.PageRenderer;
@@ -10,11 +11,11 @@ import java.util.List;
 
 @Component
 public class PageCollectorEngine {
-    public List<Page> createPages(List<Box> boxList, String title) {
+    public List<Page> createPages(List<Box> boxList, String title, UserRequest userRequest) {
         List<Page> pageList = new ArrayList<>();
         List<Box> pageBoxes = new ArrayList<>();
-        int row = 0;
-        int column = 0;
+        int row = userRequest.getSkipBoxSpaceOnBeginning() % PageRenderer.BOX_ROWS_PER_PAGE;
+        int column = userRequest.getSkipBoxSpaceOnBeginning() / PageRenderer.BOX_ROWS_PER_PAGE;
         for (Box box: boxList) {
             if (box.getOccupiedSpace() > PageRenderer.BOX_ROWS_PER_PAGE) {
                 throw new RuntimeException("Túl sok egybefüggő cikk a dobozban, nem fér ki egy hasábra: " + box.getArticles().get(0).getNumber());

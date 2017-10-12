@@ -12,6 +12,7 @@ import com.himadri.model.service.UserSession;
 import com.himadri.renderer.IndecesRenderer;
 import com.himadri.renderer.IndexPageRenderer;
 import com.himadri.renderer.Util;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -46,8 +47,10 @@ public class IndexEngine {
         for (Page page: pages) {
             for (Box box: page.getBoxes()) {
                 for (Box.Article article: box.getArticles()) {
-                    String title = getProductNameForIndex(g2, article, userRequest);
-                    productNameSet.add(new Index.Record(title, page.getPageNumber()));
+                    String title = getIndexTitle(g2, article, userRequest);
+                    if (StringUtils.isNotBlank(title)) {
+                        productNameSet.add(new Index.Record(title, page.getPageNumber()));
+                    }
                     index.getProductNumberIndex().add(new Index.Record(article.getNumber(), page.getPageNumber()));
                 }
             }
@@ -58,7 +61,7 @@ public class IndexEngine {
         return index;
     }
 
-    private String getProductNameForIndex(PdfBoxPageGraphics g2, Box.Article article, UserRequest userRequest) {
+    private String getIndexTitle(PdfBoxPageGraphics g2, Box.Article article, UserRequest userRequest) {
         final String boxIndexName = stripToEmpty(article.getIndexName());
         final int indexStringWidth = g2.getStringWidth(boxIndexName);
         if (indexStringWidth > indexPageRenderer.calculateKeySplitWidth(IndecesRenderer.PRODUCT_NAME_BOX_COLUMN_NB)) {

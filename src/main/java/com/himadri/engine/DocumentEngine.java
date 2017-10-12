@@ -36,7 +36,7 @@ public class DocumentEngine {
         final Collection<Collection<List<Item>>> itemsPerProductGroupPerBox = itemCategorizerEngine
                 .itemsPerProductGroupPerBox(items);
         final List<Box> boxes = boxCollectorEngine.collectBoxes(itemsPerProductGroupPerBox, userRequest);
-        final List<Page> pages = pageCollectorEngine.createPages(boxes, userRequest.getCatalogueTitle());
+        final List<Page> pages = pageCollectorEngine.createPages(boxes, userRequest.getCatalogueTitle(), userRequest);
         final TableOfContent tableOfContent = tableOfContentEngine.createTableOfContent(pages);
         final Index index = indexEngine.createIndex(pages, userRequest);
         userSessionCache.getIfPresent(userRequest.getRequestId()).setTotalPageCount(

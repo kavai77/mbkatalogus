@@ -1,5 +1,6 @@
 package com.himadri.engine;
 
+import com.himadri.dto.UserRequest;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Page;
 import org.junit.Before;
@@ -22,7 +23,7 @@ public class PageCollectorEngineTest {
     @Test
     public void testSingleBoxes() throws Exception {
         final List<Page> pages = sut.createPages(createNBoxesWithSize(IntStream.generate(() -> 1).limit(17).toArray()),
-                null);
+                null, createUserRequestWithSkipBox(0));
         assertEquals(2, pages.size());
         assertEquals(16, pages.get(0).getBoxes().size());
         assertEquals(1, pages.get(1).getBoxes().size());
@@ -38,7 +39,7 @@ public class PageCollectorEngineTest {
     @Test
     public void testBigBoxes() throws Exception {
         final List<Page> pages = sut.createPages(createNBoxesWithSize(5, 5, 4, 4, 2 ),
-                null);
+                null, createUserRequestWithSkipBox(0));
         assertEquals(2, pages.size());
         assertEquals(2, pages.get(0).getBoxes().size());
         assertEquals(3, pages.get(1).getBoxes().size());
@@ -49,9 +50,23 @@ public class PageCollectorEngineTest {
         assertBoxPosition(0, 1, "4", pages.get(1).getBoxes().get(2));
     }
 
+    @Test
+    public void testBoxesWithSkip() throws Exception {
+        final List<Page> pages = sut.createPages(createNBoxesWithSize(5, 5, 4, 4, 2 ),
+                null, createUserRequestWithSkipBox(3));
+        assertEquals(2, pages.size());
+        assertEquals(2, pages.get(0).getBoxes().size());
+        assertEquals(3, pages.get(1).getBoxes().size());
+        assertBoxPosition(3, 0, "0", pages.get(0).getBoxes().get(0));
+        assertBoxPosition(0, 1, "1", pages.get(0).getBoxes().get(1));
+        assertBoxPosition(0, 0, "2", pages.get(1).getBoxes().get(0));
+        assertBoxPosition(4, 0, "3", pages.get(1).getBoxes().get(1));
+        assertBoxPosition(0, 1, "4", pages.get(1).getBoxes().get(2));
+    }
+
     @Test(expected = RuntimeException.class)
     public void testTooBigBox() throws Exception {
-        sut.createPages(createNBoxesWithSize(3, 9 ),null);
+        sut.createPages(createNBoxesWithSize(3, 9 ),null, createUserRequestWithSkipBox(0));
     }
 
     private void assertBoxPosition(int expectedRow, int expectedColumn, String expectedTitle, Box box) {
@@ -71,5 +86,9 @@ public class PageCollectorEngineTest {
 
     private Box createBoxWithSize(int index, int size) {
         return new Box(null, null, Integer.toString(index), null, null, 0, size, null);
+    }
+
+    private UserRequest createUserRequestWithSkipBox(int skip) {
+        return new UserRequest(null, null, null, false, false, false, skip);
     }
 }

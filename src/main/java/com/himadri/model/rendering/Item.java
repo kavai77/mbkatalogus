@@ -26,8 +26,6 @@ public class Item {
     @CsvBindByName
     private String m3;
     @CsvBindByName
-    private String termekinfo;
-    @CsvBindByName
     private String me;
     @CsvBindByName
     private String kepnev;
@@ -123,14 +121,6 @@ public class Item {
 
     public void setM3(String m3) {
         this.m3 = m3;
-    }
-
-    public String getTermekinfo() {
-        return termekinfo;
-    }
-
-    public void setTermekinfo(String termekinfo) {
-        this.termekinfo = termekinfo;
     }
 
     public String getMe() {

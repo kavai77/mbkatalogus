@@ -4,6 +4,7 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
     $scope.draftMode = "true";
     $scope.wholeSaleFormat = "true";
     $scope.autoLineBreakAfterMinQty = false;
+    $scope.skipBoxSpaceOnBeginning = 0;
     $scope.send = function() {
         $scope.errorMessage = null;
         $scope.requestId = null;
@@ -18,6 +19,10 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             $scope.errorMessage = "Írj be egy katalógus címet!"
             return;
         }
+        if ($scope.skipBoxSpaceOnBeginning > 15) {
+            $scope.errorMessage = "Maximálisan 15 boxot hagyhatsz ki."
+            return;
+        }
         Upload.upload({
             url: '/service/csvRendering',
             data: {
@@ -26,6 +31,7 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
                 'draftMode': $scope.draftMode,
                 'wholeSaleFormat': $scope.wholeSaleFormat,
                 'autoLineBreakAfterMinQty': $scope.autoLineBreakAfterMinQty,
+                'skipBoxSpaceOnBeginning': $scope.skipBoxSpaceOnBeginning,
             }
         }).then(function (resp) {
             $scope.requestId = resp.data.requestId;
