@@ -19,6 +19,7 @@ import java.util.Map;
 public class PageRenderer {
     private static final int WIDTH = (int) Math.round(PDRectangle.A4.getWidth());
     private static final int HEIGHT = (int) Math.round(PDRectangle.A4.getHeight());
+    private static final int OVERFLOW = 10;
     private static final int MARGIN_TOP = 30;
     private static final int MARGIN_BOTTOM = 20;
     public static final int BOX_ROWS_PER_PAGE = 8;
@@ -65,17 +66,17 @@ public class PageRenderer {
 
         // draw the frame
         if (page.getOrientation() == Page.Orientation.LEFT) {
-            g2.drawLine(marginLeft, MARGIN_TOP, WIDTH, MARGIN_TOP);
+            g2.drawLine(marginLeft, MARGIN_TOP, WIDTH + OVERFLOW, MARGIN_TOP);
             g2.drawLine(marginLeft, MARGIN_TOP, marginLeft, HEIGHT-MARGIN_BOTTOM);
-            g2.drawLine(marginLeft, HEIGHT-MARGIN_BOTTOM, WIDTH, HEIGHT-MARGIN_BOTTOM);
+            g2.drawLine(marginLeft, HEIGHT-MARGIN_BOTTOM, WIDTH + OVERFLOW, HEIGHT-MARGIN_BOTTOM);
             g2.setNonStrokingColor(mainColor);
-            g2.fillRect(0, 0, 30, 700);
+            g2.fillRect(-OVERFLOW, -OVERFLOW, 30 + OVERFLOW, 700 + OVERFLOW);
         } else {
-            g2.drawLine(0, MARGIN_TOP, WIDTH-marginRight, MARGIN_TOP);
+            g2.drawLine(-OVERFLOW, MARGIN_TOP, WIDTH-marginRight, MARGIN_TOP);
             g2.drawLine(WIDTH-marginRight, MARGIN_TOP, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM);
-            g2.drawLine(0, HEIGHT-MARGIN_BOTTOM, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM);
+            g2.drawLine(-OVERFLOW, HEIGHT-MARGIN_BOTTOM, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM);
             g2.setNonStrokingColor(mainColor);
-            g2.fillRect(WIDTH - 30, 0, 30, 700);
+            g2.fillRect(WIDTH - 30, -OVERFLOW, 30 + OVERFLOW, 700 + OVERFLOW);
         }
 
         // drawing page number
