@@ -23,8 +23,6 @@ public class Box {
         this.productGroup = productGroup;
         this.indexOfProductGroup = indexOfProductGroup;
         this.occupiedSpace = occupiedSpace;
-        this.row = row;
-        this.column = column;
         this.articles = articles;
     }
 
@@ -77,12 +75,14 @@ public class Box {
         private final String number;
         private final String price;
         private final String description;
+        private final String indexName;
         private final boolean emptyItemText;
 
-        public Article(String number, String price, String description, boolean emptyItemText) {
+        public Article(String number, String price, String description, String indexName, boolean emptyItemText) {
             this.number = number;
             this.price = price;
             this.description = description;
+            this.indexName = indexName;
             this.emptyItemText = emptyItemText;
         }
 
@@ -98,6 +98,10 @@ public class Box {
             return description;
         }
 
+        public String getIndexName() {
+            return indexName;
+        }
+
         public boolean isEmptyItemText() {
             return emptyItemText;
         }
@@ -108,6 +112,7 @@ public class Box {
                     "number='" + number + '\'' +
                     ", price='" + price + '\'' +
                     ", description='" + description + '\'' +
+                    ", indexName='" + indexName + '\'' +
                     '}';
         }
     }

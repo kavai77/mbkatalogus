@@ -10,18 +10,17 @@ import com.himadri.model.rendering.Item;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.BoxRenderer;
 import com.himadri.renderer.Util;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.ArrayUtils.toStringArray;
 import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
@@ -46,11 +45,8 @@ public class ItemToBoxConverter {
     }
 
     public List<Box> createBox(List<Item> items, int indexOfProductGroup, UserRequest userRequest) {
-        List<Box.Article> articleList = new ArrayList<>(items.size());
         final String boxTitle = getBoxTitle(items, userRequest);
-        for (Item item : items) {
-            articleList.add(convertItemToArticle(item, boxTitle, userRequest));
-        }
+        List<Box.Article> articleList = items.stream().map(item -> convertItemToArticle(item, userRequest)).collect(Collectors.toList());
         Item firstItem = items.get(0);
         int articleStart = 0;
         final List<Box> boxList = new ArrayList<>();
@@ -76,7 +72,7 @@ public class ItemToBoxConverter {
 
     }
 
-    Box.Article convertItemToArticle(Item item, String boxTitle, UserRequest userRequest) {
+    private Box.Article convertItemToArticle(Item item, UserRequest userRequest) {
         StringBuilder descriptionBuilder = new StringBuilder();
         if (userRequest.isWholeSaleFormat()) {
             if (isNotBlank(item.getNagykerar())) {
@@ -94,36 +90,25 @@ public class ItemToBoxConverter {
                 descriptionBuilder.append(Util.FORCE_LINE_BREAK_CHARACTERS);
             }
         }
-        final String itemText = stripToEmpty(stripStart(removeStart(item.getCikknev(), boxTitle), " ;"));
+        final String itemText = stripToEmpty(item.getLeiras());
         descriptionBuilder.append(itemText);
-        return new Box.Article(item.getCikkszam(), remove(item.getKiskerar(), '\u00a0'), descriptionBuilder.toString(), isBlank(itemText));
+        return new Box.Article(item.getCikkszam(), remove(item.getKiskerar(), '\u00a0'),
+                descriptionBuilder.toString(), item.getTargymutato(), isEmpty(itemText));
     }
 
-    String getBoxTitle(List<Item> items, UserRequest userRequest) {
-        final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
-        String boxTitle;
-        if (items.size() == 1) {
-            boxTitle = substringBefore(items.get(0).getCikknev(), ";");
-        } else {
-            final String[] titles = toStringArray(items.stream().map(Item::getCikknev).collect(Collectors.toList()).toArray());
-            boxTitle = getCommonPrefix(titles);
-            if (contains(boxTitle, ';')) {
-                boxTitle = substringBeforeLast(boxTitle, ";");
-            } else {
-                if (!endsWith(boxTitle, " ")) {
-                    boxTitle = substringBeforeLast(boxTitle, " ");
-                }
-                if (isBlank(boxTitle)) {
-                    userSession.addErrorItem(ErrorItem.Severity.ERROR,
-                            ErrorItem.ErrorCategory.FORMATTING, String.format("Az összevont cikkeknek nincs egységes kezdetük. " +
-                                    "Első cikkszám: %s. Cikknevek: %s ", items.get(0).getCikkszam(), Arrays.toString(titles)));
-                } else {
-                    userSession.addErrorItem(ErrorItem.Severity.WARN, ErrorItem.ErrorCategory.FORMATTING, String.format(
-                            "Az összevont cikkek közös kezdetében nincs pontosvessző, így az elválasztás automatikusan történik. " +
-                                    "Első cikkszám: %s. Cikknevek: %s", items.get(0).getCikkszam(), Arrays.toString(titles)));
-                }
-            }
+    private String getBoxTitle(List<Item> items, UserRequest userRequest) {
+        final String boxTitle = stripToEmpty(normalizeSpace(items.get(0).getDtpmegnevezes()));
+        List<String> wrongTitles = items.stream().map(Item::getDtpmegnevezes).map(StringUtils::stripToEmpty)
+                .map(StringUtils::normalizeSpace)
+                .filter(a -> !StringUtils.equalsIgnoreCase(boxTitle, a)).collect(Collectors.toList());
+        if (!wrongTitles.isEmpty()) {
+            final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
+            userSession.addErrorItem(ErrorItem.Severity.WARN,
+                    ErrorItem.ErrorCategory.FORMATTING, String.format("Az összevont cikkeknek különbözik a dtp megnevezésük. " +
+                            "Első cikkszám: %s. Első DTP megnevezés \"%s\". Eltérő megnevezések: %s ",
+                            items.get(0).getCikkszam(), boxTitle, wrongTitles.toString()));
         }
-        return stripToEmpty(boxTitle);
+
+        return boxTitle;
     }
 }

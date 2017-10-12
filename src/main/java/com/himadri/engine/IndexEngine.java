@@ -1,10 +1,14 @@
 package com.himadri.engine;
 
+import com.google.common.cache.Cache;
+import com.himadri.dto.ErrorItem;
+import com.himadri.dto.UserRequest;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Index;
 import com.himadri.model.rendering.Page;
+import com.himadri.model.service.UserSession;
 import com.himadri.renderer.IndecesRenderer;
 import com.himadri.renderer.IndexPageRenderer;
 import com.himadri.renderer.Util;
@@ -18,7 +22,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import static com.himadri.renderer.Fonts.INDEX_CONTENT_FONT;
-import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static org.apache.commons.lang3.StringUtils.stripToEmpty;
 
 @Component
 public class IndexEngine {
@@ -29,17 +33,21 @@ public class IndexEngine {
     private IndexPageRenderer indexPageRenderer;
 
     @Autowired
+    private Cache<String, UserSession> userSessionCache;
+
+    @Autowired
     private Util util;
 
-    public Index createIndex(List<Page> pages) {
+    public Index createIndex(List<Page> pages, UserRequest userRequest) {
         Index index = new Index();
         SortedSet<Index.Record> productNameSet = new TreeSet<>();
         PdfBoxPageGraphics g2 = new PdfBoxPageGraphics(new PDDocument(), pdFontService, null, null);
+        g2.setFont(INDEX_CONTENT_FONT);
         for (Page page: pages) {
             for (Box box: page.getBoxes()) {
-                String title = getProductNameForIndex(g2, box.getTitle());
-                productNameSet.add(new Index.Record(title, page.getPageNumber()));
                 for (Box.Article article: box.getArticles()) {
+                    String title = getProductNameForIndex(g2, article, userRequest);
+                    productNameSet.add(new Index.Record(title, page.getPageNumber()));
                     index.getProductNumberIndex().add(new Index.Record(article.getNumber(), page.getPageNumber()));
                 }
             }
@@ -50,9 +58,14 @@ public class IndexEngine {
         return index;
     }
 
-    private String getProductNameForIndex(PdfBoxPageGraphics g2, String boxTitle) {
-        final String[] splitTitle = util.splitGraphicsText(g2, INDEX_CONTENT_FONT, boxTitle,
-                indexPageRenderer.calculateKeySplitWidth(IndecesRenderer.PRODUCT_NAME_BOX_COLUMN_NB));
-        return removeEnd(removeEnd(splitTitle[0], ","), ";");
+    private String getProductNameForIndex(PdfBoxPageGraphics g2, Box.Article article, UserRequest userRequest) {
+        final String boxIndexName = stripToEmpty(article.getIndexName());
+        final int indexStringWidth = g2.getStringWidth(boxIndexName);
+        if (indexStringWidth > indexPageRenderer.calculateKeySplitWidth(IndecesRenderer.PRODUCT_NAME_BOX_COLUMN_NB)) {
+            final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
+            userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
+                    "A tárgymutató szövege hosszabb, mint amennyi kifér a boxba: " + boxIndexName);
+        }
+        return boxIndexName;
     }
 }

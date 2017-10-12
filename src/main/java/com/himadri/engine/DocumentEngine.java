@@ -38,7 +38,7 @@ public class DocumentEngine {
         final List<Box> boxes = boxCollectorEngine.collectBoxes(itemsPerProductGroupPerBox, userRequest);
         final List<Page> pages = pageCollectorEngine.createPages(boxes, userRequest.getCatalogueTitle());
         final TableOfContent tableOfContent = tableOfContentEngine.createTableOfContent(pages);
-        final Index index = indexEngine.createIndex(pages);
+        final Index index = indexEngine.createIndex(pages, userRequest);
         userSessionCache.getIfPresent(userRequest.getRequestId()).setTotalPageCount(
                  1 + pages.size() +
                 (int) Math.ceil((double) index.getProductNumberIndex().size() / (IndecesRenderer.MAX_BOX_ROW_NB * IndecesRenderer.PRODUCT_NB_BOX_COLUMN_NB)) +

@@ -5,8 +5,10 @@ import com.opencsv.bean.CsvBindByName;
 public class Item {
     @CsvBindByName(required = true)
     private String cikkszam;
-    @CsvBindByName(required = true)
-    private String cikknev;
+    @CsvBindByName
+    private String dtpmegnevezes;
+    @CsvBindByName
+    private String leiras;
     @CsvBindByName
     private String cikkfajta;
     @CsvBindByName(required = true)
@@ -28,13 +30,9 @@ public class Item {
     @CsvBindByName
     private String me;
     @CsvBindByName
-    private String cikkcsopsorrend;
-    @CsvBindByName
-    private Long cikksorrend;
-    @CsvBindByName
     private String kepnev;
     @CsvBindByName
-    private String gyartokepnev;
+    private String targymutato;
 
     public Item() {
     }
@@ -47,12 +45,20 @@ public class Item {
         this.cikkszam = cikkszam;
     }
 
-    public String getCikknev() {
-        return cikknev;
+    public String getDtpmegnevezes() {
+        return dtpmegnevezes;
     }
 
-    public void setCikknev(String cikknev) {
-        this.cikknev = cikknev;
+    public void setDtpmegnevezes(String dtpmegnevezes) {
+        this.dtpmegnevezes = dtpmegnevezes;
+    }
+
+    public String getLeiras() {
+        return leiras;
+    }
+
+    public void setLeiras(String leiras) {
+        this.leiras = leiras;
     }
 
     public String getCikkfajta() {
@@ -135,22 +141,6 @@ public class Item {
         this.me = me;
     }
 
-    public String getCikkcsopsorrend() {
-        return cikkcsopsorrend;
-    }
-
-    public void setCikkcsopsorrend(String cikkcsopsorrend) {
-        this.cikkcsopsorrend = cikkcsopsorrend;
-    }
-
-    public Long getCikksorrend() {
-        return cikksorrend;
-    }
-
-    public void setCikksorrend(Long cikksorrend) {
-        this.cikksorrend = cikksorrend;
-    }
-
     public String getKepnev() {
         return kepnev;
     }
@@ -159,11 +149,11 @@ public class Item {
         this.kepnev = kepnev;
     }
 
-    public String getGyartokepnev() {
-        return gyartokepnev;
+    public String getTargymutato() {
+        return targymutato;
     }
 
-    public void setGyartokepnev(String gyartokepnev) {
-        this.gyartokepnev = gyartokepnev;
+    public void setTargymutato(String targymutato) {
+        this.targymutato = targymutato;
     }
 }
