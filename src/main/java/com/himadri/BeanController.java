@@ -7,6 +7,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.himadri.engine.CatalogueReader;
 import com.himadri.engine.CatalogueReaderWithOpenCsv;
+import com.himadri.engine.ItemCategorizerEngine;
 import com.himadri.model.service.UserSession;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -16,6 +17,7 @@ import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 
@@ -29,9 +31,17 @@ public class BeanController {
             "ttf", new TTFParser(),
             "otf", new OTFParser());
 
+    @Value("${itemCategorizerEngineClass}")
+    private String itemCategorizerEngineClass;
+
     @Bean
     public CatalogueReader catalogueReader() {
         return new CatalogueReaderWithOpenCsv();
+    }
+
+    @Bean
+    public ItemCategorizerEngine itemCategorizerEngine() throws Exception {
+        return (ItemCategorizerEngine) Class.forName(itemCategorizerEngineClass).newInstance();
     }
 
     @Bean

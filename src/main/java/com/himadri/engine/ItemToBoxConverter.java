@@ -3,6 +3,7 @@ package com.himadri.engine;
 import com.google.common.cache.Cache;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
+import com.himadri.engine.ItemCategorizerEngine.BoxItems;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
@@ -44,10 +45,10 @@ public class ItemToBoxConverter {
         pdfBoxGraphics = new PdfBoxPageGraphics(new PDDocument(), pdFontService, null, null);
     }
 
-    public List<Box> createBox(List<Item> items, int indexOfProductGroup, UserRequest userRequest) {
-        final String boxTitle = getBoxTitle(items, userRequest);
-        List<Box.Article> articleList = items.stream().map(item -> convertItemToArticle(item, userRequest)).collect(Collectors.toList());
-        Item firstItem = items.get(0);
+    public List<Box> createBox(BoxItems items, int indexOfProductGroup, String productGroupName, UserRequest userRequest) {
+        final String boxTitle = getBoxTitle(items.getItems(), userRequest);
+        List<Box.Article> articleList = items.getItems().stream().map(item -> convertItemToArticle(item, userRequest)).collect(Collectors.toList());
+        Item firstItem = items.getItems().get(0);
         int articleStart = 0;
         final List<Box> boxList = new ArrayList<>();
         while (articleStart < articleList.size()) {
@@ -62,7 +63,7 @@ public class ItemToBoxConverter {
             }
             String brandImage = isNotBlank(firstItem.getGyarto()) ? stripToEmpty(firstItem.getGyarto()) + PSD_EXTENSION : null;
             boxList.add(new Box(firstItem.getCikkszam() + PSD_EXTENSION, brandImage, boxTitle,
-                    stripToEmpty(firstItem.getCikkfajta()), firstItem.getCikkcsoportnev(), indexOfProductGroup,
+                    stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
                     Math.max(1, requiredOccupiedSpace.getBoxSize()),
                     articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle())));
 

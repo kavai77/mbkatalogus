@@ -61,7 +61,7 @@ public class RestController {
         executorService.submit(() -> {
             try {
                 final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);
-                final Document document = documentEngine.createDocumentFromItems(items, userRequest);
+                final Document document = documentEngine.createDocumentFromItems(items, userRequest, userSession);
                 documentRenderer.renderDocument(document, userRequest);
             } catch (ValidationException e) {
                 userSession.addErrorItem(e);

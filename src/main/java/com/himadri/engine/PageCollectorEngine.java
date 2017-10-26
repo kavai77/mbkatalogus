@@ -41,7 +41,7 @@ public class PageCollectorEngine {
         final Box firstBox = pageBoxes.get(0);
         final int pageNumber = pageList.size() + 1;
         Page page = new Page(title, firstBox.getProductGroup(), pageNumber,
-                pageNumber % 2 == 0 ? Page.Orientation.RIGHT : Page.Orientation.LEFT, pageBoxes);
+                pageNumber % 2 == 0 ? Page.Orientation.LEFT : Page.Orientation.RIGHT, pageBoxes);
         pageList.add(page);
     }
 }

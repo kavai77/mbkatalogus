@@ -1,28 +1,42 @@
 package com.himadri.engine;
 
+import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.Item;
-import org.springframework.stereotype.Component;
+import com.himadri.model.service.UserSession;
 
-import java.util.*;
+import java.util.List;
 
-import static org.apache.commons.lang3.StringUtils.*;
+public interface ItemCategorizerEngine {
+    List<ProductGroup> itemsPerProductGroupPerBox(List<Item> items, UserSession userSession) throws ValidationException;
 
-@Component
-public class ItemCategorizerEngine {
-    public Collection<Collection<List<Item>>> itemsPerProductGroupPerBox(List<Item> items) {
-        Map<String, Map<String, List<Item>>> product = new LinkedHashMap<>();
-        for (Item item: items) {
-            final String productGroupName = stripToEmpty(item.getCikkcsoportnev());
-            product.putIfAbsent(productGroupName, new LinkedHashMap<>());
-            Map<String, List<Item>> productGroupMap = product.get(productGroupName);
-            final String productPictureKey = isNotBlank(item.getKepnev()) ? strip(item.getKepnev()) : UUID.randomUUID().toString();
-            productGroupMap.putIfAbsent(productPictureKey, new ArrayList<>());
-            productGroupMap.get(productPictureKey).add(item);
+    class ProductGroup {
+        private final String name;
+        private final List<BoxItems> boxes;
+
+
+        public ProductGroup(String name, List<BoxItems> boxes) {
+            this.name = name;
+            this.boxes = boxes;
         }
 
+        public String getName() {
+            return name;
+        }
 
-        Map<String, Collection<List<Item>>> retValue = new LinkedHashMap<>();
-        product.forEach((k, v) -> retValue.put(k, v.values()));
-        return retValue.values();
+        public List<BoxItems> getBoxes() {
+            return boxes;
+        }
+    }
+
+    class BoxItems {
+        private final List<Item> items;
+
+        public BoxItems(List<Item> items) {
+            this.items = items;
+        }
+
+        public List<Item> getItems() {
+            return items;
+        }
     }
 }
