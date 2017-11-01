@@ -7,16 +7,19 @@ public class UserRequest {
     private final InputStream csvInputStream;
     private final String catalogueTitle;
     private final boolean draftMode;
+    private final boolean pressPageMode;
     private final boolean wholeSaleFormat;
     private final boolean autoLineBreakAfterMinQty;
     private final int skipBoxSpaceOnBeginning;
 
     public UserRequest(String requestId, InputStream csvInputStream, String catalogueTitle, boolean draftMode,
-                       boolean wholeSaleFormat, boolean autoLineBreakAfterMinQty, int skipBoxSpaceOnBeginning) {
+                       boolean pressPageMode, boolean wholeSaleFormat, boolean autoLineBreakAfterMinQty,
+                       int skipBoxSpaceOnBeginning) {
         this.requestId = requestId;
         this.csvInputStream = csvInputStream;
         this.catalogueTitle = catalogueTitle;
         this.draftMode = draftMode;
+        this.pressPageMode = pressPageMode;
         this.wholeSaleFormat = wholeSaleFormat;
         this.autoLineBreakAfterMinQty = autoLineBreakAfterMinQty;
         this.skipBoxSpaceOnBeginning = skipBoxSpaceOnBeginning;
@@ -36,6 +39,10 @@ public class UserRequest {
 
     public boolean isDraftMode() {
         return draftMode;
+    }
+
+    public boolean isPressPageMode() {
+        return pressPageMode;
     }
 
     public boolean isWholeSaleFormat() {

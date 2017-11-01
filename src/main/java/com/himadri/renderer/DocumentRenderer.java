@@ -12,6 +12,7 @@ import com.himadri.model.service.UserSession;
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import static org.apache.commons.lang3.StringUtils.*;
 @Component
 public class DocumentRenderer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentRenderer.class);
+
     @Autowired
     private TableOfContentRenderer tableOfContentRenderer;
 
@@ -73,10 +75,12 @@ public class DocumentRenderer {
         int previousDocumentStartPage = 1;
         int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
-        final MemoryUsageSetting memUsageSetting = MemoryUsageSetting.setupMixed(100 * 2 ^ 20);
+        final MemoryUsageSetting memUsageSetting = userRequest.isDraftMode() ?
+                MemoryUsageSetting.setupMainMemoryOnly() : MemoryUsageSetting.setupTempFileOnly();
         memUsageSetting.setTempDir(new File(renderingLocation));
         PDDocument doc = new PDDocument(memUsageSetting);
-        renderPDFPage(doc, userSession, g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
+        renderPDFPage(doc, userSession, userRequest.isPressPageMode(),
+                g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
         userSession.incrementCurrentPageNumber();
         for (int i = 0; i < document.getPages().size(); i++) {
             if (i > 0 && i % pagesPerDocument == 0) {
@@ -86,7 +90,8 @@ public class DocumentRenderer {
             }
             final Page page = document.getPages().get(i);
             LOGGER.debug("Rendering page:" + page.getPageNumber());
-            renderPDFPage(doc, userSession, g -> pageRenderer.drawPage(g, page, userRequest));
+            renderPDFPage(doc, userSession, userRequest.isPressPageMode(),
+                    g -> pageRenderer.drawPage(g, page, userRequest));
             userSession.incrementCurrentPageNumber();
             if (userSession.isCancelled()) {
                 break;
@@ -102,8 +107,13 @@ public class DocumentRenderer {
                 userSession.isCancelled() ? "A dokumentum készítés megszakítva" : "A dokumentum készítés kész.");
     }
 
-    private void renderPDFPage(PDDocument doc, UserSession userRequest, Consumer<PdfBoxPageGraphics> consumer) throws IOException {
-        PdfBoxPageGraphics graphics = new PdfBoxPageGraphics(doc, pdFontService, pdColorTranslator, userRequest);
+    private void renderPDFPage(PDDocument doc, UserSession userSession, boolean pressPageMode,
+                               Consumer<PdfBoxPageGraphics> consumer) throws IOException {
+        final PDRectangle pageSize = Util.getStandardPageSize(pressPageMode);
+        PdfBoxPageGraphics graphics = new PdfBoxPageGraphics(doc, pageSize, pdFontService, pdColorTranslator, userSession);
+        if (pressPageMode) {
+            Util.pressTranslateAndDrawCuttingEdges(graphics);
+        }
         consumer.accept(graphics);
         graphics.closeStream();
     }

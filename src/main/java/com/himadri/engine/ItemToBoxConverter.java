@@ -12,7 +12,6 @@ import com.himadri.model.service.UserSession;
 import com.himadri.renderer.BoxRenderer;
 import com.himadri.renderer.Util;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +41,7 @@ public class ItemToBoxConverter {
 
     @PostConstruct
     public void init() {
-        pdfBoxGraphics = new PdfBoxPageGraphics(new PDDocument(), pdFontService, null, null);
+        pdfBoxGraphics = PdfBoxPageGraphics.createForStringWidthCalculation(pdFontService);
     }
 
     public List<Box> createBox(BoxItems items, int indexOfProductGroup, String productGroupName, UserRequest userRequest) {

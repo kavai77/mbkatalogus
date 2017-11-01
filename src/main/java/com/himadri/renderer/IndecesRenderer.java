@@ -8,6 +8,7 @@ import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Index;
 import com.himadri.model.service.UserSession;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -51,9 +52,10 @@ public class IndecesRenderer {
         while (startIndex < productNumberIndex.size()) {
             final int pageBoxes = Math.min(MAX_BOX_ROW_NB * PRODUCT_NB_BOX_COLUMN_NB, productNumberIndex.size() - startIndex);
             final int rows = (int) Math.ceil((double) pageBoxes / PRODUCT_NB_BOX_COLUMN_NB);
-            PdfBoxPageGraphics g2 = new PdfBoxPageGraphics(doc, pdFontService, pdColorTranslator, userSession);
+            final PDRectangle pageSize = Util.getStandardPageSize(userRequest.isPressPageMode());
+            PdfBoxPageGraphics g2 = new PdfBoxPageGraphics(doc, pageSize, pdFontService, pdColorTranslator, userSession);
             indexPageRenderer.renderIndex(g2, productNumberIndex, startIndex, indexProductNb, indexPageNb,
-                    userRequest.getCatalogueTitle(), indexTitle, rows, PRODUCT_NB_BOX_COLUMN_NB);
+                    userRequest, indexTitle, rows, PRODUCT_NB_BOX_COLUMN_NB);
             g2.closeStream();
             startIndex += pageBoxes;
             userSession.incrementCurrentPageNumber();
@@ -67,9 +69,10 @@ public class IndecesRenderer {
         while (startIndex < productNameIndex.size()) {
             final int pageBoxes = Math.min(MAX_BOX_ROW_NB * PRODUCT_NAME_BOX_COLUMN_NB, productNameIndex.size() - startIndex);
             final int rows = (int) Math.ceil((double) pageBoxes / PRODUCT_NAME_BOX_COLUMN_NB);
-            PdfBoxPageGraphics g2 = new PdfBoxPageGraphics(doc, pdFontService, pdColorTranslator, userSession);
+            final PDRectangle pageSize = Util.getStandardPageSize(userRequest.isPressPageMode());
+            PdfBoxPageGraphics g2 = new PdfBoxPageGraphics(doc, pageSize, pdFontService, pdColorTranslator, userSession);
             indexPageRenderer.renderIndex(g2, productNameIndex, startIndex, null, null,
-                    userRequest.getCatalogueTitle(), subjectIndexTitle, rows, PRODUCT_NAME_BOX_COLUMN_NB);
+                    userRequest, subjectIndexTitle, rows, PRODUCT_NAME_BOX_COLUMN_NB);
             g2.closeStream();
             startIndex += pageBoxes;
             userSession.incrementCurrentPageNumber();

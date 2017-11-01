@@ -89,6 +89,6 @@ public class PageCollectorEngineTest {
     }
 
     private UserRequest createUserRequestWithSkipBox(int skip) {
-        return new UserRequest(null, null, null, false, false, false, skip);
+        return new UserRequest(null, null, null, false, false, false, false, skip);
     }
 }

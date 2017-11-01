@@ -13,7 +13,6 @@ import com.himadri.renderer.IndecesRenderer;
 import com.himadri.renderer.IndexPageRenderer;
 import com.himadri.renderer.Util;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +41,7 @@ public class IndexEngine {
     public Index createIndex(List<Page> pages, UserRequest userRequest) {
         Index index = new Index();
         SortedSet<Index.Record> productNameSet = new TreeSet<>();
-        PdfBoxPageGraphics g2 = new PdfBoxPageGraphics(new PDDocument(), pdFontService, null, null);
+        PdfBoxPageGraphics g2 = PdfBoxPageGraphics.createForStringWidthCalculation(pdFontService);
         g2.setFont(INDEX_CONTENT_FONT);
         for (Page page: pages) {
             for (Box box: page.getBoxes()) {

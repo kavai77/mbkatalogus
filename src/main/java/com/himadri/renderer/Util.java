@@ -3,6 +3,7 @@ package com.himadri.renderer;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +16,13 @@ import java.util.List;
 
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.StringUtils.splitByWholeSeparator;
+import static org.apache.pdfbox.pdmodel.common.PDRectangle.A4;
 
 @Component
 public class Util {
+    private static final int PRESS_PAGE_MARGIN = 20;
+    private static final float PRESS_CUT_EDGE = 13;
+
     private static Logger LOG = LoggerFactory.getLogger(Util.class);
 
     public static final String FORCE_LINE_BREAK_CHARACTERS = ";;";
@@ -64,5 +69,35 @@ public class Util {
             }
         }
         return lines.toArray(new String[lines.size()]);
+    }
+
+    public static PDRectangle getStandardPageSize(boolean pressPageMode) {
+        return pressPageMode ?
+                new PDRectangle(A4.getWidth() + 2 * PRESS_PAGE_MARGIN, A4.getHeight() + 2 * PRESS_PAGE_MARGIN) :
+                A4;
+    }
+
+    public static void pressTranslateAndDrawCuttingEdges(PdfBoxPageGraphics g2) {
+        // translate
+        g2.transform(PRESS_PAGE_MARGIN, PRESS_PAGE_MARGIN);
+
+        g2.setStrokingColor(Color.BLACK);
+        g2.setLineWidth(.5f);
+
+        // left up corner
+        g2.drawLineByWidth(-PRESS_PAGE_MARGIN, 0, PRESS_CUT_EDGE, 0);
+        g2.drawLineByWidth(0, -PRESS_PAGE_MARGIN, 0, PRESS_CUT_EDGE);
+
+        // left down corner
+        g2.drawLineByWidth(-PRESS_PAGE_MARGIN, A4.getHeight(), PRESS_CUT_EDGE, 0);
+        g2.drawLineByWidth(0, A4.getHeight() + PRESS_PAGE_MARGIN - PRESS_CUT_EDGE, 0, PRESS_CUT_EDGE);
+
+        // right up corner
+        g2.drawLineByWidth(A4.getWidth() + PRESS_PAGE_MARGIN - PRESS_CUT_EDGE, 0, PRESS_CUT_EDGE, 0);
+        g2.drawLineByWidth(A4.getWidth(), -PRESS_PAGE_MARGIN, 0, PRESS_CUT_EDGE);
+
+        // right down corner
+        g2.drawLineByWidth(A4.getWidth() + PRESS_PAGE_MARGIN - PRESS_CUT_EDGE, A4.getHeight(), PRESS_CUT_EDGE, 0);
+        g2.drawLineByWidth(A4.getWidth(), A4.getHeight() + PRESS_PAGE_MARGIN - PRESS_CUT_EDGE, 0, PRESS_CUT_EDGE);
     }
 }

@@ -19,7 +19,6 @@ import java.util.Map;
 public class PageRenderer {
     private static final int WIDTH = (int) Math.round(PDRectangle.A4.getWidth());
     private static final int HEIGHT = (int) Math.round(PDRectangle.A4.getHeight());
-    private static final int OVERFLOW = 10;
     private static final int MARGIN_TOP = 30;
     private static final int MARGIN_BOTTOM = 20;
     public static final int BOX_ROWS_PER_PAGE = 8;
@@ -65,18 +64,19 @@ public class PageRenderer {
         g2.drawLine(marginLeft + BOX_WIDTH, MARGIN_TOP,marginLeft + BOX_WIDTH, HEIGHT - MARGIN_BOTTOM);
 
         // draw the frame
+        int edgeOverFlow = userRequest.isPressPageMode() ? 10 : 0;
         if (page.getOrientation() == Page.Orientation.LEFT) {
-            g2.drawLine(marginLeft, MARGIN_TOP, WIDTH + OVERFLOW, MARGIN_TOP);
+            g2.drawLine(marginLeft, MARGIN_TOP, WIDTH + edgeOverFlow, MARGIN_TOP);
             g2.drawLine(marginLeft, MARGIN_TOP, marginLeft, HEIGHT-MARGIN_BOTTOM);
-            g2.drawLine(marginLeft, HEIGHT-MARGIN_BOTTOM, WIDTH + OVERFLOW, HEIGHT-MARGIN_BOTTOM);
+            g2.drawLine(marginLeft, HEIGHT-MARGIN_BOTTOM, WIDTH + edgeOverFlow, HEIGHT-MARGIN_BOTTOM);
             g2.setNonStrokingColor(mainColor);
-            g2.fillRect(-OVERFLOW, -OVERFLOW, 30 + OVERFLOW, 700 + OVERFLOW);
+            g2.fillRect(-edgeOverFlow, -edgeOverFlow, 30 + edgeOverFlow, 700 + edgeOverFlow);
         } else {
-            g2.drawLine(-OVERFLOW, MARGIN_TOP, WIDTH-marginRight, MARGIN_TOP);
+            g2.drawLine(-edgeOverFlow, MARGIN_TOP, WIDTH-marginRight, MARGIN_TOP);
             g2.drawLine(WIDTH-marginRight, MARGIN_TOP, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM);
-            g2.drawLine(-OVERFLOW, HEIGHT-MARGIN_BOTTOM, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM);
+            g2.drawLine(-edgeOverFlow, HEIGHT-MARGIN_BOTTOM, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM);
             g2.setNonStrokingColor(mainColor);
-            g2.fillRect(WIDTH - 30, -OVERFLOW, 30 + OVERFLOW, 700 + OVERFLOW);
+            g2.fillRect(WIDTH - 30, -edgeOverFlow, 30 + edgeOverFlow, 700 + edgeOverFlow);
         }
 
         // drawing page number

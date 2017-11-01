@@ -3,6 +3,7 @@ package com.himadri.graphics.pdfbox;
 import com.himadri.model.service.UserSession;
 import org.apache.fontbox.ttf.TTFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.junit.Before;
@@ -31,7 +32,7 @@ public class PdfBoxGraphicsTest {
 
     @Before
     public void setUp() throws Exception {
-        sut = new PdfBoxPageGraphics(document, pdFontService, pdColorTranslator, userSession);
+        sut = new PdfBoxPageGraphics(document, PDRectangle.A4, pdFontService, pdColorTranslator, userSession);
     }
 
     @Test

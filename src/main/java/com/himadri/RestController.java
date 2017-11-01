@@ -50,14 +50,15 @@ public class RestController {
     public RequestId csvRendering(@RequestParam MultipartFile file,
                                   @RequestParam String title,
                                   @RequestParam boolean draftMode,
+                                  @RequestParam boolean pressPageMode,
                                   @RequestParam boolean wholeSaleFormat,
                                   @RequestParam boolean autoLineBreakAfterMinQty,
                                   @RequestParam int skipBoxSpaceOnBeginning) throws IOException {
         String id = UUID.randomUUID().toString();
         final UserSession userSession = new UserSession();
         userSessionCache.put(id, userSession);
-        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, draftMode, wholeSaleFormat,
-                autoLineBreakAfterMinQty, skipBoxSpaceOnBeginning);
+        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, draftMode, pressPageMode,
+                wholeSaleFormat, autoLineBreakAfterMinQty, skipBoxSpaceOnBeginning);
         executorService.submit(() -> {
             try {
                 final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);

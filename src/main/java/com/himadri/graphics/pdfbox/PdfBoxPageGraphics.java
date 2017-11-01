@@ -35,15 +35,16 @@ public class PdfBoxPageGraphics {
     private PDFont currentFont;
     private float currentFontSize;
 
-    public PdfBoxPageGraphics(PDDocument document, PDFontService fontService, PDColorTranslator colorTranslator,
+    public PdfBoxPageGraphics(PDDocument document, PDRectangle pageSize,
+                              PDFontService fontService, PDColorTranslator colorTranslator,
                               @Nullable UserSession userSession) {
         this.document = document;
         this.fontService = fontService;
-        this.pageHeight = PDRectangle.A4.getHeight();
+        this.pageHeight = pageSize.getHeight();
         this.colorTranslator = colorTranslator;
         this.userSession = userSession;
 
-        final PDPage page = new PDPage(PDRectangle.A4);
+        final PDPage page = new PDPage(pageSize);
         document.addPage(page);
 
         try {
@@ -51,6 +52,10 @@ public class PdfBoxPageGraphics {
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
         }
+    }
+
+    public static PdfBoxPageGraphics createForStringWidthCalculation(PDFontService fontService) {
+        return new PdfBoxPageGraphics(new PDDocument(), new PDRectangle(0, 0), fontService, null, null);
     }
 
     public PDDocument getDocument() {
@@ -122,10 +127,6 @@ public class PdfBoxPageGraphics {
         return getStringWidth(currentFont, currentFontSize, text);
     }
 
-    public int getStringWidth(Font font, String text) {
-        return getStringWidth(fontService.getPDFont(document, font), font.getSize2D(), text);
-    }
-
     public int getStringWidth(PDFont pdFont, float fontSize, String text) {
         try {
             return Math.round(pdFont.getStringWidth(removeSpecialCharacters(pdFont, text)) / 1000f * fontSize);
@@ -151,6 +152,10 @@ public class PdfBoxPageGraphics {
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
         }
+    }
+
+    public void drawLineByWidth(float x1, float y1, float width, float height) {
+        drawLine(x1, y1, x1 + width, y1 + height);
     }
 
 

@@ -1,5 +1,6 @@
 package com.himadri.renderer;
 
+import com.himadri.dto.UserRequest;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Index;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.util.List;
 
 @Component
 public class IndexPageRenderer {
@@ -22,14 +24,18 @@ public class IndexPageRenderer {
     @Autowired
     private Util util;
 
-    public void renderIndex(PdfBoxPageGraphics g2, java.util.List<Index.Record> content, int from,
+    public void renderIndex(PdfBoxPageGraphics g2, List<Index.Record> content, int from,
                             String keyName, String valueName,
-                            String catalogueTitle, String indexName,
+                            UserRequest userRequest, String indexName,
                             int rowNb, int columnNb) {
+        if (userRequest.isPressPageMode()) {
+            Util.pressTranslateAndDrawCuttingEdges(g2);
+        }
+
         // drawing catalogue title
         g2.setNonStrokingColor(Color.lightGray);
         g2.setFont(Fonts.PAGE_CATALOGUE_TITLE_FONT);
-        g2.drawString(catalogueTitle, MARGIN_LEFT_RIGHT, MARGIN_TOP - 15);
+        g2.drawString(userRequest.getCatalogueTitle(), MARGIN_LEFT_RIGHT, MARGIN_TOP - 15);
 
         //drawing index name
         g2.setNonStrokingColor(Color.lightGray);

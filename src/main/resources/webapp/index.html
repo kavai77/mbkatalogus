@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="/lib/bootstrap.min.css">
-    <link rel="stylesheet" href="/main.css">
-    <script src="/lib/angular.min.js"></script>
-    <script src="/lib/ui-bootstrap.min.js"></script>
-    <script src="/lib/ui-bootstrap-tpls.min.js"></script>
+    <link rel="stylesheet" href="lib/bootstrap.min.css">
+    <link rel="stylesheet" href="main.css">
+    <script src="lib/angular.min.js"></script>
+    <script src="lib/ui-bootstrap.min.js"></script>
+    <script src="lib/ui-bootstrap-tpls.min.js"></script>
     <script src="ng-file-upload.min.js"></script>
     <script src="main.js"></script>
 
@@ -37,14 +37,23 @@
                 <legend>Minőség</legend>
                 <div class="form-check">
                     <label class="form-check-label">
-                        <input type="radio" class="form-check-input" ng-model="draftMode" value="true">
-                        Előnézet (képek nélkül, egy PDF dokumentumban)
+                        <input type="radio" class="form-check-input" ng-model="quality" value="0">
+                        Előnézet
+                        <small class="form-text text-muted">képek nélkül, egy PDF dokumentumban</small>
+                    </label>
+                </div>
+                <div class="form-check" style="display: none">
+                    <label class="form-check-label">
+                        <input type="radio" class="form-check-input" ng-model="quality" value="1">
+                        Webes
+                        <small class="form-text text-muted">minden tartalommal, közepes méret, vágójelek nélkül, egy PDF dokumentumban</small>
                     </label>
                 </div>
                 <div class="form-check">
                     <label class="form-check-label">
-                        <input type="radio" class="form-check-input" ng-model="draftMode" value="false">
-                        Nyomdai (minden tartalommal, nagy méret, több PDF dokumentumra tördelve)
+                        <input type="radio" class="form-check-input" ng-model="quality" value="2">
+                        Nyomdai
+                        <small class="form-text text-muted">minden tartalommal, nagy méret, kifutással, vágójelekkel, több PDF dokumentumra tördelve</small>
                     </label>
                 </div>
             </fieldset>
@@ -116,8 +125,8 @@
     <div ng-repeat="errorItem in errorItems" ng-class="errorStyle[errorItem.severity]" ng-hide="hiddenErrorItems[errorItem.category] || hiddenErrorItems[errorItem.severity]">{{errorItem.message}}</div>
 </div>
 
-<script src="/lib/jquery-3.1.1.slim.min.js"></script>
-<script src="/lib/tether.min.js"></script>
-<script src="/lib/bootstrap.min.js"></script>
+<script src="lib/jquery-3.1.1.slim.min.js"></script>
+<script src="lib/tether.min.js"></script>
+<script src="lib/bootstrap.min.js"></script>
 </body>
 </html>
