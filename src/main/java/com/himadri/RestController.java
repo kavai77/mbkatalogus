@@ -30,6 +30,8 @@ import java.util.concurrent.Executors;
 @RequestMapping("/service")
 public class RestController {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestController.class);
+    private static final ValidationException TERMINATED_EXCEPTION = new ValidationException(
+            ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "A generálás hiba miatt megszakadt.");
 
     @Autowired
     private CatalogueReader catalogueReader;
@@ -66,8 +68,10 @@ public class RestController {
                 documentRenderer.renderDocument(document, userRequest);
             } catch (ValidationException e) {
                 userSession.addErrorItem(e);
+                userSession.addErrorItem(TERMINATED_EXCEPTION);
             } catch (IOException e) {
                 userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "IO hiba történt: " + e.getMessage());
+                userSession.addErrorItem(TERMINATED_EXCEPTION);
                 LOGGER.error("IOException in main worker thread", e);
             } catch (Throwable e) {
                 StringBuilder sb = new StringBuilder();
@@ -75,6 +79,7 @@ public class RestController {
                     sb.append(i.getMessage()).append(' ');
                 }
                 userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.RUNTIME, "Ismeretlen hiba történt: " + sb.toString());
+                userSession.addErrorItem(TERMINATED_EXCEPTION);
                 LOGGER.error("Unexpected exception in main worker thread", e);
             } finally {
                 userSession.setDone();
