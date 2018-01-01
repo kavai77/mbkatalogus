@@ -3,25 +3,23 @@ package com.himadri.renderer;
 import com.google.common.cache.Cache;
 import com.google.common.primitives.Floats;
 import com.himadri.dto.UserRequest;
+import com.himadri.exception.ImageNotFoundException;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.service.UserSession;
+import com.himadri.renderer.imageloader.ImageLoader;
+import com.himadri.renderer.imageloader.ImageLoaderServiceRegistry;
 import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +30,8 @@ import static com.himadri.dto.ErrorItem.Severity.ERROR;
 import static com.himadri.dto.ErrorItem.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
 import static java.lang.Math.min;
-import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.join;
 
 @Component
 public class BoxRenderer {
@@ -52,9 +51,6 @@ public class BoxRenderer {
     private static final float MAX_SPACE_PER_PAGE = PageRenderer.BOX_ROWS_PER_PAGE * BOX_HEIGHT;
 
     @Autowired
-    private LogoImageCache logoImageCache;
-
-    @Autowired
     private Cache<String, UserSession> userSessionCache;
     
     @Autowired
@@ -63,63 +59,46 @@ public class BoxRenderer {
     @Autowired
     private PDFontService fontService;
 
-    @Value("${imageLocation}")
-    private String imageLocation;
+    @Autowired
+    private ImageLoaderServiceRegistry imageLoaderServiceRegistry;
 
     @Value("${logoImageLocation}")
     private String logoImageLocation;
-
-    @PostConstruct
-    public void init() {
-        File imageLocationFile = new File(imageLocation);
-        if (!imageLocationFile.exists() || !imageLocationFile.isDirectory()) {
-            throw new RuntimeException(String.format("The configured path for image location %s does not exist", imageLocation));
-        }
-
-        File logoImageLocationFile = new File(logoImageLocation);
-        if (!logoImageLocationFile.exists() || !logoImageLocationFile.isDirectory()) {
-            throw new RuntimeException(String.format("The configured path for logo image location %s does not exist", logoImageLocation));
-        }
-    }
 
     public void drawBox(PdfBoxPageGraphics g2, Box box, UserRequest userRequest) {
         final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
-        if (isNotBlank(box.getImage())) {
-            final File imageFile = new File(imageLocation, stripToEmpty(box.getImage()));
-            if (!imageFile.exists() || !imageFile.isFile()) {
-                userSession.addErrorItem(WARN, IMAGE, "Nem található a kép: " + box.getImage());
-            } else if (!userRequest.isDraftMode()) {
-                try (InputStream fis = new FileInputStream(imageFile)) {
-                    BufferedImage image = ImageIO.read(fis);
-                    float scale = min(1f, min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight()));
-                    float posX = (TEXT_BOX_X - image.getWidth() * scale) / 2;
-                    float posY = (BOX_HEIGHT - image.getHeight() * scale) / 2;
-                    g2.drawImage(image, posX, posY, image.getWidth() * scale, image.getHeight() * scale);
-                } catch (IOException e) {
-                    userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
-                            box.getImage(), e.getMessage()));
-                    LOGGER.error("Could not paint image {}", box, e);
-                }
+        PDImageXObject image = null;
+        final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
+        try {
+            image = imageLoader.loadImage(box, g2.getDocument());
+            if (image != null) {
+                float scale = min(1f, min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight()));
+                float posX = (TEXT_BOX_X - image.getWidth() * scale) / 2;
+                float posY = (BOX_HEIGHT - image.getHeight() * scale) / 2;
+                g2.drawImage(image, posX, posY, image.getWidth() * scale, image.getHeight() * scale);
             }
+        } catch (ImageNotFoundException e) {
+            userSession.addErrorItem(WARN, IMAGE, "Nem található a kép: " + box.getImage());
+        } catch (IOException e) {
+            userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a képet: %s. Hibaüzenet: %s",
+                    box.getImage(), e.getMessage()));
+            LOGGER.error("Could not paint image {}", box, e);
         }
 
         // draw the logo
-        if (isNotBlank(box.getBrandImage())) {
-            final File logoImageFile = new File(logoImageLocation, box.getBrandImage());
-            if (!logoImageFile.exists() || !logoImageFile.isFile()) {
-                userSession.addErrorItem(WARN, IMAGE, "Nem található a logo file kép: " + box.getBrandImage());
-            } else if (!userRequest.isDraftMode()) {
-                try {
-                    BufferedImage logoImage = logoImageCache.getLogoImage(logoImageFile);
-                    float scale = min(1f, min(LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth(), LOGO_IMAGE_HEIGHT_MAX / logoImage.getHeight()));
-                    g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
-                } catch (IOException e) {
-                    userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
-                            box.getImage(), e.getMessage()));
-                    LOGGER.error("Could not paint logo image", e);
-                }
+        if (isNotBlank(box.getBrandImage()) && image != null) {
+            try {
+                PDImageXObject logoImage = imageLoader.loadLogoImage(box, g2.getDocument());
+                float scale = min(1f, min(LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth(), LOGO_IMAGE_HEIGHT_MAX / logoImage.getHeight()));
+                g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
+            } catch (ImageNotFoundException e) {
+                userSession.addErrorItem(WARN, IMAGE, "Nem található a logo kép: " + box.getBrandImage());
+            } catch (IOException e) {
+                userSession.addErrorItem(ERROR, IMAGE, String.format("Nem lehetett kirajzolni a logo képet: %s. Hibaüzenet: %s",
+                        box.getBrandImage(), e.getMessage()));
+                LOGGER.error("Could not paint logo image {}", box, e);
             }
         }
 
@@ -218,6 +197,8 @@ public class BoxRenderer {
         g2.drawLine(BOX_START, box.getOccupiedSpace() * BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH,
                 box.getOccupiedSpace() * BOX_HEIGHT);
     }
+
+
 
     public RequiredOccupiedSpace calculateRequiredOccupiedSpace(PdfBoxPageGraphics g2, List<Box.Article> articles, int articleStartIndex) {
         final BoxPositions boxPositions = calculateBoxPositions(g2, articles);

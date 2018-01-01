@@ -31,6 +31,8 @@ public class Item {
     private String kepnev;
     @CsvBindByName
     private String targymutato;
+    @CsvBindByName
+    private String webkepnev;
 
     public Item() {
     }
@@ -145,5 +147,13 @@ public class Item {
 
     public void setTargymutato(String targymutato) {
         this.targymutato = targymutato;
+    }
+
+    public String getWebkepnev() {
+        return webkepnev;
+    }
+
+    public void setWebkepnev(String webkepnev) {
+        this.webkepnev = webkepnev;
     }
 }

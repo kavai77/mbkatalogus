@@ -1,7 +1,7 @@
 var app=angular.module('app', ['ngFileUpload', 'ui.bootstrap']);
 
 app.controller('controller', function($scope, Upload, $interval, $http) {
-    $scope.quality = "0";
+    $scope.quality = "DRAFT";
     $scope.wholeSaleFormat = "true";
     $scope.autoLineBreakAfterMinQty = false;
     $scope.skipBoxSpaceOnBeginning = 0;
@@ -23,27 +23,12 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             $scope.errorMessage = "Maximálisan 15 boxot hagyhatsz ki."
             return;
         }
-        var draftMode, pressPageMode;
-        switch ($scope.quality) {
-            case "0":
-                draftMode = true;
-                pressPageMode = false;
-                break;
-            case "1":
-                draftMode = true;
-                pressPageMode = true;
-                break;
-            case "2":
-                draftMode = false;
-                pressPageMode = true;
-        }
         Upload.upload({
             url: '/service/csvRendering',
             data: {
                 'file': $scope.catalogueCsvFile,
                 'title': $scope.catalogueTitle,
-                'draftMode': draftMode,
-                'pressPageMode': pressPageMode,
+                'quality': $scope.quality,
                 'wholeSaleFormat': $scope.wholeSaleFormat,
                 'autoLineBreakAfterMinQty': $scope.autoLineBreakAfterMinQty,
                 'skipBoxSpaceOnBeginning': $scope.skipBoxSpaceOnBeginning,

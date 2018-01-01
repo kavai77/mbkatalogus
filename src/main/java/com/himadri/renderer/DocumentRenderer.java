@@ -9,6 +9,8 @@ import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
+import com.himadri.renderer.imageloader.ImageLoader;
+import com.himadri.renderer.imageloader.ImageLoaderServiceRegistry;
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -48,6 +50,9 @@ public class DocumentRenderer {
     @Autowired
     private PDColorTranslator pdColorTranslator;
 
+    @Autowired
+    private ImageLoaderServiceRegistry imageLoaderServiceRegistry;
+
     @Value("${renderingLocation}")
     private String renderingLocation;
 
@@ -73,13 +78,12 @@ public class DocumentRenderer {
 
     public void renderDocument(Document document, UserRequest userRequest) throws IOException {
         int previousDocumentStartPage = 1;
-        int pagesPerDocument = userRequest.isDraftMode() ? Integer.MAX_VALUE : pagesPerDocumentInQualityMode;
+        int pagesPerDocument = userRequest.getQuality().isSplitIntoMultiplePDFs() ?  pagesPerDocumentInQualityMode : Integer.MAX_VALUE;
         UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
-        final MemoryUsageSetting memUsageSetting = userRequest.isDraftMode() ?
-                MemoryUsageSetting.setupMainMemoryOnly() : MemoryUsageSetting.setupTempFileOnly();
-        memUsageSetting.setTempDir(new File(renderingLocation));
+        final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
+        final MemoryUsageSetting memUsageSetting = imageLoader.getMemoryUsageSettings();
         PDDocument doc = new PDDocument(memUsageSetting);
-        renderPDFPage(doc, userSession, userRequest.isPressPageMode(),
+        renderPDFPage(doc, userSession, userRequest.getQuality().isDrawCuttingEdges(),
                 g2 -> tableOfContentRenderer.renderTableOfContent(g2, document.getTableOfContent()));
         userSession.incrementCurrentPageNumber();
         for (int i = 0; i < document.getPages().size(); i++) {
@@ -90,7 +94,7 @@ public class DocumentRenderer {
             }
             final Page page = document.getPages().get(i);
             LOGGER.debug("Rendering page:" + page.getPageNumber());
-            renderPDFPage(doc, userSession, userRequest.isPressPageMode(),
+            renderPDFPage(doc, userSession, userRequest.getQuality().isDrawCuttingEdges(),
                     g -> pageRenderer.drawPage(g, page, userRequest));
             userSession.incrementCurrentPageNumber();
             if (userSession.isCancelled()) {
@@ -107,11 +111,11 @@ public class DocumentRenderer {
                 userSession.isCancelled() ? "A dokumentum készítés megszakítva" : "A dokumentum készítés kész.");
     }
 
-    private void renderPDFPage(PDDocument doc, UserSession userSession, boolean pressPageMode,
+    private void renderPDFPage(PDDocument doc, UserSession userSession, boolean shouldDrawCuttingEdges,
                                Consumer<PdfBoxPageGraphics> consumer) throws IOException {
-        final PDRectangle pageSize = Util.getStandardPageSize(pressPageMode);
+        final PDRectangle pageSize = Util.getStandardPageSize(shouldDrawCuttingEdges);
         PdfBoxPageGraphics graphics = new PdfBoxPageGraphics(doc, pageSize, pdFontService, pdColorTranslator, userSession);
-        if (pressPageMode) {
+        if (shouldDrawCuttingEdges) {
             Util.pressTranslateAndDrawCuttingEdges(graphics);
         }
         consumer.accept(graphics);

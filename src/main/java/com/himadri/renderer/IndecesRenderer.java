@@ -52,7 +52,7 @@ public class IndecesRenderer {
         while (startIndex < productNumberIndex.size()) {
             final int pageBoxes = Math.min(MAX_BOX_ROW_NB * PRODUCT_NB_BOX_COLUMN_NB, productNumberIndex.size() - startIndex);
             final int rows = (int) Math.ceil((double) pageBoxes / PRODUCT_NB_BOX_COLUMN_NB);
-            final PDRectangle pageSize = Util.getStandardPageSize(userRequest.isPressPageMode());
+            final PDRectangle pageSize = Util.getStandardPageSize(userRequest.getQuality().isDrawCuttingEdges());
             PdfBoxPageGraphics g2 = new PdfBoxPageGraphics(doc, pageSize, pdFontService, pdColorTranslator, userSession);
             indexPageRenderer.renderIndex(g2, productNumberIndex, startIndex, indexProductNb, indexPageNb,
                     userRequest, indexTitle, rows, PRODUCT_NB_BOX_COLUMN_NB);
@@ -69,7 +69,7 @@ public class IndecesRenderer {
         while (startIndex < productNameIndex.size()) {
             final int pageBoxes = Math.min(MAX_BOX_ROW_NB * PRODUCT_NAME_BOX_COLUMN_NB, productNameIndex.size() - startIndex);
             final int rows = (int) Math.ceil((double) pageBoxes / PRODUCT_NAME_BOX_COLUMN_NB);
-            final PDRectangle pageSize = Util.getStandardPageSize(userRequest.isPressPageMode());
+            final PDRectangle pageSize = Util.getStandardPageSize(userRequest.getQuality().isDrawCuttingEdges());
             PdfBoxPageGraphics g2 = new PdfBoxPageGraphics(doc, pageSize, pdFontService, pdColorTranslator, userSession);
             indexPageRenderer.renderIndex(g2, productNameIndex, startIndex, null, null,
                     userRequest, subjectIndexTitle, rows, PRODUCT_NAME_BOX_COLUMN_NB);

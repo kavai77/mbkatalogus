@@ -28,7 +28,7 @@ public class IndexPageRenderer {
                             String keyName, String valueName,
                             UserRequest userRequest, String indexName,
                             int rowNb, int columnNb) {
-        if (userRequest.isPressPageMode()) {
+        if (userRequest.getQuality().isDrawCuttingEdges()) {
             Util.pressTranslateAndDrawCuttingEdges(g2);
         }
 

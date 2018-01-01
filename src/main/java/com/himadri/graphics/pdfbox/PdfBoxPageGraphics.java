@@ -11,7 +11,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
-import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.util.Matrix;
 import org.slf4j.Logger;
@@ -137,7 +137,15 @@ public class PdfBoxPageGraphics {
 
     public void drawImage(BufferedImage bufferedImage, float x, float y, float width, float height) {
         try {
-            final PDImageXObject pdImageXObject = LosslessFactory.createFromImage(document, bufferedImage);
+            final PDImageXObject pdImageXObject = JPEGFactory.createFromImage(document, bufferedImage);
+            drawImage(pdImageXObject, x, y, width, height);
+        } catch (IOException e) {
+            throw new PdfBoxGraphicsException(e);
+        }
+    }
+
+    public void drawImage(PDImageXObject pdImageXObject, float x, float y, float width, float height) {
+        try {
             contentStream.drawImage(pdImageXObject, x, pageHeight - y - height, width, height);
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);

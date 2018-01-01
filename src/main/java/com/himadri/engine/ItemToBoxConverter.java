@@ -11,6 +11,8 @@ import com.himadri.model.rendering.Item;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.BoxRenderer;
 import com.himadri.renderer.Util;
+import com.himadri.renderer.imageloader.ImageLoader;
+import com.himadri.renderer.imageloader.ImageLoaderServiceRegistry;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,6 +39,9 @@ public class ItemToBoxConverter {
     @Autowired
     PDFontService pdFontService;
 
+    @Autowired
+    ImageLoaderServiceRegistry imageLoaderServiceRegistry;
+
     private PdfBoxPageGraphics pdfBoxGraphics;
 
     @PostConstruct
@@ -50,6 +55,7 @@ public class ItemToBoxConverter {
         Item firstItem = items.getItems().get(0);
         int articleStart = 0;
         final List<Box> boxList = new ArrayList<>();
+        final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
         while (articleStart < articleList.size()) {
             final BoxRenderer.RequiredOccupiedSpace requiredOccupiedSpace = boxRenderer.calculateRequiredOccupiedSpace(
                     pdfBoxGraphics, articleList, articleStart);
@@ -61,7 +67,8 @@ public class ItemToBoxConverter {
                 return Collections.emptyList();
             }
             String brandImage = isNotBlank(firstItem.getGyarto()) ? stripToEmpty(firstItem.getGyarto()) + PSD_EXTENSION : null;
-            boxList.add(new Box(stripToEmpty(firstItem.getKepnev()), brandImage, boxTitle,
+            final String imageName = imageLoader.getImageName(firstItem);
+            boxList.add(new Box(imageName, brandImage, boxTitle,
                     stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
                     Math.max(1, requiredOccupiedSpace.getBoxSize()),
                     articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle())));

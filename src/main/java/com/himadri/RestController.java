@@ -1,10 +1,7 @@
 package com.himadri;
 
 import com.google.common.cache.Cache;
-import com.himadri.dto.ErrorItem;
-import com.himadri.dto.RequestId;
-import com.himadri.dto.UserPollingInfo;
-import com.himadri.dto.UserRequest;
+import com.himadri.dto.*;
 import com.himadri.engine.CatalogueReader;
 import com.himadri.engine.DocumentEngine;
 import com.himadri.exception.ValidationException;
@@ -51,15 +48,14 @@ public class RestController {
     @ResponseBody
     public RequestId csvRendering(@RequestParam MultipartFile file,
                                   @RequestParam String title,
-                                  @RequestParam boolean draftMode,
-                                  @RequestParam boolean pressPageMode,
+                                  @RequestParam Quality quality,
                                   @RequestParam boolean wholeSaleFormat,
                                   @RequestParam boolean autoLineBreakAfterMinQty,
                                   @RequestParam int skipBoxSpaceOnBeginning) throws IOException {
         String id = UUID.randomUUID().toString();
         final UserSession userSession = new UserSession();
         userSessionCache.put(id, userSession);
-        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, draftMode, pressPageMode,
+        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, quality,
                 wholeSaleFormat, autoLineBreakAfterMinQty, skipBoxSpaceOnBeginning);
         executorService.submit(() -> {
             try {

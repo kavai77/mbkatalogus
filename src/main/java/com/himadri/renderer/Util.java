@@ -71,8 +71,8 @@ public class Util {
         return lines.toArray(new String[lines.size()]);
     }
 
-    public static PDRectangle getStandardPageSize(boolean pressPageMode) {
-        return pressPageMode ?
+    public static PDRectangle getStandardPageSize(boolean shouldDrawCuttingEdges) {
+        return shouldDrawCuttingEdges ?
                 new PDRectangle(A4.getWidth() + 2 * PRESS_PAGE_MARGIN, A4.getHeight() + 2 * PRESS_PAGE_MARGIN) :
                 A4;
     }

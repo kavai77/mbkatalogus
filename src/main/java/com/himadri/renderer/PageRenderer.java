@@ -64,7 +64,7 @@ public class PageRenderer {
         g2.drawLine(marginLeft + BOX_WIDTH, MARGIN_TOP,marginLeft + BOX_WIDTH, HEIGHT - MARGIN_BOTTOM);
 
         // draw the frame
-        int edgeOverFlow = userRequest.isPressPageMode() ? 10 : 0;
+        int edgeOverFlow = userRequest.getQuality().isDrawCuttingEdges() ? 10 : 0;
         if (page.getOrientation() == Page.Orientation.LEFT) {
             g2.drawLine(marginLeft, MARGIN_TOP, WIDTH + edgeOverFlow, MARGIN_TOP);
             g2.drawLine(marginLeft, MARGIN_TOP, marginLeft, HEIGHT-MARGIN_BOTTOM);
