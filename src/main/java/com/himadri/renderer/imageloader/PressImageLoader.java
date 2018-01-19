@@ -43,6 +43,9 @@ public class PressImageLoader implements ImageLoader {
                     public PDImageXObject load(LogoImageKey imageKey) throws IOException {
                         LOGGER.info("Loading logo file: {}", imageKey.getLogoImage().getAbsolutePath());
                         final BufferedImage image = ImageIO.read(imageKey.getLogoImage());
+                        if (image == null) {
+                            throw new IOException("ImageIO.read is null");
+                        }
                         return LosslessFactory.createFromImage(imageKey.getPdDocument(), image);
                     }
                 });
@@ -64,6 +67,9 @@ public class PressImageLoader implements ImageLoader {
         }
         try (InputStream fis = new FileInputStream(imageFile)) {
             final BufferedImage image = ImageIO.read(fis);
+            if (image == null) {
+                throw new IOException("ImageIO.read is null");
+            }
             return LosslessFactory.createFromImage(document, image);
         }
     }

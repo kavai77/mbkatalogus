@@ -119,6 +119,9 @@ public class WebImageLoader implements ImageLoader {
             return JPEGFactory.createFromByteArray(document, content);
         } else {
             final BufferedImage image = ImageIO.read(new ByteArrayInputStream(content));
+            if (image == null) {
+                throw new IOException("ImageIO.read is null");
+            }
             return LosslessFactory.createFromImage(document, image);
         }
     }
