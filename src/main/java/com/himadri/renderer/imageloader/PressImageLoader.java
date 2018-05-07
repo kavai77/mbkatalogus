@@ -8,6 +8,7 @@ import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Item;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
@@ -66,11 +67,15 @@ public class PressImageLoader implements ImageLoader {
             throw new ImageNotFoundException();
         }
         try (InputStream fis = new FileInputStream(imageFile)) {
-            final BufferedImage image = ImageIO.read(fis);
-            if (image == null) {
-                throw new IOException("ImageIO.read is null");
+            if (endsWithAny(lowerCase(imageFile.getName()), ".jpg", ".jpeg")) {
+                return JPEGFactory.createFromStream(document, fis);
+            } else {
+                final BufferedImage image = ImageIO.read(fis);
+                if (image == null) {
+                    throw new IOException("ImageIO.read is null");
+                }
+                return LosslessFactory.createFromImage(document, image);
             }
-            return LosslessFactory.createFromImage(document, image);
         }
     }
 
