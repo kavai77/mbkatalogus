@@ -115,7 +115,7 @@ public class WebImageLoader implements ImageLoader {
     }
 
     private PDImageXObject createPDImageXObject(Box box, PDDocument document, byte[] content) throws IOException {
-        if (endsWithIgnoreCase(box.getImage(), ".jpg")) {
+        if (endsWithAny(lowerCase(box.getImage()), ".jpg", ".jpeg")) {
             return JPEGFactory.createFromByteArray(document, content);
         } else {
             final BufferedImage image = ImageIO.read(new ByteArrayInputStream(content));
