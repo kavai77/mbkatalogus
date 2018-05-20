@@ -1,5 +1,6 @@
 package com.himadri;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -79,6 +80,11 @@ public class BeanController {
                         return PDType0Font.load(key.pdDocument, key.trueTypeFont, true);
                     }
                 });
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 
     public static class PDDocumentTrueTypeFont {

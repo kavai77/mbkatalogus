@@ -61,6 +61,14 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
         $http.get('/service/cancel?requestId=' + $scope.requestId);
     }
 
+    $http.get('/service/indexbootstrap').then(
+        function successCallback(response){
+            $scope.pageTitle = response.data.pageTitle;
+        }, function errorCallback(response) {
+            console.log(JSON.stringify(response));
+        }
+    );
+
     $scope.errorStyle = new Object();
     $scope.errorStyle["INFO"] = "alert alert-success";
     $scope.errorStyle["WARN"] = "alert alert-warning";

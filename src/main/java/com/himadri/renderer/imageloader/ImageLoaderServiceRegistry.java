@@ -27,11 +27,15 @@ public class ImageLoaderServiceRegistry {
     @Value("${logoImageLocation}")
     String logoImageLocation;
 
+    @Value("${persistenceLocation}")
+    String persistenceLocation;
+
     @PostConstruct
     public void init() {
         validateDirectory(imageLocation, "imageLocation");
         validateDirectory(logoImageLocation, "logoImageLocation");
         validateDirectory(webImageCacheLocation, "webImageCacheLocation");
+        validateDirectory(persistenceLocation, "persistenceLocation");
 
         qualityImageLoaderMap.put(Quality.DRAFT, new DraftImageLoader());
         qualityImageLoaderMap.put(Quality.WEB, new WebImageLoader(webImageURLPrefix, webImageCacheLocation, logoImageLocation));

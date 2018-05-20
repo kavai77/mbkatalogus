@@ -1,0 +1,28 @@
+spring:
+  profiles: szerszam
+instance: szerszam
+pageTitle: Szerszám Katalógus
+pdfLang: hu
+---
+spring:
+  profiles: bio
+instance: bio
+pageTitle: Bio Katalógus
+pdfLang: hu
+---
+spring:
+  profiles: szerb
+instance: szerb
+pageTitle: Szerb Katalógus
+pdfLang: sr
+---
+spring:
+  profiles: test
+instance: test
+pageTitle: Teszt Mód
+pdfLang: hu
+imageLocation: ../cikkek
+logoImageLocation: ../logok
+renderingLocation: ../render
+webImageCacheLocation: ../cache
+persistenceLocation: ../db

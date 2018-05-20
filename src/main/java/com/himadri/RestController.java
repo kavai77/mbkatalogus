@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.himadri.dto.*;
 import com.himadri.engine.CatalogueReader;
 import com.himadri.engine.DocumentEngine;
+import com.himadri.engine.PersistenceService;
 import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Item;
@@ -12,6 +13,7 @@ import com.himadri.renderer.DocumentRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +43,12 @@ public class RestController {
 
     @Autowired
     private Cache<String, UserSession> userSessionCache;
+
+    @Autowired
+    private PersistenceService persistenceService;
+
+    @Value("${pageTitle}")
+    private String pageTitle;
 
     private ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -99,6 +107,14 @@ public class RestController {
             userSession.setCancelled();
         }
         return ResponseEntity.ok(null);
+    }
+
+    @GetMapping("/indexbootstrap")
+    @ResponseBody
+    public IndexBootStrap indexBootStrap() {
+        return new IndexBootStrap()
+                    .setPageTitle(pageTitle)
+                    .setLastDocumentTitle(persistenceService.getInstanceProperties().getLastCatalogueName());
     }
 
 }

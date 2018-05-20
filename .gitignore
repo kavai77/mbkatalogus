@@ -4,3 +4,4 @@ target/
 *.ttf
 *.otf
 *.iml
+start.sh
