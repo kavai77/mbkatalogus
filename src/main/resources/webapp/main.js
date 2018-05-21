@@ -65,6 +65,7 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             $scope.wholeSaleFormat = response.data.lastWholeSaleFormat != null ? response.data.lastWholeSaleFormat : "true";
             $scope.autoLineBreakAfterMinQty = response.data.lastAutoLineBreakAfterMinQty;
             $scope.skipBoxSpaceOnBeginning = response.data.lastSkipBoxSpaceOnBeginning;
+            $scope.productGroupsWithoutChapter = response.data.productGroupsWithoutChapter;
         }, function errorCallback(response) {
             $scope.quality = "DRAFT";
             $scope.wholeSaleFormat = "true";
@@ -91,5 +92,39 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             }
             $scope.errorItems.push(errorItems[i]);
         }
+    }
+
+    $scope.addProductGroup = function() {
+        var productGroup = prompt("Cikkcsoport neve");
+        if (productGroup != null) {
+            $scope.productGroupsWithoutChapter.push(productGroup);
+        }
+    }
+
+    $scope.removeProductGroup = function(productGroup) {
+        var index = $scope.productGroupsWithoutChapter.indexOf(productGroup);
+        if (index > -1) {
+            $scope.productGroupsWithoutChapter.splice(index, 1);
+        }
+    }
+
+    $scope.saveProductGroups = function() {
+        $http.post('/service/saveproductgroupwithoutchapter', $scope.productGroupsWithoutChapter).then(
+            function successCallback(response){
+                $('#productGroupsWithoutChapterModal').modal('hide');
+            }, function errorCallback(response) {
+                alert("Hiba történt mentés során");
+                console.log(JSON.stringify(response));
+            }
+        );
+    }
+
+    $scope.reloadProductGroups = function() {
+        $('#productGroupsWithoutChapterModal').modal('hide');
+        $http.get('/service/indexbootstrap').then(
+            function successCallback(response) {
+                $scope.productGroupsWithoutChapter = response.data.productGroupsWithoutChapter;
+            }
+        );
     }
 });

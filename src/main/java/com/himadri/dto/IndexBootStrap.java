@@ -1,5 +1,7 @@
 package com.himadri.dto;
 
+import java.util.List;
+
 public class IndexBootStrap {
     private String pageTitle;
     private String lastDocumentTitle;
@@ -7,6 +9,7 @@ public class IndexBootStrap {
     private String lastWholeSaleFormat;
     private boolean lastAutoLineBreakAfterMinQty;
     private int lastSkipBoxSpaceOnBeginning;
+    private List<String> productGroupsWithoutChapter;
 
     public String getPageTitle() {
         return pageTitle;
@@ -35,7 +38,7 @@ public class IndexBootStrap {
         return this;
     }
 
-    public String isLastWholeSaleFormat() {
+    public String getLastWholeSaleFormat() {
         return lastWholeSaleFormat;
     }
 
@@ -59,6 +62,15 @@ public class IndexBootStrap {
 
     public IndexBootStrap setLastSkipBoxSpaceOnBeginning(int lastSkipBoxSpaceOnBeginning) {
         this.lastSkipBoxSpaceOnBeginning = lastSkipBoxSpaceOnBeginning;
+        return this;
+    }
+
+    public List<String> getProductGroupsWithoutChapter() {
+        return productGroupsWithoutChapter;
+    }
+
+    public IndexBootStrap setProductGroupsWithoutChapter(List<String> productGroupsWithoutChapter) {
+        this.productGroupsWithoutChapter = productGroupsWithoutChapter;
         return this;
     }
 }

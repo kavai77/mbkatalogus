@@ -88,6 +88,11 @@
                 <input type="file" ngf-select ng-model="catalogueCsvFile" id="catalogueCsvFile">
                 <a href="help.pdf" target="_blank">Segítség a CSV formátumhoz</a>
             </div>
+            <div class="form-group">
+                <a href data-toggle="modal" data-target="#productGroupsWithoutChapterModal">
+                    Fejezet nélküli cikkcsoportok
+                </a>
+            </div>
             <button type="submit" class="btn btn-primary">Katalógus Készítés</button>
         </form>
     </div>
@@ -124,6 +129,37 @@
         </label>
     </div>
     <div ng-repeat="errorItem in errorItems" ng-class="errorStyle[errorItem.severity]" ng-hide="hiddenErrorItems[errorItem.category] || hiddenErrorItems[errorItem.severity]">{{errorItem.message}}</div>
+</div>
+
+<div class="modal fade" id="productGroupsWithoutChapterModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Fejezet nélküli cikkcsoportok</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <small>Ezekhez a cikkcsoportokhoz tartozó cikkek bárhol lehetnek a CSV dokumentumban,
+                    nem szükséges, hogy sorban legyenek</small>
+                <p><ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                        ng-repeat="productGroup in productGroupsWithoutChapter">
+                        {{productGroup}}
+                        <a href ng-click="removeProductGroup(productGroup)">
+                            <img src="img/glyphicons-198-remove-circle.png">
+                        </a>
+                    </li>
+                </ul></p>
+                <button type="button" class="btn btn-outline-primary" ng-click="addProductGroup()">Hozzáad</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" ng-click="reloadProductGroups()">Mégsem</button>
+                <button type="button" class="btn btn-primary" ng-click="saveProductGroups()">Mentés</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="lib/jquery-3.1.1.slim.min.js"></script>

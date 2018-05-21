@@ -131,7 +131,15 @@ public class RestController {
                     .setLastQuality(instanceProperties.getLastQuality())
                     .setLastWholeSaleFormat(instanceProperties.isLastWholeSaleFormat() != null ? instanceProperties.isLastWholeSaleFormat().toString() : null)
                     .setLastAutoLineBreakAfterMinQty(instanceProperties.isLastAutoLineBreakAfterMinQty())
-                    .setLastSkipBoxSpaceOnBeginning(instanceProperties.getLastSkipBoxSpaceOnBeginning());
+                    .setLastSkipBoxSpaceOnBeginning(instanceProperties.getLastSkipBoxSpaceOnBeginning())
+                    .setProductGroupsWithoutChapter(instanceProperties.getProductGroupsWithoutChapter());
+    }
+
+    @PostMapping("/saveproductgroupwithoutchapter")
+    public ResponseEntity<?> saveProductGroupWithoutChapter(@RequestBody List<String> productGroupWithoutChapter) {
+        persistenceService.getInstanceProperties().setProductGroupsWithoutChapter(productGroupWithoutChapter);
+        persistenceService.persistInstanceProperties();
+        return ResponseEntity.ok(null);
     }
 
 }
