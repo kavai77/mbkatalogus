@@ -1,2 +1,0 @@
-# Custom PropertySource Loaders
-org.springframework.boot.env.PropertySourceLoader=com.himadri.UnicodePropertiesPropertySourceLoader

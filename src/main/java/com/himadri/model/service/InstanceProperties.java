@@ -10,7 +10,7 @@ public class InstanceProperties {
     private Boolean lastWholeSaleFormat;
     private boolean lastAutoLineBreakAfterMinQty;
     private int lastSkipBoxSpaceOnBeginning;
-    private List<String> productsWithoutChapter;
+    private List<String> productGroupsWithoutChapter;
 
     public String getLastCatalogueName() {
         return lastCatalogueName;
@@ -20,12 +20,12 @@ public class InstanceProperties {
         this.lastCatalogueName = lastCatalogueName;
     }
 
-    public List<String> getProductsWithoutChapter() {
-        return productsWithoutChapter;
+    public List<String> getProductGroupsWithoutChapter() {
+        return productGroupsWithoutChapter;
     }
 
-    public void setProductsWithoutChapter(List<String> productsWithoutChapter) {
-        this.productsWithoutChapter = productsWithoutChapter;
+    public void setProductGroupsWithoutChapter(List<String> productGroupsWithoutChapter) {
+        this.productGroupsWithoutChapter = productGroupsWithoutChapter;
     }
 
     public Quality getLastQuality() {

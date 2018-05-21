@@ -7,7 +7,7 @@ import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.Item;
 import com.himadri.model.service.UserSession;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 
@@ -16,11 +16,13 @@ import static com.himadri.dto.ErrorItem.Severity.ERROR;
 import static org.apache.commons.lang3.StringUtils.*;
 
 public class StrictItemCategorizerEngine implements ItemCategorizerEngine {
-    @Value("#{'${productGroupsWithoutChapter}'.split(';')}")
-    private Set<String> productGroupSetWithoutChapter;
+    @Autowired
+    private PersistenceService persistenceService;
 
     @Override
     public List<ProductGroup> itemsPerProductGroupPerBox(List<Item> items, UserSession userSession) throws ValidationException {
+        Set<String> productGroupSetWithoutChapter = new HashSet<>(
+                persistenceService.getInstanceProperties().getProductGroupsWithoutChapter());
         List<ProductGroup> productGroups = new ArrayList<>();
         Optional<String> firstProductGroupName = items.stream()
                 .map(this::getProductGroupName)
