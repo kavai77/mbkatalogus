@@ -11,13 +11,14 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.*;
 
+import static com.himadri.renderer.Util.validateDirectory;
+
 @Service
 public class PersistenceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistenceService.class);
 
-
-    @Value("${persistenceLocation}")
-    private String persistenceLocation;
+    @Value("${dbLocation}")
+    private String dbLocation;
 
     @Value("${instance}")
     private String instance;
@@ -31,13 +32,22 @@ public class PersistenceService {
 
     @PostConstruct
     public void init() {
-        jsonFile = new File(persistenceLocation, instance + ".json");
+        validateDirectory(dbLocation, "dbLocation");
+
+        jsonFile = new File(dbLocation, instance + ".json");
+        if (!jsonFile.exists()) {
+            try (Writer writer = new FileWriter(jsonFile)) {
+                objectMapper.writeValue(writer, new InstanceProperties());
+            } catch (IOException e) {
+                throw new RuntimeException("Could not store instanceProperties", e);
+            }
+        }
+
         try (Reader reader = new FileReader(jsonFile)) {
             instanceProperties = objectMapper.readValue(reader, InstanceProperties.class);
         } catch (IOException e) {
-            instanceProperties = new InstanceProperties();
+            throw new RuntimeException("Could load instanceProperties", e);
         }
-
     }
 
     public InstanceProperties getInstanceProperties() {

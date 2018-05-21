@@ -5,8 +5,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
 import java.util.EnumMap;
+
+import static com.himadri.renderer.Util.validateDirectory;
 
 @Component
 public class ImageLoaderServiceRegistry {
@@ -27,27 +28,15 @@ public class ImageLoaderServiceRegistry {
     @Value("${logoImageLocation}")
     String logoImageLocation;
 
-    @Value("${persistenceLocation}")
-    String persistenceLocation;
-
     @PostConstruct
     public void init() {
         validateDirectory(imageLocation, "imageLocation");
         validateDirectory(logoImageLocation, "logoImageLocation");
         validateDirectory(webImageCacheLocation, "webImageCacheLocation");
-        validateDirectory(persistenceLocation, "persistenceLocation");
 
         qualityImageLoaderMap.put(Quality.DRAFT, new DraftImageLoader());
         qualityImageLoaderMap.put(Quality.WEB, new WebImageLoader(webImageURLPrefix, webImageCacheLocation, logoImageLocation));
         qualityImageLoaderMap.put(Quality.PRESS, new PressImageLoader(imageLocation, logoImageLocation, renderingLocation));
-    }
-
-    private void validateDirectory(String location, String locationDescription) {
-        File locationFile = new File(location);
-        if (!locationFile.exists() || !locationFile.isDirectory()) {
-            throw new RuntimeException(String.format("The configured path for %s does not exist: %s",
-                    locationDescription, location));
-        }
     }
 
     public ImageLoader getImageLoader(Quality quality) {

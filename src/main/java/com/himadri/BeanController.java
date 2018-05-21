@@ -1,6 +1,7 @@
 package com.himadri;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -84,7 +85,9 @@ public class BeanController {
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        return mapper;
     }
 
     public static class PDDocumentTrueTypeFont {

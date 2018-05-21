@@ -8,6 +8,7 @@ import com.himadri.engine.PersistenceService;
 import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.Item;
+import com.himadri.model.service.InstanceProperties;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.DocumentRenderer;
 import org.slf4j.Logger;
@@ -67,6 +68,7 @@ public class RestController {
                 wholeSaleFormat, autoLineBreakAfterMinQty, skipBoxSpaceOnBeginning);
         executorService.submit(() -> {
             try {
+                saveLastUserRequest(userRequest);
                 final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);
                 final Document document = documentEngine.createDocumentFromItems(items, userRequest, userSession);
                 documentRenderer.renderDocument(document, userRequest);
@@ -93,6 +95,16 @@ public class RestController {
         return new RequestId(id);
     }
 
+    private void saveLastUserRequest(UserRequest userRequest) {
+        final InstanceProperties instanceProperties = persistenceService.getInstanceProperties();
+        instanceProperties.setLastCatalogueName(userRequest.getCatalogueTitle());
+        instanceProperties.setLastQuality(userRequest.getQuality());
+        instanceProperties.setLastWholeSaleFormat(userRequest.isWholeSaleFormat());
+        instanceProperties.setLastAutoLineBreakAfterMinQty(userRequest.isAutoLineBreakAfterMinQty());
+        instanceProperties.setLastSkipBoxSpaceOnBeginning(userRequest.getSkipBoxSpaceOnBeginning());
+        persistenceService.persistInstanceProperties();
+    }
+
     @GetMapping("/pollUserInfo")
     @ResponseBody
     public UserPollingInfo userPollingInfo(@RequestParam String requestId) {
@@ -112,9 +124,14 @@ public class RestController {
     @GetMapping("/indexbootstrap")
     @ResponseBody
     public IndexBootStrap indexBootStrap() {
+        final InstanceProperties instanceProperties = persistenceService.getInstanceProperties();
         return new IndexBootStrap()
                     .setPageTitle(pageTitle)
-                    .setLastDocumentTitle(persistenceService.getInstanceProperties().getLastCatalogueName());
+                    .setLastDocumentTitle(instanceProperties.getLastCatalogueName())
+                    .setLastQuality(instanceProperties.getLastQuality())
+                    .setLastWholeSaleFormat(instanceProperties.isLastWholeSaleFormat() != null ? instanceProperties.isLastWholeSaleFormat().toString() : null)
+                    .setLastAutoLineBreakAfterMinQty(instanceProperties.isLastAutoLineBreakAfterMinQty())
+                    .setLastSkipBoxSpaceOnBeginning(instanceProperties.getLastSkipBoxSpaceOnBeginning());
     }
 
 }

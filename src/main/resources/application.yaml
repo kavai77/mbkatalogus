@@ -23,6 +23,6 @@ pageTitle: Teszt Mód
 pdfLang: hu
 imageLocation: ../cikkek
 logoImageLocation: ../logok
-renderingLocation: ../render
+dbLocation: ../db
 webImageCacheLocation: ../cache
-persistenceLocation: ../db
+renderingLocation: target/render

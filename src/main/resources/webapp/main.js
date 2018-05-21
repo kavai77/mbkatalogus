@@ -1,10 +1,6 @@
 var app=angular.module('app', ['ngFileUpload', 'ui.bootstrap']);
 
 app.controller('controller', function($scope, Upload, $interval, $http) {
-    $scope.quality = "DRAFT";
-    $scope.wholeSaleFormat = "true";
-    $scope.autoLineBreakAfterMinQty = false;
-    $scope.skipBoxSpaceOnBeginning = 0;
     $scope.send = function() {
         $scope.errorMessage = null;
         $scope.requestId = null;
@@ -64,7 +60,16 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
     $http.get('/service/indexbootstrap').then(
         function successCallback(response){
             $scope.pageTitle = response.data.pageTitle;
+            $scope.catalogueTitle = response.data.lastDocumentTitle;
+            $scope.quality = response.data.lastQuality != null ? response.data.lastQuality : "DRAFT";
+            $scope.wholeSaleFormat = response.data.lastWholeSaleFormat != null ? response.data.lastWholeSaleFormat : "true";
+            $scope.autoLineBreakAfterMinQty = response.data.lastAutoLineBreakAfterMinQty;
+            $scope.skipBoxSpaceOnBeginning = response.data.lastSkipBoxSpaceOnBeginning;
         }, function errorCallback(response) {
+            $scope.quality = "DRAFT";
+            $scope.wholeSaleFormat = "true";
+            $scope.autoLineBreakAfterMinQty = false;
+            $scope.skipBoxSpaceOnBeginning = 0;
             console.log(JSON.stringify(response));
         }
     );

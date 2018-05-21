@@ -7,6 +7,8 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import java.io.File;
+
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 
 @SpringBootApplication
@@ -19,7 +21,7 @@ public class App extends WebMvcConfigurerAdapter {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/**").addResourceLocations("classpath:/webapp/");
         registry.addResourceHandler("/render/*").addResourceLocations("file://" +
-                appendIfMissing(renderingLocation, "/"));
+                appendIfMissing(new File(renderingLocation).getAbsolutePath(), "/"));
     }
 
     @Override

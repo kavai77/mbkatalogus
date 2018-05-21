@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +40,14 @@ public class Util {
             new Color(245, 148, 49),
             new Color(253, 236, 215)
     };
+
+    public static void validateDirectory(String location, String locationDescription) {
+        File locationFile = new File(location);
+        if (!locationFile.exists() || !locationFile.isDirectory()) {
+            throw new RuntimeException(String.format("The configured path for %s does not exist: %s",
+                    locationDescription, location));
+        }
+    }
 
     public Color getBoxMainColor(Box box) {
         return getProductGroupMainColor(box.getIndexOfProductGroup());
