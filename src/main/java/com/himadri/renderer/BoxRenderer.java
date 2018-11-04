@@ -115,7 +115,7 @@ public class BoxRenderer {
         // text boxes
         final Color grayBackground = new Color(224, 224, 244);
         boolean colorAlternate = false;
-        for (float y = TEXT_BOX_HEAD_HEIGHT; y < box.getOccupiedSpace() * BOX_HEIGHT - TEXT_BOX_LINE_HEIGHT; y+=TEXT_BOX_LINE_HEIGHT) {
+        for (float y = TEXT_BOX_HEAD_HEIGHT; y < box.getHeight() * BOX_HEIGHT - TEXT_BOX_LINE_HEIGHT; y+=TEXT_BOX_LINE_HEIGHT) {
             g2.setNonStrokingColor(colorAlternate ? Color.white : grayBackground);
             colorAlternate = !colorAlternate;
             if (y < BOX_HEIGHT) {
@@ -194,13 +194,14 @@ public class BoxRenderer {
         // bottom line
         g2.setStrokingColor(Color.lightGray);
         g2.setLineWidth(.5f);
-        g2.drawLine(BOX_START, box.getOccupiedSpace() * BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH,
-                box.getOccupiedSpace() * BOX_HEIGHT);
+        g2.drawLine(BOX_START, box.getHeight() * BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH,
+                box.getHeight() * BOX_HEIGHT);
     }
 
 
 
-    public RequiredOccupiedSpace calculateRequiredOccupiedSpace(PdfBoxPageGraphics g2, List<Box.Article> articles, int articleStartIndex) {
+    public RequiredOccupiedSpace calculateRequiredOccupiedSpace(PdfBoxPageGraphics g2, List<Box.Article> articles,
+                                                                int articleStartIndex, int availableBoxes) {
         final BoxPositions boxPositions = calculateBoxPositions(g2, articles);
         int lineCount = 0;
         float requiredSpace = TEXT_BOX_HEAD_HEIGHT;
@@ -209,8 +210,8 @@ public class BoxRenderer {
                     getSplitWidths(boxPositions, i, lineCount));
             requiredSpace += descriptionSplit.length * TEXT_BOX_LINE_HEIGHT;
             lineCount += descriptionSplit.length;
-            if (requiredSpace > MAX_SPACE_PER_PAGE) {
-                return new RequiredOccupiedSpace((int)Math.ceil((requiredSpace - descriptionSplit.length * TEXT_BOX_LINE_HEIGHT) / BOX_HEIGHT), i);
+            if (requiredSpace > availableBoxes * PageRenderer.BOX_HEIGHT) {
+                return new RequiredOccupiedSpace(availableBoxes, i);
             }
         }
         return new RequiredOccupiedSpace((int)Math.ceil(requiredSpace / BOX_HEIGHT), articles.size());

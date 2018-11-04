@@ -1,7 +1,7 @@
 package com.himadri.engine;
 
 import com.himadri.dto.UserRequest;
-import com.himadri.model.rendering.Item;
+import com.himadri.model.rendering.CsvItem;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.apache.commons.lang3.StringUtils;
 
@@ -12,9 +12,9 @@ import java.util.List;
 
 public class CatalogueReaderWithOpenCsv implements CatalogueReader {
     @Override
-    public List<Item> readWithCsvBeanReader(UserRequest userRequest) throws IOException {
-        return new CsvToBeanBuilder<Item>(new InputStreamReader(userRequest.getCsvInputStream()))
-                .withType(Item.class)
+    public List<CsvItem> readWithCsvBeanReader(UserRequest userRequest) throws IOException {
+        return new CsvToBeanBuilder<CsvItem>(new InputStreamReader(userRequest.getCsvInputStream()))
+                .withType(CsvItem.class)
                 .withOrderedResults(true)
                 .withSeparator(';')
                 .withFilter(strings -> Arrays.stream(strings).anyMatch(StringUtils::isNotBlank))

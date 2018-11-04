@@ -6,8 +6,8 @@ import com.himadri.engine.CatalogueReader;
 import com.himadri.engine.DocumentEngine;
 import com.himadri.engine.PersistenceService;
 import com.himadri.exception.ValidationException;
+import com.himadri.model.rendering.CsvItem;
 import com.himadri.model.rendering.Document;
-import com.himadri.model.rendering.Item;
 import com.himadri.model.service.InstanceProperties;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.DocumentRenderer;
@@ -69,7 +69,7 @@ public class RestController {
         executorService.submit(() -> {
             try {
                 saveLastUserRequest(userRequest);
-                final List<Item> items = catalogueReader.readWithCsvBeanReader(userRequest);
+                final List<CsvItem> items = catalogueReader.readWithCsvBeanReader(userRequest);
                 final Document document = documentEngine.createDocumentFromItems(items, userRequest, userSession);
                 documentRenderer.renderDocument(document, userRequest);
             } catch (ValidationException e) {

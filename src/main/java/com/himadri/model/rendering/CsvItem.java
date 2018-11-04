@@ -2,7 +2,7 @@ package com.himadri.model.rendering;
 
 import com.opencsv.bean.CsvBindByName;
 
-public class Item {
+public class CsvItem {
     @CsvBindByName(required = true)
     private String cikkszam;
     @CsvBindByName
@@ -34,7 +34,7 @@ public class Item {
     @CsvBindByName
     private String webkepnev;
 
-    public Item() {
+    public CsvItem() {
     }
 
     public String getCikkszam() {

@@ -3,13 +3,14 @@ package com.himadri.engine;
 import com.google.common.cache.Cache;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
-import com.himadri.engine.ItemCategorizerEngine.BoxItems;
+import com.himadri.engine.ItemCategorizerEngine.CsvItemGroup;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
-import com.himadri.model.rendering.Item;
+import com.himadri.model.rendering.CsvItem;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.BoxRenderer;
+import com.himadri.renderer.PageRenderer;
 import com.himadri.renderer.Util;
 import com.himadri.renderer.imageloader.ImageLoader;
 import com.himadri.renderer.imageloader.ImageLoaderServiceRegistry;
@@ -49,16 +50,19 @@ public class ItemToBoxConverter {
         pdfBoxGraphics = PdfBoxPageGraphics.createForStringWidthCalculation(pdFontService);
     }
 
-    public List<Box> createBox(BoxItems items, int indexOfProductGroup, String productGroupName, UserRequest userRequest) {
+    public List<Box> createBox(CsvItemGroup items, int indexOfProductGroup, String productGroupName,
+                               UserRequest userRequest, int[] availableBoxSizes) {
         final String boxTitle = getBoxTitle(items.getItems(), userRequest);
         List<Box.Article> articleList = items.getItems().stream().map(item -> convertItemToArticle(item, userRequest)).collect(Collectors.toList());
-        Item firstItem = items.getItems().get(0);
+        CsvItem firstItem = items.getItems().get(0);
         int articleStart = 0;
         final List<Box> boxList = new ArrayList<>();
         final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
         while (articleStart < articleList.size()) {
+            int availableBoxSize = boxList.size() < availableBoxSizes.length ? availableBoxSizes[boxList.size()] :
+                    PageRenderer.BOX_ROWS_PER_PAGE;
             final BoxRenderer.RequiredOccupiedSpace requiredOccupiedSpace = boxRenderer.calculateRequiredOccupiedSpace(
-                    pdfBoxGraphics, articleList, articleStart);
+                    pdfBoxGraphics, articleList, articleStart, availableBoxSize);
             if (articleStart == requiredOccupiedSpace.getIndexOfNextArticle()) {
                 final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
                 userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
@@ -70,7 +74,7 @@ public class ItemToBoxConverter {
             final String imageName = imageLoader.getImageName(firstItem);
             boxList.add(new Box(imageName, brandImage, boxTitle,
                     stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
-                    Math.max(1, requiredOccupiedSpace.getBoxSize()),
+                    1, Math.max(1, requiredOccupiedSpace.getBoxSize()),
                     articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle())));
 
             articleStart = requiredOccupiedSpace.getIndexOfNextArticle();
@@ -79,7 +83,7 @@ public class ItemToBoxConverter {
 
     }
 
-    private Box.Article convertItemToArticle(Item item, UserRequest userRequest) {
+    private Box.Article convertItemToArticle(CsvItem item, UserRequest userRequest) {
         StringBuilder descriptionBuilder = new StringBuilder();
         if (userRequest.isWholeSaleFormat()) {
             if (isNotBlank(item.getNagykerar())) {
@@ -103,9 +107,9 @@ public class ItemToBoxConverter {
                 descriptionBuilder.toString(), item.getTargymutato(), isEmpty(itemText));
     }
 
-    private String getBoxTitle(List<Item> items, UserRequest userRequest) {
+    private String getBoxTitle(List<CsvItem> items, UserRequest userRequest) {
         final String boxTitle = stripToEmpty(normalizeSpace(items.get(0).getDtpmegnevezes()));
-        List<String> wrongTitles = items.stream().map(Item::getDtpmegnevezes).map(StringUtils::stripToEmpty)
+        List<String> wrongTitles = items.stream().map(CsvItem::getDtpmegnevezes).map(StringUtils::stripToEmpty)
                 .map(StringUtils::normalizeSpace)
                 .filter(a -> !StringUtils.equalsIgnoreCase(boxTitle, a)).collect(Collectors.toList());
         if (!wrongTitles.isEmpty()) {

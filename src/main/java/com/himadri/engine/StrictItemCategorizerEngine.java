@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.himadri.dto.ErrorItem;
 import com.himadri.exception.ValidationException;
-import com.himadri.model.rendering.Item;
+import com.himadri.model.rendering.CsvItem;
 import com.himadri.model.service.UserSession;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +20,10 @@ public class StrictItemCategorizerEngine implements ItemCategorizerEngine {
     private PersistenceService persistenceService;
 
     @Override
-    public List<ProductGroup> itemsPerProductGroupPerBox(List<Item> items, UserSession userSession) throws ValidationException {
+    public List<CsvProductGroup> groupCsvItems(List<CsvItem> items, UserSession userSession) throws ValidationException {
         Set<String> productGroupSetWithoutChapter = new HashSet<>(
                 persistenceService.getInstanceProperties().getProductGroupsWithoutChapter());
-        List<ProductGroup> productGroups = new ArrayList<>();
+        List<CsvProductGroup> productGroups = new ArrayList<>();
         Optional<String> firstProductGroupName = items.stream()
                 .map(this::getProductGroupName)
                 .filter(i -> !productGroupSetWithoutChapter.contains(i))
@@ -31,23 +31,23 @@ public class StrictItemCategorizerEngine implements ItemCategorizerEngine {
         if (!firstProductGroupName.isPresent()) {
             throw new ValidationException(ERROR, FORMATTING, "Nincs egyetlen fejezet sem!");
         }
-        productGroups.add(new ProductGroup(firstProductGroupName.get(), new ArrayList<>()));
+        productGroups.add(new CsvProductGroup(firstProductGroupName.get(), new ArrayList<>()));
         Set<String> previousProductGroups = Sets.newHashSet(firstProductGroupName.get());
         Map<String, String> previousPictures = new HashMap<>();
 
         for (int i = 0; i < items.size(); i++) {
-            Item item = items.get(i);
+            CsvItem item = items.get(i);
             final String productGroupName = getProductGroupName(item);
             final String productPictureKey = getProductPictureKey(item);
             final boolean sameProductPictureWithPreviousItem = i > 0 &&
                     StringUtils.equals(productPictureKey, getProductPictureKey(items.get(i - 1)));
             if (sameProductPictureWithPreviousItem) { // same box as previous
-                if (lastItem(productGroups).getBoxes().isEmpty()) {
+                if (lastItem(productGroups).getItemGroups().isEmpty()) {
                     throw new ValidationException(ERROR, FORMATTING,
                         String.format("Két egy boxba tarozó cikknek más cikkcsoportja van: %s és %s",
                             items.get(i - 1).getCikkszam(), item.getCikkszam()));
                 }
-                lastItem(lastItem(productGroups).getBoxes()).getItems().add(item);
+                lastItem(lastItem(productGroups).getItemGroups()).getItems().add(item);
             } else { // new box
                 if (previousPictures.containsKey(productPictureKey)) {
                     userSession.addErrorItem(ErrorItem.Severity.WARN, FORMATTING,
@@ -63,21 +63,21 @@ public class StrictItemCategorizerEngine implements ItemCategorizerEngine {
                         throw new ValidationException(ERROR, FORMATTING, String.format("A %s cikk sorrendben kívül " +
                                 "áll a cikkcsoportja fejezetén: %s.", item.getCikkszam(), productGroupName));
                     }
-                    productGroups.add(new ProductGroup(productGroupName, new ArrayList<>()));
+                    productGroups.add(new CsvProductGroup(productGroupName, new ArrayList<>()));
                     previousProductGroups.add(productGroupName);
                 }
-                lastItem(productGroups).getBoxes().add(new BoxItems(Lists.newArrayList(item)));
+                lastItem(productGroups).getItemGroups().add(new CsvItemGroup(Lists.newArrayList(item)));
             }
         }
 
         return productGroups;
     }
 
-    private String getProductGroupName(Item item) {
+    private String getProductGroupName(CsvItem item) {
         return stripToEmpty(item.getCikkcsoportnev());
     }
 
-    private String getProductPictureKey(Item item) {
+    private String getProductPictureKey(CsvItem item) {
         return isNotBlank(item.getKepnev()) ? strip(item.getKepnev()) : UUID.randomUUID().toString();
     }
 

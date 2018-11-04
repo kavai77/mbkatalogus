@@ -2,7 +2,7 @@ package com.himadri.engine;
 
 import com.google.common.cache.Cache;
 import com.himadri.dto.UserRequest;
-import com.himadri.engine.ItemCategorizerEngine.ProductGroup;
+import com.himadri.engine.ItemCategorizerEngine.CsvProductGroup;
 import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.*;
 import com.himadri.model.service.UserSession;
@@ -18,9 +18,6 @@ public class DocumentEngine {
     private ItemCategorizerEngine itemCategorizerEngine;
 
     @Autowired
-    private BoxCollectorEngine boxCollectorEngine;
-
-    @Autowired
     private PageCollectorEngine pageCollectorEngine;
 
     @Autowired
@@ -32,10 +29,9 @@ public class DocumentEngine {
     @Autowired
     private Cache<String, UserSession> userSessionCache;
 
-    public Document createDocumentFromItems(List<Item> items, UserRequest userRequest, UserSession userSession) throws ValidationException {
-        final List<ProductGroup> productGroups = itemCategorizerEngine.itemsPerProductGroupPerBox(items, userSession);
-        final List<Box> boxes = boxCollectorEngine.collectBoxes(productGroups, userRequest);
-        final List<Page> pages = pageCollectorEngine.createPages(boxes, userRequest.getCatalogueTitle(), userRequest);
+    public Document createDocumentFromItems(List<CsvItem> items, UserRequest userRequest, UserSession userSession) throws ValidationException {
+        final List<CsvProductGroup> productGroups = itemCategorizerEngine.groupCsvItems(items, userSession);
+        final List<Page> pages = pageCollectorEngine.createPages(productGroups, userRequest.getCatalogueTitle(), userRequest);
         final TableOfContent tableOfContent = tableOfContentEngine.createTableOfContent(pages);
         final Index index = indexEngine.createIndex(pages, userRequest);
         userSessionCache.getIfPresent(userRequest.getRequestId()).setTotalPageCount(

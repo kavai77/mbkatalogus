@@ -5,7 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.himadri.exception.ImageNotFoundException;
 import com.himadri.model.rendering.Box;
-import com.himadri.model.rendering.Item;
+import com.himadri.model.rendering.CsvItem;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
@@ -53,7 +53,7 @@ public class PressImageLoader implements ImageLoader {
     }
 
     @Override
-    public String getImageName(Item item) {
+    public String getImageName(CsvItem item) {
         return stripToEmpty(item.getKepnev());
     }
 

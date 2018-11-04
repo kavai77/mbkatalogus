@@ -5,7 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.himadri.exception.ImageNotFoundException;
 import com.himadri.model.rendering.Box;
-import com.himadri.model.rendering.Item;
+import com.himadri.model.rendering.CsvItem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -58,7 +58,7 @@ public class WebImageLoader implements ImageLoader {
     }
 
     @Override
-    public String getImageName(Item item) {
+    public String getImageName(CsvItem item) {
         return stripToEmpty(item.getWebkepnev());
     }
 

@@ -1,41 +1,41 @@
 package com.himadri.engine;
 
 import com.himadri.exception.ValidationException;
-import com.himadri.model.rendering.Item;
+import com.himadri.model.rendering.CsvItem;
 import com.himadri.model.service.UserSession;
 
 import java.util.List;
 
 public interface ItemCategorizerEngine {
-    List<ProductGroup> itemsPerProductGroupPerBox(List<Item> items, UserSession userSession) throws ValidationException;
+    List<CsvProductGroup> groupCsvItems(List<CsvItem> items, UserSession userSession) throws ValidationException;
 
-    class ProductGroup {
+    class CsvProductGroup {
         private final String name;
-        private final List<BoxItems> boxes;
+        private final List<CsvItemGroup> itemGroups;
 
 
-        public ProductGroup(String name, List<BoxItems> boxes) {
+        public CsvProductGroup(String name, List<CsvItemGroup> itemGroups) {
             this.name = name;
-            this.boxes = boxes;
+            this.itemGroups = itemGroups;
         }
 
         public String getName() {
             return name;
         }
 
-        public List<BoxItems> getBoxes() {
-            return boxes;
+        public List<CsvItemGroup> getItemGroups() {
+            return itemGroups;
         }
     }
 
-    class BoxItems {
-        private final List<Item> items;
+    class CsvItemGroup {
+        private final List<CsvItem> items;
 
-        public BoxItems(List<Item> items) {
+        public CsvItemGroup(List<CsvItem> items) {
             this.items = items;
         }
 
-        public List<Item> getItems() {
+        public List<CsvItem> getItems() {
             return items;
         }
     }
