@@ -6,6 +6,7 @@ import com.google.common.cache.LoadingCache;
 import com.himadri.exception.ImageNotFoundException;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.CsvItem;
+import com.himadri.model.service.UserSession;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
@@ -47,6 +48,7 @@ public class PressImageLoader implements ImageLoader {
                         if (image == null) {
                             throw new IOException("ImageIO.read is null");
                         }
+                        imageKey.getUserSession().getTotalLogoImageSize().addAndGet(imageKey.getLogoImage().length());
                         return LosslessFactory.createFromImage(imageKey.getPdDocument(), image);
                     }
                 });
@@ -58,7 +60,7 @@ public class PressImageLoader implements ImageLoader {
     }
 
     @Override
-    public PDImageXObject loadImage(Box box, PDDocument document) throws IOException, ImageNotFoundException {
+    public PDImageXObject loadImage(Box box, PDDocument document, UserSession userSession) throws IOException, ImageNotFoundException {
         if (isBlank(box.getImage())) {
             return null;
         }
@@ -66,6 +68,8 @@ public class PressImageLoader implements ImageLoader {
         if (!imageFile.exists() || !imageFile.isFile()) {
             throw new ImageNotFoundException();
         }
+        userSession.getTotalImageSize().addAndGet(imageFile.length());
+        System.out.printf("Adding image %s size %d. Total length %d%n", imageFile.getName(), imageFile.length(), userSession.getTotalImageSize().get());
         try (InputStream fis = new FileInputStream(imageFile)) {
             if (endsWithAny(lowerCase(imageFile.getName()), ".jpg", ".jpeg")) {
                 return JPEGFactory.createFromStream(document, fis);
@@ -80,14 +84,14 @@ public class PressImageLoader implements ImageLoader {
     }
 
     @Override
-    public PDImageXObject loadLogoImage(Box box, PDDocument document) throws IOException, ImageNotFoundException {
+    public PDImageXObject loadLogoImage(Box box, PDDocument document, UserSession userSession) throws IOException, ImageNotFoundException {
         if (isNotBlank(box.getBrandImage())) {
             final File logoImageFile = new File(logoImageLocation, box.getBrandImage());
             if (!logoImageFile.exists() || !logoImageFile.isFile()) {
                 throw new ImageNotFoundException();
             }
             try {
-                return logoImageCache.get(new LogoImageKey(document, logoImageFile));
+                return logoImageCache.get(new LogoImageKey(document, logoImageFile, userSession));
             } catch (ExecutionException e) {
                 throw (IOException) e.getCause();
             }

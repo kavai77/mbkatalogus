@@ -94,7 +94,7 @@ public class BoxRenderer {
         final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
         final BoxMetrics m = box.getWidth() == 1 ? regularBoxMetrics : wideBoxMetrics;
         try {
-            image = imageLoader.loadImage(box, g2.getDocument());
+            image = imageLoader.loadImage(box, g2.getDocument(), userSession);
             if (image != null) {
                 float scale = min(1f, min(m.getImageWidthMax() / image.getWidth(), m.getImageHeightMax() / image.getHeight()));
                 float posX = (m.getTextBoxX() - image.getWidth() * scale) / 2;
@@ -112,7 +112,7 @@ public class BoxRenderer {
         // draw the logo
         if (isNotBlank(box.getBrandImage()) && image != null) {
             try {
-                PDImageXObject logoImage = imageLoader.loadLogoImage(box, g2.getDocument());
+                PDImageXObject logoImage = imageLoader.loadLogoImage(box, g2.getDocument(), userSession);
                 float scale = min(1f, min(m.getLogoImageWidthMax() / logoImage.getWidth(), m.getLogoImageHeightMax() / logoImage.getHeight()));
                 g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
             } catch (ImageNotFoundException e) {

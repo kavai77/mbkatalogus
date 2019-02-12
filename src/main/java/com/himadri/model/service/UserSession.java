@@ -9,6 +9,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class UserSession {
 
@@ -16,6 +17,8 @@ public class UserSession {
     private final Queue<GeneratedDocument> generatedDocuments = new ConcurrentLinkedQueue<>();
     private final AtomicInteger totalPageCount = new AtomicInteger();
     private final AtomicInteger currentPageNumber = new AtomicInteger();
+    private final AtomicLong totalImageSize = new AtomicLong();
+    private final AtomicLong totalLogoImageSize = new AtomicLong();
     private final AtomicBoolean done = new AtomicBoolean();
     private final AtomicBoolean cancelled = new AtomicBoolean();
 
@@ -77,4 +80,11 @@ public class UserSession {
         cancelled.set(true);
     }
 
+    public AtomicLong getTotalImageSize() {
+        return totalImageSize;
+    }
+
+    public AtomicLong getTotalLogoImageSize() {
+        return totalLogoImageSize;
+    }
 }

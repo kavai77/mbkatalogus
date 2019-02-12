@@ -33,6 +33,8 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             $scope.requestId = resp.data.requestId;
             $scope.totalPageCount = 0;
             $scope.currentPageNumber = 0;
+            $scope.totalLogoImageSize = "0 MB";
+            $scope.totalImageSize = "0 MB";
             stop = $interval(function() {
                 $http.get('/service/pollUserInfo?requestId=' + $scope.requestId).then(
                 function successCallback(response){
@@ -41,6 +43,8 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
                     $scope.currentPageNumber = response.data.currentPageNumber;
                     $scope.appendErrorItems(response.data.errorItems);
                     $scope.done = response.data.done;
+                    $scope.totalLogoImageSize = response.data.totalLogoImageSize;
+                    $scope.totalImageSize = response.data.totalImageSize;
                     if ($scope.done) {
                         $interval.cancel(stop);
                     }

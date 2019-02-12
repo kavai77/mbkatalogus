@@ -1,5 +1,6 @@
 package com.himadri.renderer.imageloader;
 
+import com.himadri.model.service.UserSession;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 import java.io.File;
@@ -8,10 +9,12 @@ import java.util.Objects;
 class LogoImageKey {
     private final PDDocument pdDocument;
     private final File logoImage;
+    private final UserSession userSession;
 
-    public LogoImageKey(PDDocument pdDocument, File logoImage) {
+    public LogoImageKey(PDDocument pdDocument, File logoImage, UserSession userSession) {
         this.pdDocument = pdDocument;
         this.logoImage = logoImage;
+        this.userSession = userSession;
     }
 
     public PDDocument getPdDocument() {
@@ -20,6 +23,10 @@ class LogoImageKey {
 
     public File getLogoImage() {
         return logoImage;
+    }
+
+    public UserSession getUserSession() {
+        return userSession;
     }
 
     @Override

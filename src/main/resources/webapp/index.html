@@ -105,6 +105,12 @@
         <uib-progressbar class="progress active mb-4" value="currentPageNumber" max="totalPageCount" type="success">
             <span style="white-space: nowrap;">{{currentPageNumber}} / {{totalPageCount}} oldal kirajzolva</span>
         </uib-progressbar>
+        <div>
+            Beolvasott logók mérete összesen: {{totalLogoImageSize}}
+        </div>
+        <div style="padding-bottom: 10px">
+            Beolvasott termékképek mérete összesen: {{totalImageSize}}
+        </div>
         <div ng-repeat="doc in generatedDocuments">
             <a ng-href="/render/{{doc.relativeUrl}}" target="_blank">Oldalak {{doc.displayName}}</a>
         </div>
