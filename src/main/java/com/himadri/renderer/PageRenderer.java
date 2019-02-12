@@ -17,8 +17,8 @@ import java.util.Map;
 
 @Component
 public class PageRenderer {
-    private static final int WIDTH = (int) Math.round(PDRectangle.A4.getWidth());
-    private static final int HEIGHT = (int) Math.round(PDRectangle.A4.getHeight());
+    private static final int WIDTH = Math.round(PDRectangle.A4.getWidth());
+    private static final int HEIGHT = Math.round(PDRectangle.A4.getHeight());
     private static final int MARGIN_TOP = 30;
     private static final int MARGIN_BOTTOM = 20;
     public static final int BOX_ROWS_PER_PAGE = 8;

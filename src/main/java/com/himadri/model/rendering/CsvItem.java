@@ -33,6 +33,10 @@ public class CsvItem {
     private String targymutato;
     @CsvBindByName
     private String webkepnev;
+    @CsvBindByName
+    private String szeles;
+    @CsvBindByName
+    private String uj;
 
     public CsvItem() {
     }
@@ -155,5 +159,21 @@ public class CsvItem {
 
     public void setWebkepnev(String webkepnev) {
         this.webkepnev = webkepnev;
+    }
+
+    public String getSzeles() {
+        return szeles;
+    }
+
+    public void setSzeles(String szeles) {
+        this.szeles = szeles;
+    }
+
+    public String getUj() {
+        return uj;
+    }
+
+    public void setUj(String uj) {
+        this.uj = uj;
     }
 }

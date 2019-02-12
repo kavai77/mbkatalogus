@@ -1,6 +1,7 @@
 package com.himadri.engine;
 
 import com.google.common.cache.Cache;
+import com.google.common.collect.ImmutableSet;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
 import com.himadri.engine.ItemCategorizerEngine.CsvItemGroup;
@@ -22,6 +23,7 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.*;
@@ -30,6 +32,7 @@ import static org.apache.commons.lang3.StringUtils.*;
 public class ItemToBoxConverter {
 
     private static final String PSD_EXTENSION = ".psd";
+    private static final Set<String> trueValueSet = ImmutableSet.of("i", "igen", "y", "yes", "t", "true");
 
     @Autowired
     Cache<String, UserSession> userSessionCache;
@@ -58,11 +61,15 @@ public class ItemToBoxConverter {
         int articleStart = 0;
         final List<Box> boxList = new ArrayList<>();
         final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
+        final boolean wideBox = items.getItems().stream()
+                .anyMatch(i -> trueValueSet.contains(defaultString(i.getSzeles()).toLowerCase()));
+        final boolean newProduct = items.getItems().stream()
+                .anyMatch(i -> trueValueSet.contains(defaultString(i.getUj()).toLowerCase()));
         while (articleStart < articleList.size()) {
             int availableBoxSize = boxList.size() < availableBoxSizes.length ? availableBoxSizes[boxList.size()] :
                     PageRenderer.BOX_ROWS_PER_PAGE;
-            final BoxRenderer.RequiredOccupiedSpace requiredOccupiedSpace = boxRenderer.calculateRequiredOccupiedSpace(
-                    pdfBoxGraphics, articleList, articleStart, availableBoxSize);
+            final BoxRenderer.RequiredHeight requiredOccupiedSpace = boxRenderer.calculateBoxHeight(
+                    pdfBoxGraphics, articleList, articleStart, availableBoxSize, wideBox);
             if (articleStart == requiredOccupiedSpace.getIndexOfNextArticle()) {
                 final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
                 userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
@@ -74,8 +81,9 @@ public class ItemToBoxConverter {
             final String imageName = imageLoader.getImageName(firstItem);
             boxList.add(new Box(imageName, brandImage, boxTitle,
                     stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
-                    1, Math.max(1, requiredOccupiedSpace.getBoxSize()),
-                    articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle())));
+                    wideBox ? PageRenderer.BOX_COLUMNS_PER_PAGE : 1,
+                    requiredOccupiedSpace.getBoxHeight(),
+                    newProduct, articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle())));
 
             articleStart = requiredOccupiedSpace.getIndexOfNextArticle();
         }

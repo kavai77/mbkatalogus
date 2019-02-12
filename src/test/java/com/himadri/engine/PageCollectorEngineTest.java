@@ -199,7 +199,7 @@ public class PageCollectorEngineTest {
     }
 
     private Box createBoxWithSize(char namePrefix, int index, int width, int height) {
-        return new Box(null, null, namePrefix + Integer.toString(index), null, null, 0, width, height, null);
+        return new Box(null, null, namePrefix + Integer.toString(index), null, null, 0, width, height, false, null);
     }
 
     private UserRequest createUserRequestWithSkipBox(int skip) {

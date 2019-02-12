@@ -13,10 +13,11 @@ public class Box {
     private final int height;
     private int row;
     private int column;
+    private final boolean newProduct;
     private final List<Article> articles;
 
     public Box(String image, String brandImage, String title, String category, String productGroup,
-               int indexOfProductGroup, int width, int height, List<Article> articles) {
+               int indexOfProductGroup, int width, int height, boolean newProduct, List<Article> articles) {
         this.image = image;
         this.brandImage = brandImage;
         this.title = title;
@@ -25,6 +26,7 @@ public class Box {
         this.indexOfProductGroup = indexOfProductGroup;
         this.width = width;
         this.height = height;
+        this.newProduct = newProduct;
         this.articles = articles;
     }
 
@@ -71,6 +73,10 @@ public class Box {
     public void setDimensions(int row, int column) {
         this.row = row;
         this.column = column;
+    }
+
+    public boolean isNewProduct() {
+        return newProduct;
     }
 
     public List<Article> getArticles() {

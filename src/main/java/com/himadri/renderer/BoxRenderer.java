@@ -18,8 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +32,7 @@ import static com.himadri.dto.ErrorItem.ErrorCategory.IMAGE;
 import static com.himadri.dto.ErrorItem.Severity.ERROR;
 import static com.himadri.dto.ErrorItem.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
+import static com.himadri.renderer.PageRenderer.BOX_WIDTH;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.join;
@@ -36,19 +40,6 @@ import static org.apache.commons.lang3.StringUtils.join;
 @Component
 public class BoxRenderer {
     private static final Logger LOGGER = LoggerFactory.getLogger(BoxRenderer.class);
-
-    private static final float IMAGE_WIDTH_MAX = 95f;
-    private static final float IMAGE_HEIGHT_MAX = 89f;
-    private static final float LOGO_IMAGE_WIDTH_MAX = 33f;
-    private static final float LOGO_IMAGE_HEIGHT_MAX = 33f;
-    private static final float BOX_START = 5;
-    private static final float TEXT_BOX_X = 105f;
-    private static final float TEXT_BOX_WIDTH = 150f;
-    private static final float TEXT_BOX_HEAD_HEIGHT = 27f;
-    private static final float TEXT_BOX_LINE_HEIGHT = 12f;
-    private static final float TEXT_MARGIN = 3f;
-    private static final int MAIN_TEXT_BOX_LINE_COUNT = 6;
-    private static final float MAX_SPACE_PER_PAGE = PageRenderer.BOX_ROWS_PER_PAGE * BOX_HEIGHT;
 
     @Autowired
     private Cache<String, UserSession> userSessionCache;
@@ -65,18 +56,49 @@ public class BoxRenderer {
     @Value("${logoImageLocation}")
     private String logoImageLocation;
 
+    private final BoxMetrics regularBoxMetrics = new BoxMetrics(
+            95f,
+            BOX_HEIGHT - 10,
+            33f,
+            33f,
+            5,
+            105f,
+            150f,
+            27f,
+            12f,
+            3f,
+            6,
+            1
+    );
+
+    private final BoxMetrics wideBoxMetrics = new BoxMetrics(
+            BOX_WIDTH - 10,
+            2 * BOX_HEIGHT - 10,
+            2 * 33f,
+            2 * 33f,
+            5,
+            BOX_WIDTH,
+            255,
+            30f,
+            12f,
+            3f,
+            14,
+            2
+    );
+
     public void drawBox(PdfBoxPageGraphics g2, Box box, UserRequest userRequest) {
         final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
         PDImageXObject image = null;
         final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
+        final BoxMetrics m = box.getWidth() == 1 ? regularBoxMetrics : wideBoxMetrics;
         try {
             image = imageLoader.loadImage(box, g2.getDocument());
             if (image != null) {
-                float scale = min(1f, min(IMAGE_WIDTH_MAX / image.getWidth(), IMAGE_HEIGHT_MAX / image.getHeight()));
-                float posX = (TEXT_BOX_X - image.getWidth() * scale) / 2;
-                float posY = (BOX_HEIGHT - image.getHeight() * scale) / 2;
+                float scale = min(1f, min(m.getImageWidthMax() / image.getWidth(), m.getImageHeightMax() / image.getHeight()));
+                float posX = (m.getTextBoxX() - image.getWidth() * scale) / 2;
+                float posY = (m.getInitialHeight() * BOX_HEIGHT - image.getHeight() * scale) / 2;
                 g2.drawImage(image, posX, posY, image.getWidth() * scale, image.getHeight() * scale);
             }
         } catch (ImageNotFoundException e) {
@@ -91,7 +113,7 @@ public class BoxRenderer {
         if (isNotBlank(box.getBrandImage()) && image != null) {
             try {
                 PDImageXObject logoImage = imageLoader.loadLogoImage(box, g2.getDocument());
-                float scale = min(1f, min(LOGO_IMAGE_WIDTH_MAX / logoImage.getWidth(), LOGO_IMAGE_HEIGHT_MAX / logoImage.getHeight()));
+                float scale = min(1f, min(m.getLogoImageWidthMax() / logoImage.getWidth(), m.getLogoImageHeightMax() / logoImage.getHeight()));
                 g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
             } catch (ImageNotFoundException e) {
                 userSession.addErrorItem(WARN, IMAGE, "Nem található a logo kép: " + box.getBrandImage());
@@ -102,26 +124,41 @@ public class BoxRenderer {
             }
         }
 
-        final BoxPositions boxPositions = calculateBoxPositions(g2, box.getArticles());
+        // draw the new logo
+        if (box.isNewProduct()) {
+            try (InputStream stream = getClass().getResourceAsStream("/uj.png")) {
+                final BufferedImage newImage = ImageIO.read(stream);
+                final float scale = min(1f, min(m.getLogoImageWidthMax() / newImage.getWidth(), m.getLogoImageHeightMax() / newImage.getHeight()));
+                g2.drawImage(newImage, m.getImageWidthMax() - newImage.getWidth() * scale + 5,
+                        m.getImageHeightMax() - newImage.getHeight() * scale + 5,
+                        newImage.getWidth() * scale,
+                        newImage.getHeight() * scale);
+            } catch (IOException e) {
+                userSession.addErrorItem(WARN, IMAGE, "Hibás Új termék logó");
+            }
+        }
+
+        final BoxPositions boxPositions = calculateBoxPositions(g2, box.getArticles(), m);
         final BoxPosition mainBoxPosition = boxPositions.getMainBoxPosition();
 
         // headline box
         final Color mainColor = util.getBoxMainColor(box);
         g2.setNonStrokingColor(mainColor);
-//        g2.setPaint(new LinearGradientPaint(TEXT_BOX_X, TEXT_BOX_HEAD_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH, 0,
+//        g2.setPaint(new LinearGradientPaint(TEXT_BOX_X, textBoxHeadHeight, TEXT_BOX_X + TEXT_BOX_WIDTH, 0,
 //                new float[]{0.0f, 0.5f, 1f}, new Color[]{mainColor, Color.white, mainColor}));
-        g2.fillRect(TEXT_BOX_X, 0, TEXT_BOX_WIDTH, TEXT_BOX_HEAD_HEIGHT);
+        g2.fillRect(m.getTextBoxX(), 0, m.getTextBoxWidth(), m.getTextBoxHeadHeight());
 
         // text boxes
         final Color grayBackground = new Color(224, 224, 244);
         boolean colorAlternate = false;
-        for (float y = TEXT_BOX_HEAD_HEIGHT; y < box.getHeight() * BOX_HEIGHT - TEXT_BOX_LINE_HEIGHT; y+=TEXT_BOX_LINE_HEIGHT) {
+        for (float y = m.getTextBoxHeadHeight(); y < box.getHeight() * BOX_HEIGHT - m.getTextBoxLineHeight();
+             y+=m.getTextBoxLineHeight()) {
             g2.setNonStrokingColor(colorAlternate ? Color.white : grayBackground);
             colorAlternate = !colorAlternate;
-            if (y < BOX_HEIGHT) {
-                g2.fillRect(TEXT_BOX_X, y, TEXT_BOX_WIDTH, TEXT_BOX_LINE_HEIGHT);
+            if (y < m.getInitialHeight() * BOX_HEIGHT) {
+                g2.fillRect(m.getTextBoxX(), y, m.getTextBoxWidth(), m.getTextBoxLineHeight());
             } else {
-                g2.fillRect(BOX_START, y,TEXT_BOX_X + TEXT_BOX_WIDTH - BOX_START, TEXT_BOX_LINE_HEIGHT);
+                g2.fillRect(m.getBoxStart(), y,m.getTextBoxX() + m.getTextBoxWidth() - m.getBoxStart(), m.getTextBoxLineHeight());
             }
         }
 
@@ -136,7 +173,7 @@ public class BoxRenderer {
         g2.setFont(Fonts.BOX_TITLE_FONT);
         String[] headingTextLines = util.splitGraphicsText(g2, Fonts.BOX_TITLE_FONT, box.getTitle(),
                 mainBoxPosition.getTextEnd() - mainBoxPosition.getTextStart(),
-                categoryStart - mainBoxPosition.getTextStart() - TEXT_MARGIN);
+                categoryStart - mainBoxPosition.getTextStart() - m.getTextMargin());
         if (headingTextLines.length == 0) {
             userSession.addErrorItem(ERROR, FORMATTING, String.format("Nincs box fejléce (dtp megnevezés): %s", box.getArticles().get(0).getNumber()));
         } else if (headingTextLines.length == 1) {
@@ -165,27 +202,27 @@ public class BoxRenderer {
         int currentLine = 0;
         for (int articleIndex = 0; articleIndex < box.getArticles().size(); articleIndex++) {
             Box.Article article = box.getArticles().get(articleIndex);
-            BoxPosition boxPosition = getBoxPositionForLine(boxPositions, currentLine);
+            BoxPosition boxPosition = getBoxPositionForLine(boxPositions, currentLine, m);
 
             // product number
             g2.setNonStrokingColor(Color.black);
             g2.setFont(Fonts.BOX_PRODUCT_NUMBER_FONT);
-            g2.drawString(article.getNumber(), boxPosition.getTextStart(), getLineYBaseLine(currentLine));
+            g2.drawString(article.getNumber(), boxPosition.getTextStart(), getLineYBaseLine(currentLine, m));
 
             // price
             g2.setNonStrokingColor(Color.black);
             g2.setFont(Fonts.BOX_PRICE_FONT);
             g2.drawString(article.getPrice(), boxPosition.getTextEnd() - g2.getStringWidth(article.getPrice()),
-                    getLineYBaseLine(currentLine));
+                    getLineYBaseLine(currentLine, m));
 
             // description
             g2.setNonStrokingColor(Color.black);
             g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
             final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, article.getDescription(),
-                    getSplitWidths(boxPositions, articleIndex, currentLine));
+                    getSplitWidths(boxPositions, articleIndex, currentLine, m));
             for (String line: descriptionSplit) {
-                g2.drawString(line, getBoxPositionForLine(boxPositions, currentLine).getDescriptionStart(),
-                        getLineYBaseLine(currentLine));
+                g2.drawString(line, getBoxPositionForLine(boxPositions, currentLine, m).getDescriptionStart(),
+                        getLineYBaseLine(currentLine, m));
                 currentLine++;
             }
         }
@@ -194,58 +231,60 @@ public class BoxRenderer {
         // bottom line
         g2.setStrokingColor(Color.lightGray);
         g2.setLineWidth(.5f);
-        g2.drawLine(BOX_START, box.getHeight() * BOX_HEIGHT, TEXT_BOX_X + TEXT_BOX_WIDTH,
+        g2.drawLine(m.getBoxStart(), box.getHeight() * BOX_HEIGHT, m.getTextBoxX() + m.getTextBoxWidth(),
                 box.getHeight() * BOX_HEIGHT);
     }
 
-
-
-    public RequiredOccupiedSpace calculateRequiredOccupiedSpace(PdfBoxPageGraphics g2, List<Box.Article> articles,
-                                                                int articleStartIndex, int availableBoxes) {
-        final BoxPositions boxPositions = calculateBoxPositions(g2, articles);
+    public RequiredHeight calculateBoxHeight(PdfBoxPageGraphics g2, List<Box.Article> articles,
+                                             int articleStartIndex, int availableBoxes, boolean isWide) {
+        final BoxMetrics m = isWide ? wideBoxMetrics : regularBoxMetrics;
+        final BoxPositions boxPositions = calculateBoxPositions(g2, articles, m);
         int lineCount = 0;
-        float requiredSpace = TEXT_BOX_HEAD_HEIGHT;
+        float requiredSpace = m.getTextBoxHeadHeight();
         for (int i = articleStartIndex; i < articles.size(); i++) {
-            final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, articles.get(i).getDescription(),
-                    getSplitWidths(boxPositions, i, lineCount));
-            requiredSpace += descriptionSplit.length * TEXT_BOX_LINE_HEIGHT;
+            final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT,
+                    articles.get(i).getDescription(), getSplitWidths(boxPositions, i, lineCount, m));
+            requiredSpace += descriptionSplit.length * m.getTextBoxLineHeight();
             lineCount += descriptionSplit.length;
-            if (requiredSpace > availableBoxes * PageRenderer.BOX_HEIGHT) {
-                return new RequiredOccupiedSpace(availableBoxes, i);
+            if (requiredSpace > availableBoxes * BOX_HEIGHT) {
+                return new RequiredHeight(availableBoxes, i);
             }
         }
-        return new RequiredOccupiedSpace((int)Math.ceil(requiredSpace / BOX_HEIGHT), articles.size());
+        final int calculatedBoxHeight = (int) Math.ceil(requiredSpace / BOX_HEIGHT);
+        return new RequiredHeight(Math.max(m.getInitialHeight(), calculatedBoxHeight), articles.size());
     }
 
-    private BoxPosition getBoxPositionForLine(BoxPositions boxPositions, int currentLine) {
-        return currentLine < MAIN_TEXT_BOX_LINE_COUNT ? boxPositions.getMainBoxPosition() :
+
+
+    private BoxPosition getBoxPositionForLine(BoxPositions boxPositions, int currentLine, BoxMetrics m) {
+        return currentLine < m.getMainBoxLineCount() ? boxPositions.getMainBoxPosition() :
                 boxPositions.getExtendedBoxPosition();
     }
 
-    private float[] getSplitWidths(BoxPositions boxPositions, int indexOfArticle, int currentLine) {
-        if (currentLine >= MAIN_TEXT_BOX_LINE_COUNT) {
+    private float[] getSplitWidths(BoxPositions boxPositions, int indexOfArticle, int currentLine, BoxMetrics m) {
+        if (currentLine >= m.getMainBoxLineCount()) {
             return new float[]{boxPositions.getExtendedBoxPosition().getDescriptionEnd(indexOfArticle) -
                     boxPositions.getExtendedBoxPosition().getDescriptionStart()};
         } else {
-            float[] splitWidths = new float[MAIN_TEXT_BOX_LINE_COUNT - currentLine + 1];
-            Arrays.fill(splitWidths, 0, MAIN_TEXT_BOX_LINE_COUNT - currentLine,
+            float[] splitWidths = new float[m.getMainBoxLineCount() - currentLine + 1];
+            Arrays.fill(splitWidths, 0, m.getMainBoxLineCount() - currentLine,
                     boxPositions.getMainBoxPosition().getDescriptionEnd(indexOfArticle) -
                             boxPositions.getMainBoxPosition().getDescriptionStart());
-            splitWidths[MAIN_TEXT_BOX_LINE_COUNT - currentLine] =
+            splitWidths[m.getMainBoxLineCount() - currentLine] =
                     boxPositions.getExtendedBoxPosition().getDescriptionEnd(indexOfArticle) -
                     boxPositions.getExtendedBoxPosition().getDescriptionStart();
             return splitWidths;
         }
     }
 
-    private float getLineYBaseLine(int line) {
-        return TEXT_BOX_HEAD_HEIGHT + (line + 1) * TEXT_BOX_LINE_HEIGHT - TEXT_MARGIN;
+    private float getLineYBaseLine(int line, BoxMetrics m) {
+        return m.getTextBoxHeadHeight() + (line + 1) * m.getTextBoxLineHeight() - m.getTextMargin();
     }
 
-    private BoxPositions calculateBoxPositions(PdfBoxPageGraphics g2, List<Box.Article> articles) {
-        final float mainBoxTextStart = TEXT_BOX_X + TEXT_MARGIN;
-        final float boxTextEnd = TEXT_BOX_X + TEXT_BOX_WIDTH - TEXT_MARGIN;
-        final float extendedBoxTextStart = BOX_START + TEXT_MARGIN;
+    private BoxPositions calculateBoxPositions(PdfBoxPageGraphics g2, List<Box.Article> articles, BoxMetrics m) {
+        final float mainBoxTextStart = m.getTextBoxX() + m.getTextMargin();
+        final float boxTextEnd = m.getTextBoxX() + m.getTextBoxWidth() - m.getTextMargin();
+        final float extendedBoxTextStart = m.getBoxStart() + m.getTextMargin();
         final PDFont productNumberFont = fontService.getPDFont(g2.getDocument(), Fonts.BOX_PRODUCT_NUMBER_FONT);
         final float maxProductNumberWidth = (float) articles.stream().map(Box.Article::getNumber).mapToDouble(
                 a -> g2.getStringWidth(productNumberFont, Fonts.BOX_PRODUCT_NUMBER_FONT.getSize2D(), a)).max().getAsDouble();
@@ -254,17 +293,17 @@ public class BoxRenderer {
                 articles.stream().
                 map(Box.Article::getPrice).
                 map(priceStr -> g2.getStringWidth(priceFont, Fonts.BOX_PRICE_FONT.getSize2D(), priceStr)).
-                map(priceWidth -> boxTextEnd - priceWidth - TEXT_MARGIN / 2).
+                map(priceWidth -> boxTextEnd - priceWidth - m.getTextMargin() / 2).
                 collect(Collectors.toList()));
         final BoxPosition mainBoxPosition = new BoxPosition()
                 .withTextStart(mainBoxTextStart)
                 .withTextEnd(boxTextEnd)
-                .withDescriptionStart(mainBoxTextStart + maxProductNumberWidth + TEXT_MARGIN)
+                .withDescriptionStart(mainBoxTextStart + maxProductNumberWidth + m.getTextMargin())
                 .withDescriptionEnd(descriptionEnds);
         final BoxPosition extendedBoxPosition = new BoxPosition()
                 .withTextStart(extendedBoxTextStart)
                 .withTextEnd(boxTextEnd)
-                .withDescriptionStart(extendedBoxTextStart + maxProductNumberWidth + TEXT_MARGIN)
+                .withDescriptionStart(extendedBoxTextStart + maxProductNumberWidth + m.getTextMargin())
                 .withDescriptionEnd(descriptionEnds);
         return new BoxPositions(mainBoxPosition, extendedBoxPosition);
     }
@@ -330,17 +369,17 @@ public class BoxRenderer {
         }
     }
 
-    public static class RequiredOccupiedSpace {
-        private final int boxSize;
+    public static class RequiredHeight {
+        private final int boxHeight;
         private final int indexOfNextArticle;
 
-        public RequiredOccupiedSpace(int boxSize, int indexOfNextArticle) {
-            this.boxSize = boxSize;
+        public RequiredHeight(int boxHeight, int indexOfNextArticle) {
+            this.boxHeight = boxHeight;
             this.indexOfNextArticle = indexOfNextArticle;
         }
 
-        public int getBoxSize() {
-            return boxSize;
+        public int getBoxHeight() {
+            return boxHeight;
         }
 
         public int getIndexOfNextArticle() {
