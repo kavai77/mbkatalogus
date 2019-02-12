@@ -33,19 +33,19 @@ public class PageCollectorEngine {
         final List<Page> pageList = new ArrayList<>();
         final int firstPageRow = userRequest.getSkipBoxSpaceOnBeginning() % PageRenderer.BOX_ROWS_PER_PAGE;
         final int firstPageColumn = userRequest.getSkipBoxSpaceOnBeginning() / PageRenderer.BOX_ROWS_PER_PAGE;
-        PageConstructor pageConstructor = new PageConstructor(title, firstPageRow, firstPageColumn);
+        PageBuilder pageBuilder = new PageBuilder(title, firstPageRow, firstPageColumn);
         for (int indexOfProductGroup = 0; indexOfProductGroup < productGroups.size(); indexOfProductGroup++) {
             CsvProductGroup productGroup = productGroups.get(indexOfProductGroup);
-            for (CsvItemGroup boxItems : productGroup.getItemGroups()) {
-                final List<Box> itemBoxes = itemToBoxConverter.createBox(boxItems, indexOfProductGroup,
+            for (CsvItemGroup csvItemGroup : productGroup.getItemGroups()) {
+                final List<Box> itemBoxes = itemToBoxConverter.createBox(csvItemGroup, indexOfProductGroup,
                         productGroup.getName(), userRequest, new int[]{});
                 for (Box box : itemBoxes) {
-                    final boolean added = pageConstructor.addBoxToPage(box);
+                    final boolean added = pageBuilder.addBoxToPage(box);
                     if (!added) {
-                        final Optional<Page> newPage = pageConstructor.createNewPage(pageList.size() + 1);
+                        final Optional<Page> newPage = pageBuilder.build(pageList.size() + 1);
                         newPage.ifPresent(pageList::add);
-                        pageConstructor = new PageConstructor(title);
-                        final boolean addedToNewPage = pageConstructor.addBoxToPage(box);
+                        pageBuilder = new PageBuilder(title);
+                        final boolean addedToNewPage = pageBuilder.addBoxToPage(box);
                         if (!addedToNewPage) {
                             final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
                             userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
@@ -56,23 +56,23 @@ public class PageCollectorEngine {
                 }
             }
         }
-        final Optional<Page> newPage = pageConstructor.createNewPage(pageList.size() + 1);
+        final Optional<Page> newPage = pageBuilder.build(pageList.size() + 1);
         newPage.ifPresent(pageList::add);
         return pageList;
     }
 
-    private static class PageConstructor {
+    private static class PageBuilder {
         private final String title;
         private int column;
         private List<Box> pageBoxes = new ArrayList<>();
         private boolean wideBoxPossible = true;
         private final boolean[][] boxOccupancyMatrix;
 
-        PageConstructor(String title) {
+        PageBuilder(String title) {
             this(title, 0, 0);
         }
 
-        PageConstructor(String title, int row, int column) {
+        PageBuilder(String title, int row, int column) {
             this.title = title;
             this.column = column;
             boxOccupancyMatrix = new boolean[PageRenderer.BOX_ROWS_PER_PAGE][];
@@ -123,7 +123,7 @@ public class PageCollectorEngine {
             return true;
         }
 
-        Optional<Page> createNewPage(int pageNumber) {
+        Optional<Page> build(int pageNumber) {
             if (pageBoxes.isEmpty()) {
                 return empty();
             }
