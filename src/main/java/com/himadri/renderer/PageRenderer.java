@@ -116,10 +116,10 @@ public class PageRenderer {
     private void drawPageNumber(PdfBoxPageGraphics g2, String number, PositionWithAlignment pageStartPosX, PositionWithAlignment numberStartPosX) {
         g2.setNonStrokingColor(Color.lightGray);
         g2.setFont(Fonts.PAGE_NB_OLDAL_FONT);
-        g2.drawString(pageName, pageStartPosX.calculatePosX(g2, pageName),HEIGHT - MARGIN_BOTTOM + 3 + 12);
+        g2.drawString(pageName, pageStartPosX.calculatePosX(g2, pageName),HEIGHT - MARGIN_BOTTOM + 12);
         g2.setNonStrokingColor(Color.black);
         g2.setFont(Fonts.PAGE_NB_FONT);
-        g2.drawString(number, numberStartPosX.calculatePosX(g2, number), HEIGHT - MARGIN_BOTTOM + 3 + 12);
+        g2.drawString(number, numberStartPosX.calculatePosX(g2, number), HEIGHT - MARGIN_BOTTOM + 12);
     }
 
     private class PositionWithAlignment {
