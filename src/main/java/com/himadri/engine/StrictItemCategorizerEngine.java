@@ -6,6 +6,7 @@ import com.himadri.dto.ErrorItem;
 import com.himadri.exception.ValidationException;
 import com.himadri.model.rendering.CsvItem;
 import com.himadri.model.service.UserSession;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,8 +22,9 @@ public class StrictItemCategorizerEngine implements ItemCategorizerEngine {
 
     @Override
     public List<CsvProductGroup> groupCsvItems(List<CsvItem> items, UserSession userSession) throws ValidationException {
-        Set<String> productGroupSetWithoutChapter = new HashSet<>(
-                persistenceService.getInstanceProperties().getProductGroupsWithoutChapter());
+        Set<String> productGroupSetWithoutChapter = new HashSet<>(ObjectUtils.firstNonNull(
+                persistenceService.getInstanceProperties().getProductGroupsWithoutChapter(),
+                Collections.emptyList()));
         List<CsvProductGroup> productGroups = new ArrayList<>();
         Optional<String> firstProductGroupName = items.stream()
                 .map(this::getProductGroupName)
