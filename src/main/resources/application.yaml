@@ -1,3 +1,15 @@
+imageLocation: /usr/share/cikkek
+logoImageLocation: /usr/share/logok
+dbLocation: /usr/share/db
+webImageCacheLocation: /usr/share/cache
+renderingLocation: /usr/share/render
+webImageURLPrefix: http://www.madalbal.hu/
+pagesPerDocumentInQualityMode: 10
+itemCategorizerEngineClass: com.himadri.engine.StrictItemCategorizerEngine
+spring:
+  profiles:
+    active: test
+---
 spring:
   profiles: szerszam
 instance: szerszam
