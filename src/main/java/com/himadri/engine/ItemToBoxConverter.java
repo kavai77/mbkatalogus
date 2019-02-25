@@ -62,7 +62,7 @@ public class ItemToBoxConverter {
         final List<Box> boxList = new ArrayList<>();
         final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
         final boolean wideBox = items.getItems().stream()
-                .anyMatch(i -> trueValueSet.contains(defaultString(i.getSzeles()).toLowerCase()));
+                .anyMatch(i -> trueValueSet.contains(defaultString(i.getNagykep()).toLowerCase()));
         final boolean newProduct = items.getItems().stream()
                 .anyMatch(i -> trueValueSet.contains(defaultString(i.getUj()).toLowerCase()));
         while (articleStart < articleList.size()) {
