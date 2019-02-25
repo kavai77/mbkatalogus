@@ -34,7 +34,7 @@ public class CsvItem {
     @CsvBindByName
     private String webkepnev;
     @CsvBindByName
-    private String szeles;
+    private String nagykep;
     @CsvBindByName
     private String uj;
 
@@ -161,12 +161,12 @@ public class CsvItem {
         this.webkepnev = webkepnev;
     }
 
-    public String getSzeles() {
-        return szeles;
+    public String getNagykep() {
+        return nagykep;
     }
 
-    public void setSzeles(String szeles) {
-        this.szeles = szeles;
+    public void setNagykep(String nagykep) {
+        this.nagykep = nagykep;
     }
 
     public String getUj() {
