@@ -2,6 +2,7 @@ package com.himadri.engine;
 
 import com.google.common.cache.Cache;
 import com.himadri.dto.ErrorItem;
+import com.himadri.dto.Quality;
 import com.himadri.dto.UserRequest;
 import com.himadri.engine.ItemCategorizerEngine.CsvItemGroup;
 import com.himadri.engine.ItemCategorizerEngine.CsvProductGroup;
@@ -14,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,8 +24,7 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PageCollectorEngineTest {
@@ -48,10 +49,10 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testSingleBoxes() throws Exception {
-        when(itemToBoxConverter.createBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
                 .thenReturn(createNarrowBoxesWithSize('A', IntStream.generate(() -> 1).limit(17).toArray()));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),
-                null, createUserRequestWithSkipBox(0));
+                 createUserRequest());
         assertEquals(2, pages.size());
         assertEquals(16, pages.get(0).getBoxes().size());
         assertEquals(1, pages.get(1).getBoxes().size());
@@ -66,10 +67,10 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testBigBoxes() throws Exception {
-        when(itemToBoxConverter.createBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
                 .thenReturn(createNarrowBoxesWithSize('A', 5, 5, 4, 4, 2 ));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),
-                null, createUserRequestWithSkipBox(0));
+                createUserRequest());
         assertEquals(2, pages.size());
         assertEquals(2, pages.get(0).getBoxes().size());
         assertEquals(3, pages.get(1).getBoxes().size());
@@ -81,24 +82,8 @@ public class PageCollectorEngineTest {
     }
 
     @Test
-    public void testBoxesWithSkip() throws Exception {
-        when(itemToBoxConverter.createBox(any(), anyInt(), anyString(), any(), any()))
-                .thenReturn(createNarrowBoxesWithSize('A', 5, 5, 4, 4, 2 ));
-        final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),
-                null, createUserRequestWithSkipBox(3));
-        assertEquals(2, pages.size());
-        assertEquals(2, pages.get(0).getBoxes().size());
-        assertEquals(3, pages.get(1).getBoxes().size());
-        assertBoxPosition(3, 0, "A0", pages.get(0).getBoxes().get(0));
-        assertBoxPosition(0, 1, "A1", pages.get(0).getBoxes().get(1));
-        assertBoxPosition(0, 0, "A2", pages.get(1).getBoxes().get(0));
-        assertBoxPosition(4, 0, "A3", pages.get(1).getBoxes().get(1));
-        assertBoxPosition(0, 1, "A4", pages.get(1).getBoxes().get(2));
-    }
-
-    @Test
     public void testWideBoxes() throws Exception {
-        when(itemToBoxConverter.createBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
                 .thenReturn(
                         createWideBoxesWithSize('A', 2, 1 ),
                         createNarrowBoxesWithSize('B', 3, 4)
@@ -114,7 +99,7 @@ public class PageCollectorEngineTest {
         // 7: |    |    |
 
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 2),
-                null, createUserRequestWithSkipBox(0));
+                createUserRequest());
         assertEquals(1, pages.size());
         assertEquals(4, pages.get(0).getBoxes().size());
         assertBoxPosition(0, 0, "A0", pages.get(0).getBoxes().get(0));
@@ -125,7 +110,7 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testWideOnNewPageBoxes() throws Exception {
-        when(itemToBoxConverter.createBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
                 .thenReturn(
                         createWideBoxesWithSize('A', 2),
                         createNarrowBoxesWithSize('B', 1),
@@ -142,7 +127,7 @@ public class PageCollectorEngineTest {
 
 
         final List<Page> pages = sut.createPages(createDummyItemGroups(3, 1),
-                null, createUserRequestWithSkipBox(0));
+                createUserRequest());
         assertEquals(2, pages.size());
         assertEquals(2, pages.get(0).getBoxes().size());
         assertEquals(1, pages.get(1).getBoxes().size());
@@ -153,10 +138,9 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testTooBigBox() throws Exception {
-        when(itemToBoxConverter.createBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
                 .thenReturn(createNarrowBoxesWithSize('A', 3, 9 ));
-        final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),null,
-                createUserRequestWithSkipBox(0));
+        final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),createUserRequest());
         assertEquals(1, pages.size());
         assertEquals(1, pages.get(0).getBoxes().size());
         assertBoxPosition(0, 0, "A0", pages.get(0).getBoxes().get(0));
@@ -165,10 +149,9 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testOnlyWideBoxes() throws Exception {
-        when(itemToBoxConverter.createBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
                 .thenReturn(createWideBoxesWithSize('A', 3, 3, 3, 6 ));
-        final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),null,
-                createUserRequestWithSkipBox(0));
+        final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1), createUserRequest());
         assertEquals(3, pages.size());
         assertEquals(2, pages.get(0).getBoxes().size());
         assertEquals(1, pages.get(1).getBoxes().size());
@@ -199,15 +182,15 @@ public class PageCollectorEngineTest {
     }
 
     private Box createBoxWithSize(char namePrefix, int index, int width, int height) {
-        return new Box(null, null, namePrefix + Integer.toString(index), null, null, 0, width, height, false, null);
+        return new Box(null, null, namePrefix + Integer.toString(index), null, "group", 0, width, height, false, null, null, Box.Type.ARTICLE);
     }
 
-    private UserRequest createUserRequestWithSkipBox(int skip) {
-        return new UserRequest(null, null, null, null, false, false, skip);
+    private UserRequest createUserRequest() {
+        return new UserRequest("requestId", mock(InputStream.class), "title", Quality.DRAFT, false, false, null, false,null, false);
     }
 
     private List<CsvProductGroup> createDummyItemGroups(int nbOfGroups, int nbOfItemsEach) {
-        return Stream.generate(() -> new CsvProductGroup("", createDummyItems(nbOfItemsEach)))
+        return Stream.generate(() -> new CsvProductGroup("group", createDummyItems(nbOfItemsEach)))
                 .limit(nbOfGroups).collect(Collectors.toList());
     }
 

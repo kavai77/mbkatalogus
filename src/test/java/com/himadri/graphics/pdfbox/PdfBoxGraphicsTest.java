@@ -12,7 +12,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.InputStream;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeNotNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PdfBoxGraphicsTest {
@@ -31,14 +34,16 @@ public class PdfBoxGraphicsTest {
     private PdfBoxPageGraphics sut;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         sut = new PdfBoxPageGraphics(document, PDRectangle.A4, pdFontService, pdColorTranslator, userSession);
     }
 
     @Test
     public void removeSpecialCharacters() throws Exception {
+        InputStream resourceAsStream = PdfBoxPageGraphics.class.getResourceAsStream("/fonts/arial.ttf");
+        assumeNotNull(resourceAsStream);
         PDFont pdFont = PDType0Font.load(document,
-                new TTFParser().parse(PdfBoxPageGraphics.class.getResourceAsStream("/fonts/arial.ttf")), true);
+                new TTFParser().parse(resourceAsStream), true);
         assertEquals("", sut.removeSpecialCharacters(pdFont, ""));
         assertEquals("test", sut.removeSpecialCharacters(pdFont, "test"));
         assertEquals("éáűőúíöüóÉÁŰŐÚÍÖÜÓ", sut.removeSpecialCharacters(pdFont, "éáűőúíöüóÉÁŰŐÚÍÖÜÓ"));

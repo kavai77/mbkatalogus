@@ -31,7 +31,7 @@ public class DocumentEngine {
 
     public Document createDocumentFromItems(List<CsvItem> items, UserRequest userRequest, UserSession userSession) throws ValidationException {
         final List<CsvProductGroup> productGroups = itemCategorizerEngine.groupCsvItems(items, userSession);
-        final List<Page> pages = pageCollectorEngine.createPages(productGroups, userRequest.getCatalogueTitle(), userRequest);
+        final List<Page> pages = pageCollectorEngine.createPages(productGroups, userRequest);
         final TableOfContent tableOfContent = tableOfContentEngine.createTableOfContent(pages);
         final Index index = indexEngine.createIndex(pages, userRequest);
         userSessionCache.getIfPresent(userRequest.getRequestId()).setTotalPageCount(

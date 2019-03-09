@@ -20,12 +20,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
+import static com.himadri.renderer.PageRenderer.BOX_WIDTH;
 import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
@@ -53,8 +59,26 @@ public class ItemToBoxConverter {
         pdfBoxGraphics = PdfBoxPageGraphics.createForStringWidthCalculation(pdFontService);
     }
 
-    public List<Box> createBox(CsvItemGroup items, int indexOfProductGroup, String productGroupName,
-                               UserRequest userRequest, int[] availableBoxSizes) {
+    public Box createImageBox(InputStream imageInputStream, boolean wideImage, UserRequest userRequest, String errorImageName) {
+        if (imageInputStream == null) {
+            return null;
+        }
+        try {
+            final BufferedImage image = ImageIO.read(imageInputStream);
+            int width = wideImage ? PageRenderer.BOX_COLUMNS_PER_PAGE : 1;
+            float scale = BOX_WIDTH * width / image.getWidth();
+            int height = (int) Math.ceil(image.getHeight() * scale / BOX_HEIGHT);
+            return Box.createImageBox(width, height, image);
+        } catch (IOException e) {
+            final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
+            userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.IMAGE,
+                String.format("Nem sikerült beolvasni a %s képet, ezért kihagytuk", errorImageName));
+            return null;
+        }
+    }
+
+    public List<Box> createArticleBox(CsvItemGroup items, int indexOfProductGroup, String productGroupName,
+                                      UserRequest userRequest, int[] availableBoxSizes) {
         final String boxTitle = getBoxTitle(items.getItems(), userRequest);
         List<Box.Article> articleList = items.getItems().stream().map(item -> convertItemToArticle(item, userRequest)).collect(Collectors.toList());
         CsvItem firstItem = items.getItems().get(0);
@@ -79,7 +103,7 @@ public class ItemToBoxConverter {
             }
             String brandImage = isNotBlank(firstItem.getGyarto()) ? stripToEmpty(firstItem.getGyarto()) + PSD_EXTENSION : null;
             final String imageName = imageLoader.getImageName(firstItem);
-            boxList.add(new Box(imageName, brandImage, boxTitle,
+            boxList.add(Box.createArticleBox(imageName, brandImage, boxTitle,
                     stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
                     wideBox ? PageRenderer.BOX_COLUMNS_PER_PAGE : 1,
                     requiredOccupiedSpace.getBoxHeight(),

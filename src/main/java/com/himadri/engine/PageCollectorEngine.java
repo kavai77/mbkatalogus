@@ -29,36 +29,79 @@ public class PageCollectorEngine {
     @Autowired
     Cache<String, UserSession> userSessionCache;
 
-    public List<Page> createPages(List<CsvProductGroup> productGroups, String title, UserRequest userRequest) {
-        final List<Page> pageList = new ArrayList<>();
-        final int firstPageRow = userRequest.getSkipBoxSpaceOnBeginning() % PageRenderer.BOX_ROWS_PER_PAGE;
-        final int firstPageColumn = userRequest.getSkipBoxSpaceOnBeginning() / PageRenderer.BOX_ROWS_PER_PAGE;
-        PageBuilder pageBuilder = new PageBuilder(title, firstPageRow, firstPageColumn);
-        for (int indexOfProductGroup = 0; indexOfProductGroup < productGroups.size(); indexOfProductGroup++) {
-            CsvProductGroup productGroup = productGroups.get(indexOfProductGroup);
-            for (CsvItemGroup csvItemGroup : productGroup.getItemGroups()) {
-                final List<Box> itemBoxes = itemToBoxConverter.createBox(csvItemGroup, indexOfProductGroup,
-                        productGroup.getName(), userRequest, new int[]{});
-                for (Box box : itemBoxes) {
-                    final boolean added = pageBuilder.addBoxToPage(box);
-                    if (!added) {
-                        final Optional<Page> newPage = pageBuilder.build(pageList.size() + 1);
-                        newPage.ifPresent(pageList::add);
-                        pageBuilder = new PageBuilder(title);
-                        final boolean addedToNewPage = pageBuilder.addBoxToPage(box);
-                        if (!addedToNewPage) {
-                            final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
-                            userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
-                                "Nem sikerült a dobozt hozzáadni egy üres oldalhoz, ezért kihagyjuk: " +
+    public List<Page> createPages(List<CsvProductGroup> productGroups, UserRequest userRequest) {
+        PageListFactory pageListFactory = new PageListFactory(productGroups, userRequest, itemToBoxConverter, userSessionCache);
+        List<Page> pages = pageListFactory.createPages(null, 0);
+        Box footerImageBox = itemToBoxConverter.createImageBox(userRequest.getFooterImageStream(),
+            userRequest.isWideFooterImage(), userRequest, "végső");
+        if (footerImageBox != null) {
+            return pageListFactory.createPages(footerImageBox, pages.size());
+        } else {
+            return pages;
+        }
+    }
+
+    private static class PageListFactory {
+        private PageBuilder currentPageBuilder;
+        private final List<Page> pageList = new ArrayList<>();
+        private final List<CsvProductGroup> productGroups;
+        private final UserRequest userRequest;
+        private final ItemToBoxConverter itemToBoxConverter;
+        private final Cache<String, UserSession> userSessionCache;
+
+
+        public PageListFactory(List<CsvProductGroup> productGroups, UserRequest userRequest,
+                               ItemToBoxConverter itemToBoxConverter, Cache<String, UserSession> userSessionCache) {
+            this.productGroups = productGroups;
+            this.userRequest = userRequest;
+            this.itemToBoxConverter = itemToBoxConverter;
+            this.userSessionCache = userSessionCache;
+        }
+
+        public List<Page> createPages(Box footerImageBox, int lastPageNumber) {
+            Box headerImageBox = itemToBoxConverter.createImageBox(userRequest.getHeaderImageStream(),
+                userRequest.isWideHeaderImage(), userRequest, "kezdő");
+            createNewPageBuilder(footerImageBox, lastPageNumber);
+            if (headerImageBox != null) {
+                currentPageBuilder.addBoxToPage(headerImageBox);
+            }
+            for (int indexOfProductGroup = 0; indexOfProductGroup < productGroups.size(); indexOfProductGroup++) {
+                CsvProductGroup productGroup = productGroups.get(indexOfProductGroup);
+                for (CsvItemGroup csvItemGroup : productGroup.getItemGroups()) {
+                    final List<Box> itemBoxes = itemToBoxConverter.createArticleBox(csvItemGroup, indexOfProductGroup,
+                        productGroup.getName(), userRequest, currentPageBuilder.getBottomFreeSpacesFromCurrentColumn());
+                    for (Box box : itemBoxes) {
+                        final boolean added = currentPageBuilder.addBoxToPage(box);
+                        if (!added) {
+                            addCurrentBuilderToPage();
+                            createNewPageBuilder(footerImageBox, lastPageNumber);
+                            final boolean addedToNewPage = currentPageBuilder.addBoxToPage(box);
+                            if (!addedToNewPage) {
+                                final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
+                                userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
+                                    "Nem sikerült a dobozt hozzáadni egy üres oldalhoz, ezért kihagyjuk: " +
                                         box.getTitle());
+                            }
                         }
                     }
                 }
             }
+            addCurrentBuilderToPage();
+
+            return pageList;
         }
-        final Optional<Page> newPage = pageBuilder.build(pageList.size() + 1);
-        newPage.ifPresent(pageList::add);
-        return pageList;
+
+        private void createNewPageBuilder(Box footerImageBox, int lastPageNumber) {
+            currentPageBuilder = new PageBuilder(userRequest.getCatalogueTitle(), pageList.size() + 1);
+            if (footerImageBox != null && currentPageBuilder.getPageNumber() == lastPageNumber) {
+                currentPageBuilder.addBoxToBottom(footerImageBox);
+            }
+        }
+
+        private void addCurrentBuilderToPage() {
+            final Optional<Page> newPage = currentPageBuilder.build();
+            newPage.ifPresent(pageList::add);
+        }
     }
 
     private static class PageBuilder {
@@ -67,21 +110,19 @@ public class PageCollectorEngine {
         private List<Box> pageBoxes = new ArrayList<>();
         private boolean wideBoxPossible = true;
         private final boolean[][] boxOccupancyMatrix;
+        private final int pageNumber;
 
-        PageBuilder(String title) {
-            this(title, 0, 0);
-        }
-
-        PageBuilder(String title, int row, int column) {
+        PageBuilder(String title, int pageNumber) {
             this.title = title;
-            this.column = column;
+            this.pageNumber = pageNumber;
             boxOccupancyMatrix = new boolean[PageRenderer.BOX_ROWS_PER_PAGE][];
             for (int i = 0; i < PageRenderer.BOX_ROWS_PER_PAGE; i++) {
                 boxOccupancyMatrix[i] = new boolean[PageRenderer.BOX_COLUMNS_PER_PAGE];
             }
-            for (int r = 0; r < row; r++) {
-                boxOccupancyMatrix[r][column] = true;
-            }
+        }
+
+        public int getPageNumber() {
+            return pageNumber;
         }
 
         boolean addBoxToPage(Box box) {
@@ -102,13 +143,24 @@ public class PageCollectorEngine {
             column += firstFittingColumn.getAsInt();
             final int row = PageRenderer.BOX_ROWS_PER_PAGE - bottomFreeSpaces[firstFittingColumn.getAsInt()];
             box.setDimensions(row, column);
+            occupyBox(box);
+            return true;
+        }
+
+        void addBoxToBottom(Box box) {
+            final int row = PageRenderer.BOX_ROWS_PER_PAGE - box.getHeight();
+            final int column = PageRenderer.BOX_COLUMNS_PER_PAGE - box.getWidth();
+            box.setDimensions(row, column);
+            occupyBox(box);
+        }
+
+        private void occupyBox(Box box) {
             pageBoxes.add(box);
             for (int r = 0; r < box.getHeight(); r++) {
                 for (int c = 0; c < box.getWidth(); c++) {
-                    boxOccupancyMatrix[row + r][column + c] = true;
+                    boxOccupancyMatrix[box.getRow() + r][box.getColumn() + c] = true;
                 }
             }
-            return true;
         }
 
         private boolean isFreeSpaceFromColumn(int[] bottomFreeSpaces, int startColumn, Box box) {
@@ -123,7 +175,9 @@ public class PageCollectorEngine {
             return true;
         }
 
-        Optional<Page> build(int pageNumber) {
+
+
+        Optional<Page> build() {
             if (pageBoxes.isEmpty()) {
                 return empty();
             }

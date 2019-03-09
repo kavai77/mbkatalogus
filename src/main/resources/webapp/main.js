@@ -15,19 +15,19 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             $scope.errorMessage = "Írj be egy katalógus címet!"
             return;
         }
-        if ($scope.skipBoxSpaceOnBeginning > 15) {
-            $scope.errorMessage = "Maximálisan 15 boxot hagyhatsz ki."
-            return;
-        }
+
         Upload.upload({
             url: '/service/csvRendering',
             data: {
-                'file': $scope.catalogueCsvFile,
+                'csvFile': $scope.catalogueCsvFile,
                 'title': $scope.catalogueTitle,
                 'quality': $scope.quality,
                 'wholeSaleFormat': $scope.wholeSaleFormat,
                 'autoLineBreakAfterMinQty': $scope.autoLineBreakAfterMinQty,
-                'skipBoxSpaceOnBeginning': $scope.skipBoxSpaceOnBeginning,
+                'headerImage': $scope.headerImage,
+                'wideHeaderImage': $scope.wideHeaderImage,
+                'footerImage': $scope.footerImage,
+                'wideFooterImage': $scope.wideFooterImage,
             }
         }).then(function (resp) {
             $scope.requestId = resp.data.requestId;
@@ -68,13 +68,15 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             $scope.quality = response.data.lastQuality != null ? response.data.lastQuality : "DRAFT";
             $scope.wholeSaleFormat = response.data.lastWholeSaleFormat != null ? response.data.lastWholeSaleFormat : "true";
             $scope.autoLineBreakAfterMinQty = response.data.lastAutoLineBreakAfterMinQty;
-            $scope.skipBoxSpaceOnBeginning = response.data.lastSkipBoxSpaceOnBeginning;
+            $scope.wideHeaderImage = response.data.lastLastWideHeaderImage;
+            $scope.wideFooterImage = response.data.lastLastWideFooterImage;
             $scope.productGroupsWithoutChapter = response.data.productGroupsWithoutChapter;
         }, function errorCallback(response) {
             $scope.quality = "DRAFT";
             $scope.wholeSaleFormat = "true";
             $scope.autoLineBreakAfterMinQty = false;
-            $scope.skipBoxSpaceOnBeginning = 0;
+            scope.wideHeaderImage = false;
+            scope.wideFooterImage = false;
             console.log(JSON.stringify(response));
         }
     );

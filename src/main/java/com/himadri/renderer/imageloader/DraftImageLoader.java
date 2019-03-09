@@ -24,6 +24,11 @@ public class DraftImageLoader implements ImageLoader {
     }
 
     @Override
+    public PDImageXObject loadResourceImage(String resource, PDDocument document) {
+        return null;
+    }
+
+    @Override
     public MemoryUsageSetting getMemoryUsageSettings() {
         return MemoryUsageSetting.setupMainMemoryOnly();
     }

@@ -18,11 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -87,6 +85,23 @@ public class BoxRenderer {
     );
 
     public void drawBox(PdfBoxPageGraphics g2, Box box, UserRequest userRequest) {
+        switch (box.getBoxType()) {
+            case ARTICLE:
+                drawArticleBox(g2, box, userRequest);
+                break;
+            case IMAGE:
+                drawImageBox(g2, box);
+                break;
+        }
+    }
+
+    private void drawImageBox(PdfBoxPageGraphics g2, Box box) {
+        BufferedImage image = box.getBufferedImage();
+        float scale = (BOX_WIDTH * box.getWidth()) / image.getWidth();
+        g2.drawImage(image, 0, 0, image.getWidth() * scale, image.getHeight() * scale);
+    }
+
+    private void drawArticleBox(PdfBoxPageGraphics g2, Box box, UserRequest userRequest) {
         final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
 
         // draw image
@@ -113,8 +128,10 @@ public class BoxRenderer {
         if (isNotBlank(box.getBrandImage()) && image != null) {
             try {
                 PDImageXObject logoImage = imageLoader.loadLogoImage(box, g2.getDocument(), userSession);
-                float scale = min(1f, min(m.getLogoImageWidthMax() / logoImage.getWidth(), m.getLogoImageHeightMax() / logoImage.getHeight()));
-                g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
+                if (logoImage != null) {
+                    float scale = min(1f, min(m.getLogoImageWidthMax() / logoImage.getWidth(), m.getLogoImageHeightMax() / logoImage.getHeight()));
+                    g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
+                }
             } catch (ImageNotFoundException e) {
                 userSession.addErrorItem(WARN, IMAGE, "Nem található a logo kép: " + box.getBrandImage());
             } catch (IOException e) {
@@ -126,13 +143,15 @@ public class BoxRenderer {
 
         // draw the new logo
         if (box.isNewProduct()) {
-            try (InputStream stream = getClass().getResourceAsStream("/uj.png")) {
-                final BufferedImage newImage = ImageIO.read(stream);
-                final float scale = min(1f, min(m.getLogoImageWidthMax() / newImage.getWidth(), m.getLogoImageHeightMax() / newImage.getHeight()));
-                g2.drawImage(newImage, m.getImageWidthMax() - newImage.getWidth() * scale + 5,
+            try {
+                PDImageXObject newImage = imageLoader.loadResourceImage("/uj.png", g2.getDocument());
+                if (newImage != null) {
+                    final float scale = min(1f, min(m.getLogoImageWidthMax() / newImage.getWidth(), m.getLogoImageHeightMax() / newImage.getHeight()));
+                    g2.drawImage(newImage, m.getImageWidthMax() - newImage.getWidth() * scale + 5,
                         m.getImageHeightMax() - newImage.getHeight() * scale + 5,
                         newImage.getWidth() * scale,
                         newImage.getHeight() * scale);
+                }
             } catch (IOException e) {
                 userSession.addErrorItem(WARN, IMAGE, "Hibás Új termék logó");
             }

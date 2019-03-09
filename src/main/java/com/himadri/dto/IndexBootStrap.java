@@ -8,7 +8,8 @@ public class IndexBootStrap {
     private Quality lastQuality;
     private String lastWholeSaleFormat;
     private boolean lastAutoLineBreakAfterMinQty;
-    private int lastSkipBoxSpaceOnBeginning;
+    private boolean lastLastWideHeaderImage;
+    private boolean lastLastWideFooterImage;
     private List<String> productGroupsWithoutChapter;
 
     public String getPageTitle() {
@@ -56,12 +57,21 @@ public class IndexBootStrap {
         return this;
     }
 
-    public int getLastSkipBoxSpaceOnBeginning() {
-        return lastSkipBoxSpaceOnBeginning;
+    public boolean isLastLastWideHeaderImage() {
+        return lastLastWideHeaderImage;
     }
 
-    public IndexBootStrap setLastSkipBoxSpaceOnBeginning(int lastSkipBoxSpaceOnBeginning) {
-        this.lastSkipBoxSpaceOnBeginning = lastSkipBoxSpaceOnBeginning;
+    public IndexBootStrap setLastLastWideHeaderImage(boolean lastLastWideHeaderImage) {
+        this.lastLastWideHeaderImage = lastLastWideHeaderImage;
+        return this;
+    }
+
+    public boolean isLastLastWideFooterImage() {
+        return lastLastWideFooterImage;
+    }
+
+    public IndexBootStrap setLastLastWideFooterImage(boolean lastLastWideFooterImage) {
+        this.lastLastWideFooterImage = lastLastWideFooterImage;
         return this;
     }
 

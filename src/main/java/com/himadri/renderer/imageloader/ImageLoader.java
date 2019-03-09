@@ -14,5 +14,6 @@ public interface ImageLoader {
     String getImageName(CsvItem item);
     PDImageXObject loadImage(Box box, PDDocument document, UserSession userSession) throws IOException, ImageNotFoundException;
     PDImageXObject loadLogoImage(Box box, PDDocument document, UserSession userSession) throws IOException, ImageNotFoundException;
+    PDImageXObject loadResourceImage(String resource, PDDocument document) throws IOException;
     MemoryUsageSetting getMemoryUsageSettings();
 }

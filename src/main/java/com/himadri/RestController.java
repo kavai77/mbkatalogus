@@ -55,17 +55,21 @@ public class RestController {
 
     @PostMapping("/csvRendering")
     @ResponseBody
-    public RequestId csvRendering(@RequestParam MultipartFile file,
+    public RequestId csvRendering(@RequestParam MultipartFile csvFile,
                                   @RequestParam String title,
                                   @RequestParam Quality quality,
                                   @RequestParam boolean wholeSaleFormat,
                                   @RequestParam boolean autoLineBreakAfterMinQty,
-                                  @RequestParam int skipBoxSpaceOnBeginning) throws IOException {
+                                  @RequestParam MultipartFile headerImage,
+                                  @RequestParam boolean wideHeaderImage,
+                                  @RequestParam MultipartFile footerImage,
+                                  @RequestParam boolean wideFooterImage) throws IOException {
         String id = UUID.randomUUID().toString();
         final UserSession userSession = new UserSession();
         userSessionCache.put(id, userSession);
-        final UserRequest userRequest = new UserRequest(id, file.getInputStream(), title, quality,
-                wholeSaleFormat, autoLineBreakAfterMinQty, skipBoxSpaceOnBeginning);
+        final UserRequest userRequest = new UserRequest(id, csvFile.getInputStream(), title, quality,
+            wholeSaleFormat, autoLineBreakAfterMinQty, headerImage.getInputStream(), wideHeaderImage,
+            footerImage.getInputStream(), wideFooterImage);
         executorService.submit(() -> {
             try {
                 saveLastUserRequest(userRequest);
@@ -101,7 +105,6 @@ public class RestController {
         instanceProperties.setLastQuality(userRequest.getQuality());
         instanceProperties.setLastWholeSaleFormat(userRequest.isWholeSaleFormat());
         instanceProperties.setLastAutoLineBreakAfterMinQty(userRequest.isAutoLineBreakAfterMinQty());
-        instanceProperties.setLastSkipBoxSpaceOnBeginning(userRequest.getSkipBoxSpaceOnBeginning());
         persistenceService.persistInstanceProperties();
     }
 
@@ -126,13 +129,14 @@ public class RestController {
     public IndexBootStrap indexBootStrap() {
         final InstanceProperties instanceProperties = persistenceService.getInstanceProperties();
         return new IndexBootStrap()
-                    .setPageTitle(pageTitle)
-                    .setLastDocumentTitle(instanceProperties.getLastCatalogueName())
-                    .setLastQuality(instanceProperties.getLastQuality())
-                    .setLastWholeSaleFormat(instanceProperties.isLastWholeSaleFormat() != null ? instanceProperties.isLastWholeSaleFormat().toString() : null)
-                    .setLastAutoLineBreakAfterMinQty(instanceProperties.isLastAutoLineBreakAfterMinQty())
-                    .setLastSkipBoxSpaceOnBeginning(instanceProperties.getLastSkipBoxSpaceOnBeginning())
-                    .setProductGroupsWithoutChapter(instanceProperties.getProductGroupsWithoutChapter());
+            .setPageTitle(pageTitle)
+            .setLastDocumentTitle(instanceProperties.getLastCatalogueName())
+            .setLastQuality(instanceProperties.getLastQuality())
+            .setLastWholeSaleFormat(instanceProperties.getLastWholeSaleFormat() != null ? instanceProperties.getLastWholeSaleFormat().toString() : null)
+            .setLastAutoLineBreakAfterMinQty(instanceProperties.isLastAutoLineBreakAfterMinQty())
+            .setLastLastWideHeaderImage(instanceProperties.isLastWideHeaderImage())
+            .setLastLastWideFooterImage(instanceProperties.isLastWideFooterImage())
+            .setProductGroupsWithoutChapter(instanceProperties.getProductGroupsWithoutChapter());
     }
 
     @PostMapping("/saveproductgroupwithoutchapter")

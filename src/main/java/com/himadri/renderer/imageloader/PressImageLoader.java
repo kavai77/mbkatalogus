@@ -32,6 +32,7 @@ public class PressImageLoader implements ImageLoader {
     private final String logoImageLocation;
     private final String renderingLocation;
     private final LoadingCache<LogoImageKey, PDImageXObject> logoImageCache;
+    private final LoadingCache<ResourceImageKey, PDImageXObject> resourceImageCache;
 
 
     public PressImageLoader(String diskImageLocation, String logoImageLocation, String renderingLocation) {
@@ -52,6 +53,19 @@ public class PressImageLoader implements ImageLoader {
                         return LosslessFactory.createFromImage(imageKey.getPdDocument(), image);
                     }
                 });
+
+        resourceImageCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(60, TimeUnit.MINUTES)
+            .build(new CacheLoader<ResourceImageKey, PDImageXObject>() {
+                public PDImageXObject load(ResourceImageKey resourceImageKey) throws IOException {
+                    LOGGER.info("Loading resource file: {}", resourceImageKey.getResource());
+                    final BufferedImage image = ImageIO.read(getClass().getResourceAsStream(resourceImageKey.getResource()));
+                    if (image == null) {
+                        throw new IOException("ImageIO.read is null");
+                    }
+                    return LosslessFactory.createFromImage(resourceImageKey.getPdDocument(), image);
+                }
+            });
     }
 
     @Override
@@ -97,6 +111,15 @@ public class PressImageLoader implements ImageLoader {
             }
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public PDImageXObject loadResourceImage(String resource, PDDocument document) throws IOException {
+        try {
+            return resourceImageCache.get(new ResourceImageKey(resource, document));
+        } catch (ExecutionException e) {
+            throw (IOException) e.getCause();
         }
     }
 
