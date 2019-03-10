@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.himadri.model.rendering.Box.Type.ARTICLE;
+import static com.himadri.model.rendering.Box.Type.IMAGE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -50,7 +52,7 @@ public class PageCollectorEngineTest {
     @Test
     public void testSingleBoxes() throws Exception {
         when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
-                .thenReturn(createNarrowBoxesWithSize('A', IntStream.generate(() -> 1).limit(17).toArray()));
+                .thenReturn(createNarrowBoxesWithSize('A', ARTICLE, IntStream.generate(() -> 1).limit(17).toArray()));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),
                  createUserRequest());
         assertEquals(2, pages.size());
@@ -68,7 +70,7 @@ public class PageCollectorEngineTest {
     @Test
     public void testBigBoxes() throws Exception {
         when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
-                .thenReturn(createNarrowBoxesWithSize('A', 5, 5, 4, 4, 2 ));
+                .thenReturn(createNarrowBoxesWithSize('A', ARTICLE, 5, 5, 4, 4, 2 ));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),
                 createUserRequest());
         assertEquals(2, pages.size());
@@ -85,8 +87,8 @@ public class PageCollectorEngineTest {
     public void testWideBoxes() throws Exception {
         when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
                 .thenReturn(
-                        createWideBoxesWithSize('A', 2, 1 ),
-                        createNarrowBoxesWithSize('B', 3, 4)
+                        createWideBoxesWithSize('A', ARTICLE, 2, 1 ),
+                        createNarrowBoxesWithSize('B', ARTICLE, 3, 4)
                 );
         // PAGE 1
         // 0: | A0 | A0 |
@@ -109,12 +111,103 @@ public class PageCollectorEngineTest {
     }
 
     @Test
+    public void testWithHeaderAndFooter() throws Exception {
+        when(itemToBoxConverter.createImageBox(any(), anyBoolean(), any(), eq("fejléc")))
+            .thenReturn(
+                createNarrowBoxesWithSize('H', IMAGE, 1).get(0)
+            );
+        when(itemToBoxConverter.createImageBox(any(), anyBoolean(), any(), eq("lábléc")))
+            .thenReturn(
+                createWideBoxesWithSize('F', IMAGE,1).get(0)
+            );
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+            .thenReturn(
+                createWideBoxesWithSize('A', ARTICLE, 1, 1 ),
+                createNarrowBoxesWithSize('B', ARTICLE, 3, 4),
+                createWideBoxesWithSize('A', ARTICLE, 1, 1 ),
+                createNarrowBoxesWithSize('B', ARTICLE, 3, 4)
+            );
+        // PAGE 1
+        // 0: | H0 |    |
+        // 1: | A0 | A0 |
+        // 2: | A1 | A1 |
+        // 3: | B0 | B1 |
+        // 4: | B0 | B1 |
+        // 5: | B0 | B1 |
+        // 6: |    | B1 |
+        // 7: | F0 | F0 |
+
+        final List<Page> pages = sut.createPages(createDummyItemGroups(1, 2),
+            createUserRequest());
+        assertEquals(1, pages.size());
+        assertEquals(6, pages.get(0).getBoxes().size());
+        assertBoxPosition(7, 0, "F0", pages.get(0).getBoxes().get(0));
+        assertBoxPosition(0, 0, "H0", pages.get(0).getBoxes().get(1));
+        assertBoxPosition(1, 0, "A0", pages.get(0).getBoxes().get(2));
+        assertBoxPosition(2, 0, "A1", pages.get(0).getBoxes().get(3));
+        assertBoxPosition(3, 0, "B0", pages.get(0).getBoxes().get(4));
+        assertBoxPosition(3, 1, "B1", pages.get(0).getBoxes().get(5));
+    }
+
+    @Test
+    public void testWithHeaderAndFooterWithNewPage() throws Exception {
+        when(itemToBoxConverter.createImageBox(any(), anyBoolean(), any(), eq("fejléc")))
+            .thenReturn(
+                createWideBoxesWithSize('H', IMAGE, 2).get(0)
+            );
+        when(itemToBoxConverter.createImageBox(any(), anyBoolean(), any(), eq("lábléc")))
+            .thenReturn(
+                createNarrowBoxesWithSize('F', IMAGE,2).get(0)
+            );
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+            .thenReturn(
+                createWideBoxesWithSize('A', ARTICLE, 1 ),
+                createNarrowBoxesWithSize('B', ARTICLE, 3, 4),
+                createWideBoxesWithSize('A', ARTICLE, 1 ),
+                createNarrowBoxesWithSize('B', ARTICLE, 3, 4)
+            );
+        // PAGE 1
+        // 0: | H0 | H0 |
+        // 1: | H0 | H0 |
+        // 2: | A0 | A0 |
+        // 3: | B0 |    |
+        // 4: | B0 |    |
+        // 5: | B0 |    |
+        // 6: |    | F0 |
+        // 7: |    | F0 |
+
+        // PAGE 2
+        // 0: | B1 |    |
+        // 1: | B1 |    |
+        // 2: | B1 |    |
+        // 3: | B1 |    |
+        // 4: |    |    |
+        // 5: |    |    |
+        // 6: |    |    |
+        // 7: |    |    |
+
+
+        final List<Page> pages = sut.createPages(createDummyItemGroups(1, 2),
+            createUserRequest());
+        assertEquals(2, pages.size());
+        assertEquals(4, pages.get(0).getBoxes().size());
+        assertBoxPosition(6, 1, "F0", pages.get(0).getBoxes().get(0));
+        assertBoxPosition(0, 0, "H0", pages.get(0).getBoxes().get(1));
+        assertBoxPosition(2, 0, "A0", pages.get(0).getBoxes().get(2));
+        assertBoxPosition(3, 0, "B0", pages.get(0).getBoxes().get(3));
+        assertEquals(1, pages.get(1).getBoxes().size());
+        assertBoxPosition(0, 0, "B1", pages.get(1).getBoxes().get(0));
+
+    }
+
+
+    @Test
     public void testWideOnNewPageBoxes() throws Exception {
         when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
                 .thenReturn(
-                        createWideBoxesWithSize('A', 2),
-                        createNarrowBoxesWithSize('B', 1),
-                        createWideBoxesWithSize('C', 2)
+                        createWideBoxesWithSize('A', ARTICLE, 2),
+                        createNarrowBoxesWithSize('B', ARTICLE, 1),
+                        createWideBoxesWithSize('C', ARTICLE, 2)
                 );
         // PAGE 1
         // 0: | A0 | A0 |
@@ -139,7 +232,7 @@ public class PageCollectorEngineTest {
     @Test
     public void testTooBigBox() throws Exception {
         when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
-                .thenReturn(createNarrowBoxesWithSize('A', 3, 9 ));
+                .thenReturn(createNarrowBoxesWithSize('A', ARTICLE, 3, 9 ));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),createUserRequest());
         assertEquals(1, pages.size());
         assertEquals(1, pages.get(0).getBoxes().size());
@@ -150,7 +243,7 @@ public class PageCollectorEngineTest {
     @Test
     public void testOnlyWideBoxes() throws Exception {
         when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
-                .thenReturn(createWideBoxesWithSize('A', 3, 3, 3, 6 ));
+                .thenReturn(createWideBoxesWithSize('A', ARTICLE, 3, 3, 3, 6 ));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1), createUserRequest());
         assertEquals(3, pages.size());
         assertEquals(2, pages.get(0).getBoxes().size());
@@ -169,20 +262,20 @@ public class PageCollectorEngineTest {
     }
 
 
-    private List<Box> createNarrowBoxesWithSize(char namePrefix, int... sizes) {
+    private List<Box> createNarrowBoxesWithSize(char namePrefix, Box.Type type, int... sizes) {
         return IntStream.range(0, sizes.length)
-                .mapToObj(i -> createBoxWithSize(namePrefix, i, 1, sizes[i]))
+                .mapToObj(i -> createBoxWithSize(namePrefix, i, 1, sizes[i], type))
                 .collect(Collectors.toList());
     }
 
-    private List<Box> createWideBoxesWithSize(char namePrefix, int... sizes) {
+    private List<Box> createWideBoxesWithSize(char namePrefix, Box.Type type, int... sizes) {
         return IntStream.range(0, sizes.length)
-                .mapToObj(i -> createBoxWithSize(namePrefix, i, 2, sizes[i]))
+                .mapToObj(i -> createBoxWithSize(namePrefix, i, 2, sizes[i], type))
                 .collect(Collectors.toList());
     }
 
-    private Box createBoxWithSize(char namePrefix, int index, int width, int height) {
-        return new Box(null, null, namePrefix + Integer.toString(index), null, "group", 0, width, height, false, null, null, Box.Type.ARTICLE);
+    private Box createBoxWithSize(char namePrefix, int index, int width, int height, Box.Type type) {
+        return new Box(null, null, namePrefix + Integer.toString(index), null, "group", 0, width, height, false, null, null, type);
     }
 
     private UserRequest createUserRequest() {

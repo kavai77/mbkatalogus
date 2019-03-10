@@ -1,23 +1,23 @@
 package com.himadri.engine;
 
 import com.google.common.cache.Cache;
-import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
 import com.himadri.engine.ItemCategorizerEngine.CsvItemGroup;
 import com.himadri.engine.ItemCategorizerEngine.CsvProductGroup;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
-import com.himadri.renderer.PageRenderer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.stream.IntStream;
 
+import static com.himadri.dto.ErrorItem.ErrorCategory.FORMATTING;
+import static com.himadri.dto.ErrorItem.Severity.ERROR;
+import static com.himadri.renderer.PageRenderer.BOX_COLUMNS_PER_PAGE;
+import static com.himadri.renderer.PageRenderer.BOX_ROWS_PER_PAGE;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 
@@ -33,9 +33,10 @@ public class PageCollectorEngine {
         PageListFactory pageListFactory = new PageListFactory(productGroups, userRequest, itemToBoxConverter, userSessionCache);
         List<Page> pages = pageListFactory.createPages(null, 0);
         Box footerImageBox = itemToBoxConverter.createImageBox(userRequest.getFooterImageStream(),
-            userRequest.isWideFooterImage(), userRequest, "végső");
+            userRequest.isWideFooterImage(), userRequest, "lábléc");
         if (footerImageBox != null) {
-            return pageListFactory.createPages(footerImageBox, pages.size());
+            PageListFactory newPageListFactory = new PageListFactory(productGroups, userRequest, itemToBoxConverter, userSessionCache);
+            return newPageListFactory.createPages(footerImageBox, pages.size());
         } else {
             return pages;
         }
@@ -60,16 +61,20 @@ public class PageCollectorEngine {
 
         public List<Page> createPages(Box footerImageBox, int lastPageNumber) {
             Box headerImageBox = itemToBoxConverter.createImageBox(userRequest.getHeaderImageStream(),
-                userRequest.isWideHeaderImage(), userRequest, "kezdő");
+                userRequest.isWideHeaderImage(), userRequest, "fejléc");
             createNewPageBuilder(footerImageBox, lastPageNumber);
             if (headerImageBox != null) {
-                currentPageBuilder.addBoxToPage(headerImageBox);
+                boolean added = currentPageBuilder.addBoxToPage(headerImageBox);
+                if (!added) {
+                    userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(ERROR, FORMATTING,
+                        "Nem sikerült a fejlécképet hozzáadni, mivel a túl magas kép egy oldalonhoz.");
+                }
             }
             for (int indexOfProductGroup = 0; indexOfProductGroup < productGroups.size(); indexOfProductGroup++) {
                 CsvProductGroup productGroup = productGroups.get(indexOfProductGroup);
                 for (CsvItemGroup csvItemGroup : productGroup.getItemGroups()) {
                     final List<Box> itemBoxes = itemToBoxConverter.createArticleBox(csvItemGroup, indexOfProductGroup,
-                        productGroup.getName(), userRequest, currentPageBuilder.getBottomFreeSpacesFromCurrentColumn());
+                        productGroup.getName(), userRequest, currentPageBuilder.getEmptySpotsFromCurrentColumn());
                     for (Box box : itemBoxes) {
                         final boolean added = currentPageBuilder.addBoxToPage(box);
                         if (!added) {
@@ -77,8 +82,7 @@ public class PageCollectorEngine {
                             createNewPageBuilder(footerImageBox, lastPageNumber);
                             final boolean addedToNewPage = currentPageBuilder.addBoxToPage(box);
                             if (!addedToNewPage) {
-                                final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
-                                userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
+                                userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(ERROR, FORMATTING,
                                     "Nem sikerült a dobozt hozzáadni egy üres oldalhoz, ezért kihagyjuk: " +
                                         box.getTitle());
                             }
@@ -94,7 +98,11 @@ public class PageCollectorEngine {
         private void createNewPageBuilder(Box footerImageBox, int lastPageNumber) {
             currentPageBuilder = new PageBuilder(userRequest.getCatalogueTitle(), pageList.size() + 1);
             if (footerImageBox != null && currentPageBuilder.getPageNumber() == lastPageNumber) {
-                currentPageBuilder.addBoxToBottom(footerImageBox);
+                boolean added = currentPageBuilder.addBoxToBottom(footerImageBox);
+                if (!added) {
+                    userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(ERROR, FORMATTING,
+                        "Nem sikerült a láblécképet hozzáadni, mivel a túl magas kép egy oldalonhoz.");
+                }
             }
         }
 
@@ -106,6 +114,7 @@ public class PageCollectorEngine {
 
     private static class PageBuilder {
         private final String title;
+        private int row;
         private int column;
         private List<Box> pageBoxes = new ArrayList<>();
         private boolean wideBoxPossible = true;
@@ -115,9 +124,9 @@ public class PageCollectorEngine {
         PageBuilder(String title, int pageNumber) {
             this.title = title;
             this.pageNumber = pageNumber;
-            boxOccupancyMatrix = new boolean[PageRenderer.BOX_ROWS_PER_PAGE][];
-            for (int i = 0; i < PageRenderer.BOX_ROWS_PER_PAGE; i++) {
-                boxOccupancyMatrix[i] = new boolean[PageRenderer.BOX_COLUMNS_PER_PAGE];
+            boxOccupancyMatrix = new boolean[BOX_ROWS_PER_PAGE][];
+            for (int i = 0; i < BOX_ROWS_PER_PAGE; i++) {
+                boxOccupancyMatrix[i] = new boolean[BOX_COLUMNS_PER_PAGE];
             }
         }
 
@@ -129,29 +138,26 @@ public class PageCollectorEngine {
             if (box.getWidth() > 1 && !wideBoxPossible) {
                 return false;
             }
-            if (box.getWidth() == 1) {
+            if (box.getWidth() == 1 && box.getBoxType() == Box.Type.ARTICLE) {
                 wideBoxPossible = false;
             }
-            int[] bottomFreeSpaces = getBottomFreeSpacesFromCurrentColumn();
-            final OptionalInt firstFittingColumn =
-                    IntStream.range(0, bottomFreeSpaces.length)
-                    .filter(c -> isFreeSpaceFromColumn(bottomFreeSpaces, c, box))
-                    .findFirst();
-            if (!firstFittingColumn.isPresent()) {
+            if (!searchNextEmptySpot(box)) {
                 return false;
             }
-            column += firstFittingColumn.getAsInt();
-            final int row = PageRenderer.BOX_ROWS_PER_PAGE - bottomFreeSpaces[firstFittingColumn.getAsInt()];
             box.setDimensions(row, column);
             occupyBox(box);
             return true;
         }
 
-        void addBoxToBottom(Box box) {
-            final int row = PageRenderer.BOX_ROWS_PER_PAGE - box.getHeight();
-            final int column = PageRenderer.BOX_COLUMNS_PER_PAGE - box.getWidth();
+        boolean addBoxToBottom(Box box) {
+            if (BOX_ROWS_PER_PAGE < box.getHeight() || BOX_COLUMNS_PER_PAGE < box.getWidth()) {
+                return false;
+            }
+            final int row = BOX_ROWS_PER_PAGE - box.getHeight();
+            final int column = BOX_COLUMNS_PER_PAGE - box.getWidth();
             box.setDimensions(row, column);
             occupyBox(box);
+            return true;
         }
 
         private void occupyBox(Box box) {
@@ -163,18 +169,33 @@ public class PageCollectorEngine {
             }
         }
 
-        private boolean isFreeSpaceFromColumn(int[] bottomFreeSpaces, int startColumn, Box box) {
-            if (box.getWidth() > bottomFreeSpaces.length - startColumn) {
+        private boolean searchNextEmptySpot(Box box) {
+            for (int c = column; c < BOX_COLUMNS_PER_PAGE; c++) {
+                for (int r = (c == column ? row : 0); r < BOX_ROWS_PER_PAGE; r++) {
+                    if (fitsInPlace(c, r, box.getWidth(), box.getHeight())) {
+                        row = r;
+                        column = c;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private boolean fitsInPlace(int column, int row, int width, int height) {
+            if ( width > BOX_COLUMNS_PER_PAGE - column ||
+                height > BOX_ROWS_PER_PAGE - row) {
                 return false;
             }
-            for (int c = 0; c < box.getWidth(); c++) {
-                if (bottomFreeSpaces[c + startColumn] < box.getHeight()) {
-                    return false;
+            for (int c = 0; c < width; c++) {
+                for (int r = 0; r < height; r++) {
+                    if (boxOccupancyMatrix[r + row][c + column]) {
+                        return false;
+                    }
                 }
             }
             return true;
         }
-
 
 
         Optional<Page> build() {
@@ -186,10 +207,13 @@ public class PageCollectorEngine {
                     pageNumber % 2 == 0 ? Page.Orientation.LEFT : Page.Orientation.RIGHT, pageBoxes));
         }
 
-        int[] getBottomFreeSpacesFromCurrentColumn() {
-            final int[] bottomFreeSpaces = new int[PageRenderer.BOX_COLUMNS_PER_PAGE - column];
-            for (int c = column; c < PageRenderer.BOX_COLUMNS_PER_PAGE; c++) {
-                int r = PageRenderer.BOX_ROWS_PER_PAGE - 1;
+        int[] getEmptySpotsFromCurrentColumn() {
+            final int[] bottomFreeSpaces = new int[BOX_COLUMNS_PER_PAGE - column];
+            for (int c = column; c < BOX_COLUMNS_PER_PAGE; c++) {
+                int r = BOX_ROWS_PER_PAGE - 1;
+                while (r >= 0 && boxOccupancyMatrix[r][c]) {
+                    r--;
+                }
                 while (r >= 0 && !boxOccupancyMatrix[r][c]) {
                     bottomFreeSpaces[c - column]++;
                     r--;
