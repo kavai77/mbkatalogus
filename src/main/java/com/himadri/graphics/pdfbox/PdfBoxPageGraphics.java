@@ -21,9 +21,11 @@ import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 public class PdfBoxPageGraphics {
     private static Logger LOG = LoggerFactory.getLogger(Util.class);
+    public static final Pattern HTML_PATTERN = Pattern.compile("((?<=<b>)|(?=<b>)|(?<=</b>)|(?=</b>)|(?<=<i>)|(?=<i>)|(?<=</i>)|(?=</i>))");
 
     private final PDDocument document;
     private final PDPageContentStream contentStream;
@@ -33,7 +35,7 @@ public class PdfBoxPageGraphics {
     private final UserSession userSession;
 
     private PDFont currentFont;
-    private float currentFontSize;
+    private Font currentRawFont;
 
     public PdfBoxPageGraphics(PDDocument document, PDRectangle pageSize,
                               PDFontService fontService, PDColorTranslator colorTranslator,
@@ -81,10 +83,10 @@ public class PdfBoxPageGraphics {
     }
 
     public void setFont(Font font) {
+        currentRawFont = font;
         currentFont = fontService.getPDFont(document, font);
-        currentFontSize = font.getSize2D();
         try {
-            contentStream.setFont(currentFont, currentFontSize);
+            contentStream.setFont(currentFont, font.getSize2D());
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
         }
@@ -94,16 +96,48 @@ public class PdfBoxPageGraphics {
         return currentFont;
     }
 
-    public float getFontSize() {
-        return currentFontSize;
-    }
-
     public void drawString(String text, float x, float y) {
         try {
             contentStream.beginText();
             contentStream.setTextMatrix(Matrix.getTranslateInstance(x, pageHeight - y));
             contentStream.showText(removeSpecialCharacters(currentFont, text));
             contentStream.endText();
+        } catch (IOException e) {
+            throw new PdfBoxGraphicsException(e);
+        }
+    }
+
+    public void drawHtmlString(String text, float x, float y) {
+        try {
+            Font originalRawFont = currentRawFont;
+            contentStream.beginText();
+            contentStream.setTextMatrix(Matrix.getTranslateInstance(x, pageHeight - y));
+            String[] split = HTML_PATTERN.split(removeSpecialCharacters(currentFont, text));
+            int currentStyle = 0;
+            for (String piece: split) {
+                switch (piece) {
+                    case "<b>":
+                        currentStyle |= Font.BOLD;
+                        setFont(originalRawFont.deriveFont(currentStyle));
+                        break;
+                    case "</b>":
+                        currentStyle &= ~Font.BOLD;
+                        setFont(originalRawFont.deriveFont(currentStyle));
+                        break;
+                    case "<i>":
+                        currentStyle |= Font.ITALIC;
+                        setFont(originalRawFont.deriveFont(currentStyle));
+                        break;
+                    case "</i>":
+                        currentStyle &= ~Font.ITALIC;
+                        setFont(originalRawFont.deriveFont(currentStyle));
+                        break;
+                    default:
+                        contentStream.showText(piece);
+                }
+            }
+            contentStream.endText();
+            setFont(originalRawFont);
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
         }
@@ -124,7 +158,7 @@ public class PdfBoxPageGraphics {
     }
 
     public int getStringWidth(String text) {
-        return getStringWidth(currentFont, currentFontSize, text);
+        return getStringWidth(currentFont, currentRawFont.getSize2D(), text);
     }
 
     public int getStringWidth(PDFont pdFont, float fontSize, String text) {

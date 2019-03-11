@@ -240,7 +240,7 @@ public class BoxRenderer {
             final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, article.getDescription(),
                     getSplitWidths(boxPositions, articleIndex, currentLine, m));
             for (String line: descriptionSplit) {
-                g2.drawString(line, getBoxPositionForLine(boxPositions, currentLine, m).getDescriptionStart(),
+                g2.drawHtmlString(line, getBoxPositionForLine(boxPositions, currentLine, m).getDescriptionStart(),
                         getLineYBaseLine(currentLine, m));
                 currentLine++;
             }
