@@ -64,23 +64,43 @@ public class PageRenderer {
                 .findFirst()
                 .orElse(util.getProductGroupMainColor(0));
 
+        int wideHeaderBoxHeight = page.getBoxes()
+            .stream()
+            .filter(b -> b.getBoxType() == Box.Type.IMAGE
+                && b.getWidth() == BOX_COLUMNS_PER_PAGE
+                && b.getRow() == 0)
+            .mapToInt(Box::getHeight)
+            .findFirst()
+            .orElse(0);
+        int wideFooterBoxHeight = page.getBoxes()
+            .stream()
+            .filter(b -> b.getBoxType() == Box.Type.IMAGE
+                && b.getWidth() == BOX_COLUMNS_PER_PAGE
+                && b.getRow() > 0)
+            .mapToInt(Box::getHeight)
+            .findFirst()
+            .orElse(0);
+
+        float frameTop = MARGIN_TOP + wideHeaderBoxHeight * BOX_HEIGHT;
+        float frameBottom = HEIGHT - MARGIN_BOTTOM - wideFooterBoxHeight * BOX_HEIGHT;
+
         // draw middle line
         g2.setStrokingColor(Color.lightGray);
         g2.setLineWidth(.5f);
-        g2.drawLine(marginLeft + BOX_WIDTH, MARGIN_TOP,marginLeft + BOX_WIDTH, HEIGHT - MARGIN_BOTTOM);
+        g2.drawLine(marginLeft + BOX_WIDTH, frameTop,marginLeft + BOX_WIDTH, frameBottom);
 
         // draw the frame
         int edgeOverFlow = userRequest.getQuality().isDrawCuttingEdges() ? 10 : 0;
         if (page.getOrientation() == Page.Orientation.LEFT) {
-            g2.drawLine(marginLeft, MARGIN_TOP, WIDTH + edgeOverFlow, MARGIN_TOP);
-            g2.drawLine(marginLeft, MARGIN_TOP, marginLeft, HEIGHT-MARGIN_BOTTOM);
-            g2.drawLine(marginLeft, HEIGHT-MARGIN_BOTTOM, WIDTH + edgeOverFlow, HEIGHT-MARGIN_BOTTOM);
+            g2.drawLine(marginLeft, frameTop, WIDTH + edgeOverFlow, frameTop);
+            g2.drawLine(marginLeft, frameTop, marginLeft, frameBottom);
+            g2.drawLine(marginLeft, frameBottom, WIDTH + edgeOverFlow, frameBottom);
             g2.setNonStrokingColor(mainColor);
             g2.fillRect(-edgeOverFlow, -edgeOverFlow, 30 + edgeOverFlow, 700 + edgeOverFlow);
         } else {
-            g2.drawLine(-edgeOverFlow, MARGIN_TOP, WIDTH-marginRight, MARGIN_TOP);
-            g2.drawLine(WIDTH-marginRight, MARGIN_TOP, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM);
-            g2.drawLine(-edgeOverFlow, HEIGHT-MARGIN_BOTTOM, WIDTH-marginRight, HEIGHT-MARGIN_BOTTOM);
+            g2.drawLine(-edgeOverFlow, frameTop, WIDTH - marginRight, frameTop);
+            g2.drawLine(WIDTH - marginRight, frameTop, WIDTH - marginRight, frameBottom);
+            g2.drawLine(-edgeOverFlow, frameBottom, WIDTH - marginRight, frameBottom);
             g2.setNonStrokingColor(mainColor);
             g2.fillRect(WIDTH - 30, -edgeOverFlow, 30 + edgeOverFlow, 700 + edgeOverFlow);
         }
