@@ -30,8 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
-import static com.himadri.renderer.PageRenderer.BOX_WIDTH;
+import static com.himadri.renderer.PageRenderer.*;
 import static org.apache.commons.lang3.StringUtils.*;
 
 @Component
@@ -65,6 +64,9 @@ public class ItemToBoxConverter {
         }
         try {
             final BufferedImage image = ImageIO.read(imageInputStream);
+            if (image == null) {
+                throw new IOException();
+            }
             int width = wideImage ? PageRenderer.BOX_COLUMNS_PER_PAGE : 1;
             float scale = BOX_WIDTH * width / image.getWidth();
             int height = (int) Math.ceil(image.getHeight() * scale / BOX_HEIGHT);
@@ -89,25 +91,28 @@ public class ItemToBoxConverter {
                 .anyMatch(i -> trueValueSet.contains(defaultString(i.getNagykep()).toLowerCase()));
         final boolean newProduct = items.getItems().stream()
                 .anyMatch(i -> trueValueSet.contains(defaultString(i.getUj()).toLowerCase()));
-        while (articleStart < articleList.size()) {
-            int availableBoxSize = boxList.size() < availableBoxSizes.length ? availableBoxSizes[boxList.size()] :
-                    PageRenderer.BOX_ROWS_PER_PAGE;
+        for (int counter = 0; articleStart < articleList.size(); counter++) {
+            int availableBoxSize = counter < availableBoxSizes.length ? availableBoxSizes[counter] : BOX_ROWS_PER_PAGE;
             final BoxRenderer.RequiredHeight requiredOccupiedSpace = boxRenderer.calculateBoxHeight(
                     pdfBoxGraphics, articleList, articleStart, availableBoxSize, wideBox);
-            if (articleStart == requiredOccupiedSpace.getIndexOfNextArticle()) {
-                final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
-                userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
-                        String.format("A %s leírása túlnyúlik egy oldalon, ezért a teljes boxot kihagytuk.",
+            if (articleStart == requiredOccupiedSpace.getIndexOfNextArticle()
+                    && availableBoxSize == BOX_ROWS_PER_PAGE) {
+                userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(ErrorItem.Severity.ERROR,
+                        ErrorItem.ErrorCategory.FORMATTING,
+                        String.format("A %s leírása túlnyúlik egy teljes oldalon, ezért a teljes boxot kihagytuk.",
                                 articleList.get(articleStart).getNumber()));
                 return Collections.emptyList();
             }
             String brandImage = isNotBlank(firstItem.getGyarto()) ? stripToEmpty(firstItem.getGyarto()) + PSD_EXTENSION : null;
             final String imageName = imageLoader.getImageName(firstItem);
-            boxList.add(Box.createArticleBox(imageName, brandImage, boxTitle,
-                    stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
-                    wideBox ? PageRenderer.BOX_COLUMNS_PER_PAGE : 1,
-                    requiredOccupiedSpace.getBoxHeight(),
-                    newProduct, articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle())));
+            final List<Box.Article> articles = articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle());
+            if (!articles.isEmpty()) {
+                boxList.add(Box.createArticleBox(imageName, brandImage, boxTitle,
+                        stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
+                        wideBox ? PageRenderer.BOX_COLUMNS_PER_PAGE : 1,
+                        requiredOccupiedSpace.getBoxHeight(),
+                        newProduct, articles));
+            }
 
             articleStart = requiredOccupiedSpace.getIndexOfNextArticle();
         }

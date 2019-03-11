@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static com.himadri.dto.ErrorItem.ErrorCategory.FORMATTING;
 import static com.himadri.dto.ErrorItem.Severity.ERROR;
+import static com.himadri.dto.ErrorItem.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_COLUMNS_PER_PAGE;
 import static com.himadri.renderer.PageRenderer.BOX_ROWS_PER_PAGE;
 import static java.util.Optional.empty;
@@ -30,13 +31,22 @@ public class PageCollectorEngine {
     Cache<String, UserSession> userSessionCache;
 
     public List<Page> createPages(List<CsvProductGroup> productGroups, UserRequest userRequest) {
-        PageListFactory pageListFactory = new PageListFactory(productGroups, userRequest, itemToBoxConverter, userSessionCache);
-        List<Page> pages = pageListFactory.createPages(null, 0);
+        Box headerImageBox = itemToBoxConverter.createImageBox(userRequest.getHeaderImageStream(),
+                userRequest.isWideHeaderImage(), userRequest, "fejléc");
         Box footerImageBox = itemToBoxConverter.createImageBox(userRequest.getFooterImageStream(),
-            userRequest.isWideFooterImage(), userRequest, "lábléc");
+                userRequest.isWideFooterImage(), userRequest, "lábléc");
+
+        PageListFactory pageListFactory = new PageListFactory(productGroups, userRequest, itemToBoxConverter, userSessionCache, headerImageBox);
+        List<Page> pages = pageListFactory.createPages(null, 0);
         if (footerImageBox != null) {
-            PageListFactory newPageListFactory = new PageListFactory(productGroups, userRequest, itemToBoxConverter, userSessionCache);
-            return newPageListFactory.createPages(footerImageBox, pages.size());
+            PageListFactory newPageListFactory = new PageListFactory(productGroups, userRequest, itemToBoxConverter, userSessionCache, headerImageBox);
+            List<Page> newPages = newPageListFactory.createPages(footerImageBox, pages.size());
+            if (newPages.size() > pages.size()) {
+                userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(WARN, FORMATTING,
+                        "A láblécképet nem sikerült az utolsó oldalra tenni, mivel az eredeti utolsó oldal " +
+                                "telített volt. Így a lábléckép az utolsó előtti oldalra került.");
+            }
+            return newPages;
         } else {
             return pages;
         }
@@ -49,19 +59,19 @@ public class PageCollectorEngine {
         private final UserRequest userRequest;
         private final ItemToBoxConverter itemToBoxConverter;
         private final Cache<String, UserSession> userSessionCache;
-
+        private final Box headerImageBox;
 
         public PageListFactory(List<CsvProductGroup> productGroups, UserRequest userRequest,
-                               ItemToBoxConverter itemToBoxConverter, Cache<String, UserSession> userSessionCache) {
+                               ItemToBoxConverter itemToBoxConverter, Cache<String, UserSession> userSessionCache, Box headerImageBox) {
             this.productGroups = productGroups;
             this.userRequest = userRequest;
             this.itemToBoxConverter = itemToBoxConverter;
             this.userSessionCache = userSessionCache;
+            this.headerImageBox = headerImageBox;
         }
 
         public List<Page> createPages(Box footerImageBox, int lastPageNumber) {
-            Box headerImageBox = itemToBoxConverter.createImageBox(userRequest.getHeaderImageStream(),
-                userRequest.isWideHeaderImage(), userRequest, "fejléc");
+
             createNewPageBuilder(footerImageBox, lastPageNumber);
             if (headerImageBox != null) {
                 boolean added = currentPageBuilder.addBoxToPage(headerImageBox);
@@ -202,8 +212,13 @@ public class PageCollectorEngine {
             if (pageBoxes.isEmpty()) {
                 return empty();
             }
-            final Box firstBox = pageBoxes.get(0);
-            return of(new Page(title, firstBox.getProductGroup(), pageNumber,
+            final String firstBoxProductGroup = pageBoxes
+                    .stream()
+                    .filter(b -> b.getBoxType() == Box.Type.ARTICLE)
+                    .map(Box::getProductGroup)
+                    .findFirst()
+                    .orElse("");
+            return of(new Page(title, firstBoxProductGroup, pageNumber,
                     pageNumber % 2 == 0 ? Page.Orientation.LEFT : Page.Orientation.RIGHT, pageBoxes));
         }
 

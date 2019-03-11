@@ -60,16 +60,17 @@ public class RestController {
                                   @RequestParam Quality quality,
                                   @RequestParam boolean wholeSaleFormat,
                                   @RequestParam boolean autoLineBreakAfterMinQty,
-                                  @RequestParam MultipartFile headerImage,
+                                  @RequestParam(required = false) MultipartFile headerImage,
                                   @RequestParam boolean wideHeaderImage,
-                                  @RequestParam MultipartFile footerImage,
+                                  @RequestParam(required = false) MultipartFile footerImage,
                                   @RequestParam boolean wideFooterImage) throws IOException {
         String id = UUID.randomUUID().toString();
         final UserSession userSession = new UserSession();
         userSessionCache.put(id, userSession);
         final UserRequest userRequest = new UserRequest(id, csvFile.getInputStream(), title, quality,
-            wholeSaleFormat, autoLineBreakAfterMinQty, headerImage.getInputStream(), wideHeaderImage,
-            footerImage.getInputStream(), wideFooterImage);
+            wholeSaleFormat, autoLineBreakAfterMinQty,
+            headerImage != null ? headerImage.getInputStream() : null, wideHeaderImage,
+            footerImage != null ? footerImage.getInputStream() : null, wideFooterImage);
         executorService.submit(() -> {
             try {
                 saveLastUserRequest(userRequest);

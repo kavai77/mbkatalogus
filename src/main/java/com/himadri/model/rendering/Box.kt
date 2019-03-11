@@ -22,8 +22,8 @@ data class Box(
     companion object {
         @JvmStatic
         fun createArticleBox(
-            image: String,
-            brandImage: String,
+            image: String?,
+            brandImage: String?,
             title: String,
             category: String,
             productGroup: String,

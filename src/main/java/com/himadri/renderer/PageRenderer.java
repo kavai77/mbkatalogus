@@ -56,7 +56,13 @@ public class PageRenderer {
     public void drawPage(PdfBoxPageGraphics g2, Page page, UserRequest userRequest) {
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
         float marginRight = MARGIN_RIGHT.get(page.getOrientation());
-        Color mainColor = util.getBoxMainColor(page.getBoxes().get(0));
+        //Color mainColor = util.getBoxMainColor(page.getBoxes().get(0));
+        Color mainColor = page.getBoxes()
+                .stream()
+                .filter(b -> b.getBoxType() == Box.Type.ARTICLE)
+                .map(b -> util.getBoxMainColor(b))
+                .findFirst()
+                .orElse(util.getProductGroupMainColor(0));
 
         // draw middle line
         g2.setStrokingColor(Color.lightGray);

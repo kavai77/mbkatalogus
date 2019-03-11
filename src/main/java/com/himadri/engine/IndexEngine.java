@@ -45,12 +45,14 @@ public class IndexEngine {
         g2.setFont(INDEX_CONTENT_FONT);
         for (Page page: pages) {
             for (Box box: page.getBoxes()) {
-                for (Box.Article article: box.getArticles()) {
-                    String title = getIndexTitle(g2, article, userRequest);
-                    if (StringUtils.isNotBlank(title)) {
-                        productNameSet.add(new Index.Record(title, page.getPageNumber()));
+                if (box.getBoxType() == Box.Type.ARTICLE) {
+                    for (Box.Article article : box.getArticles()) {
+                        String title = getIndexTitle(g2, article, userRequest);
+                        if (StringUtils.isNotBlank(title)) {
+                            productNameSet.add(new Index.Record(title, page.getPageNumber()));
+                        }
+                        index.getProductNumberIndex().add(new Index.Record(article.getNumber(), page.getPageNumber()));
                     }
-                    index.getProductNumberIndex().add(new Index.Record(article.getNumber(), page.getPageNumber()));
                 }
             }
         }

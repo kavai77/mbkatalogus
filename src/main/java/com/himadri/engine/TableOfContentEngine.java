@@ -13,7 +13,9 @@ public class TableOfContentEngine {
         TableOfContent tableOfContent = new TableOfContent();
         for (Page page: pages) {
             for (Box box: page.getBoxes()) {
-                tableOfContent.getTableOfContent().putIfAbsent(box.getProductGroup(), page.getPageNumber());
+                if (box.getBoxType() == Box.Type.ARTICLE) {
+                    tableOfContent.getTableOfContent().putIfAbsent(box.getProductGroup(), page.getPageNumber());
+                }
             }
         }
         return tableOfContent;
