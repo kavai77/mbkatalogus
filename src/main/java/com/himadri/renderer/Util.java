@@ -1,5 +1,6 @@
 package com.himadri.renderer;
 
+import com.google.common.collect.ImmutableSet;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
@@ -14,6 +15,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.StringUtils.splitByWholeSeparator;
@@ -21,6 +23,7 @@ import static org.apache.pdfbox.pdmodel.common.PDRectangle.A4;
 
 @Component
 public class Util {
+    public static final Set<String> trueValueSet = ImmutableSet.of("i", "igen", "y", "yes", "t", "true");
     private static final int PRESS_PAGE_MARGIN = 20;
     private static final float PRESS_CUT_EDGE = 13;
 

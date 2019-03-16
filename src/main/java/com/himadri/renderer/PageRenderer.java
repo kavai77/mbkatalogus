@@ -24,22 +24,17 @@ public class PageRenderer {
     public static final int BOX_ROWS_PER_PAGE = 8;
     public static final int BOX_COLUMNS_PER_PAGE = 2;
 
-    private static final Map<Page.Orientation, Integer> MARGIN_LEFT = ImmutableMap.of(
+    static final Map<Page.Orientation, Integer> MARGIN_LEFT = ImmutableMap.of(
             Page.Orientation.LEFT,40,
             Page.Orientation.RIGHT,30
     );
 
-    private static final Map<Page.Orientation, Integer> MARGIN_RIGHT = ImmutableMap.of(
+    static final Map<Page.Orientation, Integer> MARGIN_RIGHT = ImmutableMap.of(
             Page.Orientation.LEFT,30,
             Page.Orientation.RIGHT,40
     );
-    public static final float BOX_WIDTH = (WIDTH - MARGIN_LEFT.get(Page.Orientation.LEFT) - MARGIN_RIGHT.get(Page.Orientation.LEFT)) / 2; // 262.5
-    public static final float BOX_HEIGHT = (HEIGHT - MARGIN_TOP - MARGIN_BOTTOM) / BOX_ROWS_PER_PAGE; //99f;
-
-    static {
-        assert MARGIN_LEFT.get(Page.Orientation.LEFT) + MARGIN_RIGHT.get(Page.Orientation.LEFT) ==
-               MARGIN_LEFT.get(Page.Orientation.RIGHT) + MARGIN_RIGHT.get(Page.Orientation.RIGHT);
-    }
+    public static final float BOX_WIDTH = (WIDTH - MARGIN_LEFT.get(Page.Orientation.LEFT) - MARGIN_RIGHT.get(Page.Orientation.LEFT)) / 2f; // 262.5
+    public static final float BOX_HEIGHT = (HEIGHT - MARGIN_TOP - MARGIN_BOTTOM) / (float) BOX_ROWS_PER_PAGE; //99f;
 
     @Autowired
     private BoxRenderer boxRenderer;

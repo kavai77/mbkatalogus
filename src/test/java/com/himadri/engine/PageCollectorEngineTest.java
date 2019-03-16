@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.google.common.collect.ImmutableList.of;
 import static com.himadri.model.rendering.Box.Type.ARTICLE;
 import static com.himadri.model.rendering.Box.Type.IMAGE;
 import static org.junit.Assert.assertEquals;
@@ -213,20 +214,17 @@ public class PageCollectorEngineTest {
         // 0: | A0 | A0 |
         // 1: | A0 | A0 |
         // 2: | B0 |    |
-
-        // PAGE 2
-        // 0: | C0 | C0 |
-        // 1: | C0 | C0 |
+        // 3: | C0 | C0 |
+        // 4: | C0 | C0 |
 
 
         final List<Page> pages = sut.createPages(createDummyItemGroups(3, 1),
                 createUserRequest());
-        assertEquals(2, pages.size());
-        assertEquals(2, pages.get(0).getBoxes().size());
-        assertEquals(1, pages.get(1).getBoxes().size());
+        assertEquals(1, pages.size());
+        assertEquals(3, pages.get(0).getBoxes().size());
         assertBoxPosition(0, 0, "A0", pages.get(0).getBoxes().get(0));
         assertBoxPosition(2, 0, "B0", pages.get(0).getBoxes().get(1));
-        assertBoxPosition(0, 0, "C0", pages.get(1).getBoxes().get(0));
+        assertBoxPosition(3, 0, "C0", pages.get(0).getBoxes().get(2));
     }
 
     @Test
@@ -253,6 +251,45 @@ public class PageCollectorEngineTest {
         assertBoxPosition(3, 0, "A1", pages.get(0).getBoxes().get(1));
         assertBoxPosition(0, 0, "A2", pages.get(1).getBoxes().get(0));
         assertBoxPosition(0, 0, "A3", pages.get(2).getBoxes().get(0));
+    }
+
+    @Test
+    public void testAvailableHeights() {
+        // 0: |   |   |
+        // 1: | X | X |
+        // 2: | X |   |
+        // 3: |   |   |
+        // 4: | X | X |
+        // 5: |   | X |
+        // 6: |   |   |
+        // 7: |   |   |
+
+        boolean[][] boxOccupancyMatrix = {
+            new boolean[]{false, false},
+            new boolean[]{true, true},
+            new boolean[]{true, false},
+            new boolean[]{false, false},
+            new boolean[]{true, true},
+            new boolean[]{false, true},
+            new boolean[]{false, false},
+            new boolean[]{false, false}
+        };
+        PageCollectorEngine.PageBuilder pageBuilder00 = new PageCollectorEngine.PageBuilder("title", 0, 0, 0, boxOccupancyMatrix);
+        assertEquals(of(1, 1, 3, 1, 2, 2), pageBuilder00.getAvailableBoxHeights(1));
+        assertEquals(of(1, 1, 2), pageBuilder00.getAvailableBoxHeights(2));
+        assertEquals(of(), pageBuilder00.getAvailableBoxHeights(3));
+
+        PageCollectorEngine.PageBuilder pageBuilde01 = new PageCollectorEngine.PageBuilder("title", 0, 0, 1, boxOccupancyMatrix);
+        assertEquals(of(1, 3, 1, 2, 2), pageBuilde01.getAvailableBoxHeights(1));
+        assertEquals(of(1, 2), pageBuilde01.getAvailableBoxHeights(2));
+
+        PageCollectorEngine.PageBuilder pageBuilde05 = new PageCollectorEngine.PageBuilder("title", 0, 0, 5, boxOccupancyMatrix);
+        assertEquals(of(3, 1, 2, 2), pageBuilde05.getAvailableBoxHeights(1));
+        assertEquals(of(2), pageBuilde05.getAvailableBoxHeights(2));
+
+        PageCollectorEngine.PageBuilder pageBuilde13 = new PageCollectorEngine.PageBuilder("title", 0, 1, 3, boxOccupancyMatrix);
+        assertEquals(of(1, 2), pageBuilde13.getAvailableBoxHeights(1));
+        assertEquals(of(), pageBuilde13.getAvailableBoxHeights(2));
     }
 
     private void assertBoxPosition(int expectedRow, int expectedColumn, String expectedTitle, Box box) {

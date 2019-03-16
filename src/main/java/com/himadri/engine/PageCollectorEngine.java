@@ -1,5 +1,6 @@
 package com.himadri.engine;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.himadri.dto.UserRequest;
 import com.himadri.engine.ItemCategorizerEngine.CsvItemGroup;
@@ -19,8 +20,10 @@ import static com.himadri.dto.ErrorItem.Severity.ERROR;
 import static com.himadri.dto.ErrorItem.Severity.WARN;
 import static com.himadri.renderer.PageRenderer.BOX_COLUMNS_PER_PAGE;
 import static com.himadri.renderer.PageRenderer.BOX_ROWS_PER_PAGE;
+import static com.himadri.renderer.Util.trueValueSet;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static org.apache.commons.lang3.StringUtils.defaultString;
 
 @Component
 public class PageCollectorEngine {
@@ -83,8 +86,10 @@ public class PageCollectorEngine {
             for (int indexOfProductGroup = 0; indexOfProductGroup < productGroups.size(); indexOfProductGroup++) {
                 CsvProductGroup productGroup = productGroups.get(indexOfProductGroup);
                 for (CsvItemGroup csvItemGroup : productGroup.getItemGroups()) {
+                    final boolean wideBox = csvItemGroup.getItems().stream()
+                        .anyMatch(i -> trueValueSet.contains(defaultString(i.getNagykep()).toLowerCase()));
                     final List<Box> itemBoxes = itemToBoxConverter.createArticleBox(csvItemGroup, indexOfProductGroup,
-                        productGroup.getName(), userRequest, currentPageBuilder.getEmptySpotsFromCurrentColumn());
+                        productGroup.getName(), userRequest, currentPageBuilder.getAvailableBoxHeights(wideBox ? BOX_COLUMNS_PER_PAGE : 1));
                     for (Box box : itemBoxes) {
                         final boolean added = currentPageBuilder.addBoxToPage(box);
                         if (!added) {
@@ -122,12 +127,11 @@ public class PageCollectorEngine {
         }
     }
 
-    private static class PageBuilder {
+    static class PageBuilder {
         private final String title;
         private int row;
         private int column;
         private List<Box> pageBoxes = new ArrayList<>();
-        private boolean wideBoxPossible = true;
         private final boolean[][] boxOccupancyMatrix;
         private final int pageNumber;
 
@@ -140,17 +144,20 @@ public class PageCollectorEngine {
             }
         }
 
-        public int getPageNumber() {
+        @VisibleForTesting
+        PageBuilder(String title, int pageNumber, int column, int row, boolean[][] boxOccupancyMatrix) {
+            this.title = title;
+            this.boxOccupancyMatrix = boxOccupancyMatrix;
+            this.pageNumber = pageNumber;
+            this.row = row;
+            this.column = column;
+        }
+
+        int getPageNumber() {
             return pageNumber;
         }
 
         boolean addBoxToPage(Box box) {
-            if (box.getWidth() > 1 && !wideBoxPossible) {
-                return false;
-            }
-            if (box.getWidth() == 1 && box.getBoxType() == Box.Type.ARTICLE) {
-                wideBoxPossible = false;
-            }
             if (!searchNextEmptySpot(box)) {
                 return false;
             }
@@ -192,6 +199,28 @@ public class PageCollectorEngine {
             return false;
         }
 
+        @VisibleForTesting
+        List<Integer> getAvailableBoxHeights(int width) {
+            final List<Integer> availableBoxHeights = new ArrayList<>();
+            for (int c = column; c < BOX_COLUMNS_PER_PAGE - width + 1; c++) {
+                int currentHeight = 0;
+                for (int r = (c == column ? row : 0); r < BOX_ROWS_PER_PAGE; r++) {
+                    if (fitsInPlace(c, r, width, 1)) {
+                        currentHeight++;
+                    } else {
+                        if (currentHeight > 0) {
+                            availableBoxHeights.add(currentHeight);
+                            currentHeight = 0;
+                        }
+                    }
+                }
+                if (currentHeight > 0) {
+                    availableBoxHeights.add(currentHeight);
+                }
+            }
+            return availableBoxHeights;
+        }
+
         private boolean fitsInPlace(int column, int row, int width, int height) {
             if ( width > BOX_COLUMNS_PER_PAGE - column ||
                 height > BOX_ROWS_PER_PAGE - row) {
@@ -222,19 +251,6 @@ public class PageCollectorEngine {
                     pageNumber % 2 == 0 ? Page.Orientation.LEFT : Page.Orientation.RIGHT, pageBoxes));
         }
 
-        int[] getEmptySpotsFromCurrentColumn() {
-            final int[] bottomFreeSpaces = new int[BOX_COLUMNS_PER_PAGE - column];
-            for (int c = column; c < BOX_COLUMNS_PER_PAGE; c++) {
-                int r = BOX_ROWS_PER_PAGE - 1;
-                while (r >= 0 && boxOccupancyMatrix[r][c]) {
-                    r--;
-                }
-                while (r >= 0 && !boxOccupancyMatrix[r][c]) {
-                    bottomFreeSpaces[c - column]++;
-                    r--;
-                }
-            }
-            return bottomFreeSpaces;
-        }
+
     }
 }

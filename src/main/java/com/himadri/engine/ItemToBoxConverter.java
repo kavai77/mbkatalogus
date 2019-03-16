@@ -1,7 +1,6 @@
 package com.himadri.engine;
 
 import com.google.common.cache.Cache;
-import com.google.common.collect.ImmutableSet;
 import com.himadri.dto.ErrorItem;
 import com.himadri.dto.UserRequest;
 import com.himadri.engine.ItemCategorizerEngine.CsvItemGroup;
@@ -27,7 +26,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.himadri.renderer.PageRenderer.*;
@@ -37,7 +35,6 @@ import static org.apache.commons.lang3.StringUtils.*;
 public class ItemToBoxConverter {
 
     private static final String PSD_EXTENSION = ".psd";
-    private static final Set<String> trueValueSet = ImmutableSet.of("i", "igen", "y", "yes", "t", "true");
 
     @Autowired
     Cache<String, UserSession> userSessionCache;
@@ -80,7 +77,7 @@ public class ItemToBoxConverter {
     }
 
     public List<Box> createArticleBox(CsvItemGroup items, int indexOfProductGroup, String productGroupName,
-                                      UserRequest userRequest, int[] availableBoxSizes) {
+                                      UserRequest userRequest, List<Integer> availableBoxHeights) {
         final String boxTitle = getBoxTitle(items.getItems(), userRequest);
         List<Box.Article> articleList = items.getItems().stream().map(item -> convertItemToArticle(item, userRequest)).collect(Collectors.toList());
         CsvItem firstItem = items.getItems().get(0);
@@ -88,11 +85,11 @@ public class ItemToBoxConverter {
         final List<Box> boxList = new ArrayList<>();
         final ImageLoader imageLoader = imageLoaderServiceRegistry.getImageLoader(userRequest.getQuality());
         final boolean wideBox = items.getItems().stream()
-                .anyMatch(i -> trueValueSet.contains(defaultString(i.getNagykep()).toLowerCase()));
+                .anyMatch(i -> Util.trueValueSet.contains(defaultString(i.getNagykep()).toLowerCase()));
         final boolean newProduct = items.getItems().stream()
-                .anyMatch(i -> trueValueSet.contains(defaultString(i.getUj()).toLowerCase()));
+                .anyMatch(i -> Util.trueValueSet.contains(defaultString(i.getUj()).toLowerCase()));
         for (int counter = 0; articleStart < articleList.size(); counter++) {
-            int availableBoxSize = counter < availableBoxSizes.length ? availableBoxSizes[counter] : BOX_ROWS_PER_PAGE;
+            int availableBoxSize = counter < availableBoxHeights.size() ? availableBoxHeights.get(counter) : BOX_ROWS_PER_PAGE;
             final BoxRenderer.RequiredHeight requiredOccupiedSpace = boxRenderer.calculateBoxHeight(
                     pdfBoxGraphics, articleList, articleStart, availableBoxSize, wideBox);
             if (articleStart == requiredOccupiedSpace.getIndexOfNextArticle()
