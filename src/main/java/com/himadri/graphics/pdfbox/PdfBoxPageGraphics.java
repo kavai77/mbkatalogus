@@ -137,7 +137,6 @@ public class PdfBoxPageGraphics {
                 }
             }
             contentStream.endText();
-            setFont(originalRawFont);
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
         }

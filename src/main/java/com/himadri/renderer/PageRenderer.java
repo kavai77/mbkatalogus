@@ -33,7 +33,7 @@ public class PageRenderer {
             Page.Orientation.LEFT,30,
             Page.Orientation.RIGHT,40
     );
-    public static final float BOX_WIDTH = (WIDTH - MARGIN_LEFT.get(Page.Orientation.LEFT) - MARGIN_RIGHT.get(Page.Orientation.LEFT)) / 2f; // 262.5
+    public static final float BOX_WIDTH = (WIDTH - MARGIN_LEFT.get(Page.Orientation.LEFT) - MARGIN_RIGHT.get(Page.Orientation.LEFT)) / (float) BOX_COLUMNS_PER_PAGE; // 262.5
     public static final float BOX_HEIGHT = (HEIGHT - MARGIN_TOP - MARGIN_BOTTOM) / (float) BOX_ROWS_PER_PAGE; //99f;
 
     @Autowired
@@ -125,7 +125,7 @@ public class PageRenderer {
 
         //drawing the boxes
         for (Box box: page.getBoxes()) {
-            final float tx = marginLeft + box.getColumn() * (BOX_WIDTH + 7.5f);
+            final float tx = marginLeft + box.getColumn() * BOX_WIDTH;
             final float ty = MARGIN_TOP + box.getRow() * BOX_HEIGHT;
             g2.transform(tx, ty);
             boxRenderer.drawBox(g2, box, userRequest);

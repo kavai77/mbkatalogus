@@ -61,7 +61,7 @@ public class BoxRenderer {
             33f,
             5,
             105f,
-            150f,
+            157.5f,
             27f,
             12f,
             3f,
@@ -98,7 +98,17 @@ public class BoxRenderer {
     private void drawImageBox(PdfBoxPageGraphics g2, Box box) {
         BufferedImage image = box.getBufferedImage();
         float scale = (BOX_WIDTH * box.getWidth()) / image.getWidth();
-        g2.drawImage(image, 0, 0, image.getWidth() * scale, image.getHeight() * scale);
+        float ty;
+        if (box.getRow() == 0) { // headline image
+            ty = (box.getHeight() * BOX_HEIGHT - image.getHeight() * scale) / 2f;
+        } else { // footline image
+            ty = box.getHeight() * BOX_HEIGHT - image.getHeight() * scale;
+        }
+        g2.drawImage(image, 0, ty, image.getWidth() * scale, image.getHeight() * scale);
+
+        if (box.getRow() == 0 && box.getWidth() == 1) {
+            drawBottomLine(g2, box, regularBoxMetrics);
+        }
     }
 
     private void drawArticleBox(PdfBoxPageGraphics g2, Box box, UserRequest userRequest) {
@@ -246,8 +256,10 @@ public class BoxRenderer {
             }
         }
 
+        drawBottomLine(g2, box, m);
+    }
 
-        // bottom line
+    private void drawBottomLine(PdfBoxPageGraphics g2, Box box, BoxMetrics m) {
         g2.setStrokingColor(Color.lightGray);
         g2.setLineWidth(.5f);
         g2.drawLine(m.getBoxStart(), box.getHeight() * BOX_HEIGHT, m.getTextBoxX() + m.getTextBoxWidth(),
