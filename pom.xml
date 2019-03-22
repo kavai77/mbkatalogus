@@ -74,6 +74,14 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>${basedir}/project-files/private-resources</directory>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>

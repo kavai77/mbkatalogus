@@ -40,7 +40,7 @@ public class PdfBoxGraphicsTest {
 
     @Test
     public void removeSpecialCharacters() throws Exception {
-        InputStream resourceAsStream = PdfBoxPageGraphics.class.getResourceAsStream("/fonts/arial.ttf");
+        InputStream resourceAsStream = PdfBoxPageGraphics.class.getResourceAsStream("/fonts/Arial.ttf");
         assumeNotNull(resourceAsStream);
         PDFont pdFont = PDType0Font.load(document,
                 new TTFParser().parse(resourceAsStream), true);

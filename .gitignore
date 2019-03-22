@@ -1,7 +1,5 @@
 .DS_Store
 .idea/
 target/
-*.ttf
-*.otf
+project-files/
 *.iml
-start.sh

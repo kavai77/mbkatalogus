@@ -37,8 +37,8 @@ spring:
 instance: test
 pageTitle: Teszt Mód
 pdfLang: hu
-imageLocation: ../cikkek
-logoImageLocation: ../logok
-dbLocation: ../db
-webImageCacheLocation: ../cache
+imageLocation: project-files/cikkek
+logoImageLocation: project-files/logok
+dbLocation: project-files/db
+webImageCacheLocation: project-files/cache
 renderingLocation: target/render
