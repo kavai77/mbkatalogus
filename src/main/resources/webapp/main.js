@@ -102,6 +102,9 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
     }
 
     $scope.addProductGroup = function() {
+        if ($scope.productGroupsWithoutChapter == null) {
+            $scope.productGroupsWithoutChapter = [];
+        }
         var productGroup = prompt("Cikkcsoport neve");
         if (productGroup != null) {
             $scope.productGroupsWithoutChapter.push(productGroup);
