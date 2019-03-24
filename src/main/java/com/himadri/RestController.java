@@ -51,6 +51,9 @@ public class RestController {
     @Value("${pageTitle}")
     private String pageTitle;
 
+    @Value("${buildTimestamp}")
+    private String buildTimestamp;
+
     private ExecutorService executorService = Executors.newCachedThreadPool();
 
     @PostMapping("/csvRendering")
@@ -129,15 +132,18 @@ public class RestController {
     @ResponseBody
     public IndexBootStrap indexBootStrap() {
         final InstanceProperties instanceProperties = persistenceService.getInstanceProperties();
-        return new IndexBootStrap()
-            .setPageTitle(pageTitle)
-            .setLastDocumentTitle(instanceProperties.getLastCatalogueName())
-            .setLastQuality(instanceProperties.getLastQuality())
-            .setLastWholeSaleFormat(instanceProperties.getLastWholeSaleFormat() != null ? instanceProperties.getLastWholeSaleFormat().toString() : null)
-            .setLastAutoLineBreakAfterMinQty(instanceProperties.isLastAutoLineBreakAfterMinQty())
-            .setLastLastWideHeaderImage(instanceProperties.isLastWideHeaderImage())
-            .setLastLastWideFooterImage(instanceProperties.isLastWideFooterImage())
-            .setProductGroupsWithoutChapter(instanceProperties.getProductGroupsWithoutChapter());
+        return IndexBootStrap.builder()
+            .pageTitle(pageTitle)
+            .lastDocumentTitle(instanceProperties.getLastCatalogueName())
+            .lastQuality(instanceProperties.getLastQuality())
+            .lastWholeSaleFormat(instanceProperties.getLastWholeSaleFormat() != null ? instanceProperties.getLastWholeSaleFormat().toString() : null)
+            .lastAutoLineBreakAfterMinQty(instanceProperties.isLastAutoLineBreakAfterMinQty())
+            .lastLastWideHeaderImage(instanceProperties.isLastWideHeaderImage())
+            .lastLastWideFooterImage(instanceProperties.isLastWideFooterImage())
+            .productGroupsWithoutChapter(instanceProperties.getProductGroupsWithoutChapter())
+            .buildTimestamp(buildTimestamp)
+            .build();
+
     }
 
     @PostMapping("/saveproductgroupwithoutchapter")

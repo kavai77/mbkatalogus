@@ -6,6 +6,7 @@ renderingLocation: /usr/share/render
 webImageURLPrefix: http://www.madalbal.hu/
 pagesPerDocumentInQualityMode: 10
 itemCategorizerEngineClass: com.himadri.engine.StrictItemCategorizerEngine
+buildTimestamp: @timestamp@
 spring:
   profiles:
     active: test

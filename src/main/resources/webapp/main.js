@@ -71,6 +71,7 @@ app.controller('controller', function($scope, Upload, $interval, $http) {
             $scope.wideHeaderImage = response.data.lastLastWideHeaderImage;
             $scope.wideFooterImage = response.data.lastLastWideFooterImage;
             $scope.productGroupsWithoutChapter = response.data.productGroupsWithoutChapter;
+            $scope.version = response.data.buildTimestamp;
         }, function errorCallback(response) {
             $scope.quality = "DRAFT";
             $scope.wholeSaleFormat = "true";
