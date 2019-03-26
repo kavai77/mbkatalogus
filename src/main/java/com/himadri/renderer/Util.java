@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
@@ -16,14 +17,18 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.Math.min;
-import static org.apache.commons.lang3.StringUtils.splitByWholeSeparator;
 import static org.apache.pdfbox.pdmodel.common.PDRectangle.A4;
 
 @Component
 public class Util {
     public static final Set<String> trueValueSet = ImmutableSet.of("i", "igen", "y", "yes", "t", "true");
+    public static final Pattern LINE_BREAK_PATTERN = Pattern.compile(";;|<p>|<br>");
+    public static final Pattern HTML_TAG_PATTERN = Pattern.compile("</?[a-zA-Z]+>");
+    public static final Pattern HTML_TAG_PATTERN_OR_WHITESPACE = Pattern.compile("</?[a-zA-Z]+>|\\s");
     private static final int PRESS_PAGE_MARGIN = 20;
     private static final float PRESS_CUT_EDGE = 13;
 
@@ -32,7 +37,7 @@ public class Util {
     public static final String FORCE_LINE_BREAK_CHARACTERS = ";;";
 
     @Autowired
-    private PDFontService pdFontService;
+    PDFontService pdFontService;
 
     private static final Color[] PRODUCT_GROUP_COLORS = new Color[] {
             new Color(124, 171, 185),
@@ -62,23 +67,34 @@ public class Util {
 
     public String[] splitGraphicsText(PdfBoxPageGraphics g2, Font font, String text, float... width) {
         List<String> lines = new ArrayList<>();
-        String[] forcedLines = splitByWholeSeparator(text, FORCE_LINE_BREAK_CHARACTERS);
+        String[] forcedLines = LINE_BREAK_PATTERN.split(text);
         PDFont pdFont = pdFontService.getPDFont(g2.getDocument(), font);
+        StringBuilder line = new StringBuilder();
+        StringBuilder visibleLine = new StringBuilder();
         for (String forcedLine: forcedLines) {
-            String[] words = splitByWholeSeparator(forcedLine, null);
-            if (words.length > 0) {
-                StringBuilder line = new StringBuilder(words[0]);
-                for (int wordSplit = 1; wordSplit < words.length; wordSplit++) {
-                    String nextString = line.toString() + " " + words[wordSplit];
-                    if (g2.getStringWidth(pdFont, font.getSize2D(), nextString) <= width[min(lines.size(), width.length - 1)]) {
-                        line.append(" ").append(words[wordSplit]);
-                    } else {
-                        lines.add(line.toString());
-                        line = new StringBuilder(words[wordSplit]);
+            String[] words = splitWithDelimiters(forcedLine, HTML_TAG_PATTERN_OR_WHITESPACE);
+            for (String word: words) {
+                if (HTML_TAG_PATTERN.matcher(word).matches()) {
+                    if (PdfBoxPageGraphics.SUPPORTED_HTML_TAGS.contains(word)) {
+                        line.append(word);
                     }
+                } else {
+                    if (g2.getStringWidth(pdFont, font.getSize2D(), visibleLine.toString() + word) > width[min(lines.size(), width.length - 1)]) {
+                        if (StringUtils.isNotBlank(visibleLine)) {
+                            lines.add(StringUtils.strip(line.toString()));
+                            line = new StringBuilder();
+                        }
+                        visibleLine = new StringBuilder();
+                    }
+                    line.append(word);
+                    visibleLine.append(word);
                 }
-                lines.add(line.toString());
             }
+            if (StringUtils.isNotBlank(visibleLine)) {
+                lines.add(StringUtils.strip(line.toString()));
+                line = new StringBuilder();
+            }
+            visibleLine = new StringBuilder();
         }
         return lines.toArray(new String[lines.size()]);
     }
@@ -111,5 +127,32 @@ public class Util {
         // right down corner
         g2.drawLineByWidth(A4.getWidth() + PRESS_PAGE_MARGIN - PRESS_CUT_EDGE, A4.getHeight(), PRESS_CUT_EDGE, 0);
         g2.drawLineByWidth(A4.getWidth(), A4.getHeight() + PRESS_PAGE_MARGIN - PRESS_CUT_EDGE, 0, PRESS_CUT_EDGE);
+    }
+
+    public static String[] splitWithDelimiters(String str, Pattern p) {
+        List<String> parts = new ArrayList<>();
+
+        Matcher m = p.matcher(str);
+
+        int lastEnd = 0;
+        while(m.find()) {
+            int start = m.start();
+            if(lastEnd != start) {
+                String nonDelim = str.substring(lastEnd, start);
+                parts.add(nonDelim);
+            }
+            String delim = m.group();
+            parts.add(delim);
+
+            int end = m.end();
+            lastEnd = end;
+        }
+
+        if(lastEnd != str.length()) {
+            String nonDelim = str.substring(lastEnd);
+            parts.add(nonDelim);
+        }
+
+        return parts.toArray(new String[]{});
     }
 }

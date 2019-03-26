@@ -1,6 +1,7 @@
 package com.himadri.graphics.pdfbox;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.himadri.dto.ErrorItem;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.Util;
@@ -21,11 +22,12 @@ import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 public class PdfBoxPageGraphics {
     private static Logger LOG = LoggerFactory.getLogger(Util.class);
-    public static final Pattern HTML_PATTERN = Pattern.compile("((?<=<b>)|(?=<b>)|(?<=</b>)|(?=</b>)|(?<=<i>)|(?=<i>)|(?<=</i>)|(?=</i>))");
+
+    public static final Set<String> SUPPORTED_HTML_TAGS = ImmutableSet.of("<b>", "</b>", "<i>", "</i>", "<strong>", "</strong>");
 
     private final PDDocument document;
     private final PDPageContentStream contentStream;
@@ -112,15 +114,17 @@ public class PdfBoxPageGraphics {
             Font originalRawFont = currentRawFont;
             contentStream.beginText();
             contentStream.setTextMatrix(Matrix.getTranslateInstance(x, pageHeight - y));
-            String[] split = HTML_PATTERN.split(removeSpecialCharacters(currentFont, text));
+            String[] split = Util.splitWithDelimiters(removeSpecialCharacters(currentFont, text), Util.HTML_TAG_PATTERN);
             int currentStyle = 0;
             for (String piece: split) {
                 switch (piece) {
                     case "<b>":
+                    case "<strong>":
                         currentStyle |= Font.BOLD;
                         setFont(originalRawFont.deriveFont(currentStyle));
                         break;
                     case "</b>":
+                    case "</strong>":
                         currentStyle &= ~Font.BOLD;
                         setFont(originalRawFont.deriveFont(currentStyle));
                         break;
