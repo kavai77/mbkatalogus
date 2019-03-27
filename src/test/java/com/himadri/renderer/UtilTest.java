@@ -62,7 +62,7 @@ public class UtilTest {
     public void splitGraphicsText() {
         PdfBoxPageGraphics g2 = mock(PdfBoxPageGraphics.class);
         when(g2.getDocument()).thenReturn(mock(PDDocument.class));
-        when(g2.getStringWidth(any(), anyFloat(), anyString())).thenAnswer((Answer<Integer>) it -> ((String) it.getArgument(2)).length());
+        when(g2.getStringWidth(any(), anyFloat(), anyString())).thenAnswer((Answer<Float>) it -> (float) ((String) it.getArgument(2)).length());
         String text = " megy<b> a vonat <p><ul></p>megy< <i>a</i>> vonat <br>kanizsara<>";
 
         String[] split35 = util.splitGraphicsText(g2, mock(Font.class), text, 3f, 5f);
