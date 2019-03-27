@@ -6,6 +6,8 @@ import com.himadri.dto.ErrorItem;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.Util;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -22,12 +24,14 @@ import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class PdfBoxPageGraphics {
     private static Logger LOG = LoggerFactory.getLogger(Util.class);
 
-    public static final Set<String> SUPPORTED_HTML_TAGS = ImmutableSet.of("<b>", "</b>", "<i>", "</i>", "<strong>", "</strong>");
+    public static final Set<String> SUPPORTED_HTML_TAGS = ImmutableSet.of("<b>", "</b>", "<i>", "</i>", "<strong>", "</strong>", "<u>", "</u>");
 
     private final PDDocument document;
     private final PDPageContentStream contentStream;
@@ -38,6 +42,7 @@ public class PdfBoxPageGraphics {
 
     private PDFont currentFont;
     private Font currentRawFont;
+    private boolean underline;
 
     public PdfBoxPageGraphics(PDDocument document, PDRectangle pageSize,
                               PDFontService fontService, PDColorTranslator colorTranslator,
@@ -98,6 +103,14 @@ public class PdfBoxPageGraphics {
         return currentFont;
     }
 
+    public boolean isUnderline() {
+        return underline;
+    }
+
+    public void setUnderline(boolean underline) {
+        this.underline = underline;
+    }
+
     public void drawString(String text, float x, float y) {
         try {
             contentStream.beginText();
@@ -115,7 +128,10 @@ public class PdfBoxPageGraphics {
             contentStream.beginText();
             contentStream.setTextMatrix(Matrix.getTranslateInstance(x, pageHeight - y));
             String[] split = Util.splitWithDelimiters(removeSpecialCharacters(currentFont, text), Util.HTML_TAG_PATTERN);
+            float xOffset = 0;
+            float underLineXStart = 0;
             int currentStyle = 0;
+            List<Pair<Float, Float>> underLineLocations = new ArrayList<>();
             for (String piece: split) {
                 switch (piece) {
                     case "<b>":
@@ -136,11 +152,29 @@ public class PdfBoxPageGraphics {
                         currentStyle &= ~Font.ITALIC;
                         setFont(originalRawFont.deriveFont(currentStyle));
                         break;
+                    case "<u>":
+                        underLineXStart = xOffset;
+                        underline = true;
+                        break;
+                    case "</u>":
+                        underline = false;
+                        underLineLocations.add(new ImmutablePair<>(underLineXStart, xOffset));
+                        break;
                     default:
                         contentStream.showText(piece);
+                        xOffset += currentFont.getStringWidth(piece) / 1000 * currentRawFont.getSize2D();
                 }
             }
             contentStream.endText();
+            if (underline) {
+                underLineLocations.add(new ImmutablePair<>(underLineXStart, xOffset));
+            }
+
+            setStrokingColor(Color.black);
+            setLineWidth(.5f);
+            for (Pair<Float, Float> location: underLineLocations) {
+                drawLine(location.getLeft() + x, y + 0.7f, location.getRight() + x, y + 0.7f);
+            }
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
         }
@@ -160,13 +194,13 @@ public class PdfBoxPageGraphics {
         }
     }
 
-    public int getStringWidth(String text) {
+    public float getStringWidth(String text) {
         return getStringWidth(currentFont, currentRawFont.getSize2D(), text);
     }
 
-    public int getStringWidth(PDFont pdFont, float fontSize, String text) {
+    public float getStringWidth(PDFont pdFont, float fontSize, String text) {
         try {
-            return Math.round(pdFont.getStringWidth(removeSpecialCharacters(pdFont, text)) / 1000f * fontSize);
+            return pdFont.getStringWidth(removeSpecialCharacters(pdFont, text)) / 1000f * fontSize;
         } catch (IOException e) {
             throw new PdfBoxGraphicsException(e);
         }

@@ -247,6 +247,7 @@ public class BoxRenderer {
             // description
             g2.setNonStrokingColor(Color.black);
             g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
+            g2.setUnderline(false);
             final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, article.getDescription(),
                     getSplitWidths(boxPositions, articleIndex, currentLine, m));
             for (String line: descriptionSplit) {

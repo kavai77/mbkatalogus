@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.Math.min;
+import static org.apache.commons.lang3.StringUtils.deleteWhitespace;
 import static org.apache.pdfbox.pdmodel.common.PDRectangle.A4;
 
 @Component
@@ -69,32 +70,59 @@ public class Util {
         List<String> lines = new ArrayList<>();
         String[] forcedLines = LINE_BREAK_PATTERN.split(text);
         PDFont pdFont = pdFontService.getPDFont(g2.getDocument(), font);
+        int currentStyle = 0;
+        float totalWidth = 0f;
         StringBuilder line = new StringBuilder();
-        StringBuilder visibleLine = new StringBuilder();
         for (String forcedLine: forcedLines) {
             String[] words = splitWithDelimiters(forcedLine, HTML_TAG_PATTERN_OR_WHITESPACE);
             for (String word: words) {
                 if (HTML_TAG_PATTERN.matcher(word).matches()) {
                     if (PdfBoxPageGraphics.SUPPORTED_HTML_TAGS.contains(word)) {
                         line.append(word);
+                        switch (word) {
+                            case "<b>":
+                            case "<strong>":
+                                currentStyle |= Font.BOLD;
+                                pdFont = pdFontService.getPDFont(g2.getDocument(), font.deriveFont(currentStyle));
+                                break;
+                            case "</b>":
+                            case "</strong>":
+                                currentStyle &= ~Font.BOLD;
+                                pdFont = pdFontService.getPDFont(g2.getDocument(), font.deriveFont(currentStyle));
+                                break;
+                            case "<i>":
+                                currentStyle |= Font.ITALIC;
+                                pdFont = pdFontService.getPDFont(g2.getDocument(), font.deriveFont(currentStyle));
+                                break;
+                            case "</i>":
+                                currentStyle &= ~Font.ITALIC;
+                                pdFont = pdFontService.getPDFont(g2.getDocument(), font.deriveFont(currentStyle));
+                                break;
+                        }
                     }
                 } else {
-                    if (g2.getStringWidth(pdFont, font.getSize2D(), visibleLine.toString() + word) > width[min(lines.size(), width.length - 1)]) {
+                    final float wordWidth = g2.getStringWidth(pdFont, font.getSize2D(), word);
+                    if (totalWidth + wordWidth > width[min(lines.size(), width.length - 1)]) {
+                        String visibleLine = HTML_TAG_PATTERN.matcher(line).replaceAll("");
                         if (StringUtils.isNotBlank(visibleLine)) {
                             lines.add(StringUtils.strip(line.toString()));
                             line = new StringBuilder();
+                        } else {
+                            line = new StringBuilder(deleteWhitespace(line.toString()));
                         }
-                        visibleLine = new StringBuilder();
+                        totalWidth = 0f;
                     }
                     line.append(word);
-                    visibleLine.append(word);
+                    totalWidth += wordWidth;
                 }
             }
+            String visibleLine = HTML_TAG_PATTERN.matcher(line).replaceAll("");
             if (StringUtils.isNotBlank(visibleLine)) {
                 lines.add(StringUtils.strip(line.toString()));
                 line = new StringBuilder();
+            } else {
+                line = new StringBuilder(deleteWhitespace(line.toString()));
             }
-            visibleLine = new StringBuilder();
         }
         return lines.toArray(new String[lines.size()]);
     }

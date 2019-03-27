@@ -64,7 +64,7 @@ public class IndexEngine {
 
     private String getIndexTitle(PdfBoxPageGraphics g2, Box.Article article, UserRequest userRequest) {
         final String boxIndexName = stripToEmpty(article.getIndexName());
-        final int indexStringWidth = g2.getStringWidth(boxIndexName);
+        final float indexStringWidth = g2.getStringWidth(boxIndexName);
         if (indexStringWidth > indexPageRenderer.calculateKeySplitWidth(IndecesRenderer.PRODUCT_NAME_BOX_COLUMN_NB)) {
             final UserSession userSession = userSessionCache.getIfPresent(userRequest.getRequestId());
             userSession.addErrorItem(ErrorItem.Severity.ERROR, ErrorItem.ErrorCategory.FORMATTING,
