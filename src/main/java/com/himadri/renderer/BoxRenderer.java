@@ -10,6 +10,7 @@ import com.himadri.model.rendering.Box;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.imageloader.ImageLoader;
 import com.himadri.renderer.imageloader.ImageLoaderServiceRegistry;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
@@ -248,7 +249,8 @@ public class BoxRenderer {
             g2.setNonStrokingColor(Color.black);
             g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
             g2.setUnderline(false);
-            final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, article.getDescription(),
+            String description = StringEscapeUtils.unescapeHtml4(article.getDescription());
+            final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, description,
                     getSplitWidths(boxPositions, articleIndex, currentLine, m));
             for (String line: descriptionSplit) {
                 g2.drawHtmlString(line, getBoxPositionForLine(boxPositions, currentLine, m).getDescriptionStart(),
