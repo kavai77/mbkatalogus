@@ -4,9 +4,9 @@ import com.google.common.collect.ImmutableSet;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
-import org.apache.commons.lang3.StringUtils;
+import com.himadri.model.service.Paragraph;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +20,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.Math.min;
-import static org.apache.commons.lang3.StringUtils.deleteWhitespace;
 import static org.apache.pdfbox.pdmodel.common.PDRectangle.A4;
 
 @Component
@@ -66,65 +64,45 @@ public class Util {
         return PRODUCT_GROUP_COLORS[indexOfProductGroup % PRODUCT_GROUP_COLORS.length];
     }
 
-    public String[] splitGraphicsText(PdfBoxPageGraphics g2, Font font, String text, float... width) {
-        List<String> lines = new ArrayList<>();
-        String[] forcedLines = LINE_BREAK_PATTERN.split(text);
-        PDFont pdFont = pdFontService.getPDFont(g2.getDocument(), font);
-        int currentStyle = 0;
-        float totalWidth = 0f;
-        StringBuilder line = new StringBuilder();
+    public Paragraph splitMultiLineText(PdfBoxPageGraphics g2, Font font, String text, float... width) {
+        Paragraph paragraph = new Paragraph(g2, pdFontService, font);
+        String unescapedText = StringEscapeUtils.unescapeHtml4(text);
+        String[] forcedLines = LINE_BREAK_PATTERN.split(unescapedText);
         for (String forcedLine: forcedLines) {
             String[] words = splitWithDelimiters(forcedLine, HTML_TAG_PATTERN_OR_WHITESPACE);
             for (String word: words) {
                 if (HTML_TAG_PATTERN.matcher(word).matches()) {
                     if (PdfBoxPageGraphics.SUPPORTED_HTML_TAGS.contains(word)) {
-                        line.append(word);
                         switch (word) {
                             case "<b>":
                             case "<strong>":
-                                currentStyle |= Font.BOLD;
-                                pdFont = pdFontService.getPDFont(g2.getDocument(), font.deriveFont(currentStyle));
+                                paragraph.addToCurrentStyle(Font.BOLD);
                                 break;
                             case "</b>":
                             case "</strong>":
-                                currentStyle &= ~Font.BOLD;
-                                pdFont = pdFontService.getPDFont(g2.getDocument(), font.deriveFont(currentStyle));
+                                paragraph.removeFromCurrentStyle(Font.BOLD);
                                 break;
                             case "<i>":
-                                currentStyle |= Font.ITALIC;
-                                pdFont = pdFontService.getPDFont(g2.getDocument(), font.deriveFont(currentStyle));
+                                paragraph.addToCurrentStyle(Font.ITALIC);
                                 break;
                             case "</i>":
-                                currentStyle &= ~Font.ITALIC;
-                                pdFont = pdFontService.getPDFont(g2.getDocument(), font.deriveFont(currentStyle));
+                                paragraph.removeFromCurrentStyle(Font.ITALIC);
+                                break;
+                            case "<u>":
+                                paragraph.startUnderLine();
+                                break;
+                            case "</u>":
+                                paragraph.addUnderline();
                                 break;
                         }
                     }
                 } else {
-                    final float wordWidth = g2.getStringWidth(pdFont, font.getSize2D(), word);
-                    if (totalWidth + wordWidth > width[min(lines.size(), width.length - 1)]) {
-                        String visibleLine = HTML_TAG_PATTERN.matcher(line).replaceAll("");
-                        if (StringUtils.isNotBlank(visibleLine)) {
-                            lines.add(StringUtils.strip(line.toString()));
-                            line = new StringBuilder();
-                        } else {
-                            line = new StringBuilder(deleteWhitespace(line.toString()));
-                        }
-                        totalWidth = 0f;
-                    }
-                    line.append(word);
-                    totalWidth += wordWidth;
+                    paragraph.addWord(word, width);
                 }
             }
-            String visibleLine = HTML_TAG_PATTERN.matcher(line).replaceAll("");
-            if (StringUtils.isNotBlank(visibleLine)) {
-                lines.add(StringUtils.strip(line.toString()));
-                line = new StringBuilder();
-            } else {
-                line = new StringBuilder(deleteWhitespace(line.toString()));
-            }
+            paragraph.lineBreak();
         }
-        return lines.toArray(new String[lines.size()]);
+        return paragraph;
     }
 
     public static PDRectangle getStandardPageSize(boolean shouldDrawCuttingEdges) {

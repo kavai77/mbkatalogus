@@ -1,36 +1,13 @@
 package com.himadri.renderer;
 
-import com.himadri.graphics.pdfbox.PDFontService;
-import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
-
-import java.awt.*;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UtilTest {
-    @Mock
-    private PDFontService pdFontService;
-
-    private Util util;
-
-    @Before
-    public void setUp() throws Exception {
-        util = new Util();
-        util.pdFontService = pdFontService;
-        when(pdFontService.getPDFont(any(), any())).thenReturn(mock(PDFont.class));
-    }
 
     @Test
     public void forceLineBreakTest() {
@@ -58,19 +35,6 @@ public class UtilTest {
 
     }
 
-    @Test
-    public void splitGraphicsText() {
-        PdfBoxPageGraphics g2 = mock(PdfBoxPageGraphics.class);
-        when(g2.getDocument()).thenReturn(mock(PDDocument.class));
-        when(g2.getStringWidth(any(), anyFloat(), anyString())).thenAnswer((Answer<Float>) it -> (float) ((String) it.getArgument(2)).length());
-        String text = " megy<b> a vonat <p><ul></p>megy< <i>a</i>> vonat <br>kanizsara<>";
 
-        String[] split35 = util.splitGraphicsText(g2, mock(Font.class), text, 3f, 5f);
 
-        assertArrayEquals(new String[]{"megy<b>", "a", "vonat", "megy<", "<i>a</i>>", "vonat", "kanizsara<>"}, split35);
-
-        String[] split30 = util.splitGraphicsText(g2, mock(Font.class), text, 30f);
-        assertArrayEquals(new String[]{"megy<b> a vonat", "megy< <i>a</i>> vonat", "kanizsara<>"}, split30);
-
-    }
 }

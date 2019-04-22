@@ -1,16 +1,19 @@
 package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Floats;
 import com.himadri.dto.UserRequest;
 import com.himadri.exception.ImageNotFoundException;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
+import com.himadri.model.service.Line;
+import com.himadri.model.service.Paragraph;
+import com.himadri.model.service.PdfObject;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.imageloader.ImageLoader;
 import com.himadri.renderer.imageloader.ImageLoaderServiceRegistry;
-import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
@@ -24,6 +27,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.himadri.dto.ErrorItem.ErrorCategory.FORMATTING;
@@ -34,11 +38,15 @@ import static com.himadri.renderer.PageRenderer.BOX_HEIGHT;
 import static com.himadri.renderer.PageRenderer.BOX_WIDTH;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.join;
 
 @Component
 public class BoxRenderer {
     private static final Logger LOGGER = LoggerFactory.getLogger(BoxRenderer.class);
+    static final int MAX_HEADLINE_LINES = 2;
+    static final Map<Integer, int[]> HEAD_LINE_POS_MAP = ImmutableMap.of(
+        1, new int[] {13},
+        2, new int[] {10, 22}
+    );
 
     @Autowired
     private Cache<String, UserSession> userSessionCache;
@@ -201,30 +209,21 @@ public class BoxRenderer {
         // heading text
         g2.setNonStrokingColor(Color.black);
         g2.setFont(Fonts.BOX_TITLE_FONT);
-        String[] headingTextLines = util.splitGraphicsText(g2, Fonts.BOX_TITLE_FONT, box.getTitle(),
+        Paragraph headingTextLines = util.splitMultiLineText(g2, Fonts.BOX_TITLE_FONT, box.getTitle(),
                 mainBoxPosition.getTextEnd() - mainBoxPosition.getTextStart(),
                 categoryStart - mainBoxPosition.getTextStart() - m.getTextMargin());
-        if (headingTextLines.length == 0) {
+        if (headingTextLines.getLines().isEmpty()) {
             userSession.addErrorItem(ERROR, FORMATTING, String.format("Nincs box fejléce (dtp megnevezés): %s", box.getArticles().get(0).getNumber()));
-        } else if (headingTextLines.length == 1) {
-            g2.drawString(headingTextLines[0], mainBoxPosition.getTextStart(), 13);
         } else {
-            g2.drawString(headingTextLines[0], mainBoxPosition.getTextStart(), 10);
-            g2.drawString(headingTextLines[1], mainBoxPosition.getTextStart(), 22);
-            if (headingTextLines.length > 2) {
-                final Box.Article firstArticle = box.getArticles().get(0);
-                if (box.getArticles().size() == 1 && firstArticle.isEmptyItemText()) {
-                    String newItemText = join(headingTextLines, ' ', 2, headingTextLines.length);
-                    box.getArticles().set(0, new Box.Article(firstArticle.getNumber(), firstArticle.getPrice(),
-                            firstArticle.getDescription() + newItemText, firstArticle.getIndexName(), false));
-                    userSession.addErrorItem(WARN, FORMATTING, String.format("A box fejléce túl hosszú, viszont a leírása üres, " +
-                                    "így automatikus tördelést alkalmaztunk és a levágott fejlécet átvittuk a leírásba. " +
-                                    "Cikkszám: %s. Címsor: %s. Leírás: %s", box.getArticles().get(0).getNumber(),
-                            join(headingTextLines[0], " ", headingTextLines[1]), newItemText));
-                } else {
-                    userSession.addErrorItem(ERROR, FORMATTING, String.format("Túl hosszú a box fejléce, le kellett vágni a második sorban. " +
-                            "Cikkszám: %s. Teljes címsor: %s", box.getArticles().get(0).getNumber(), box.getTitle()));
+            final int maxLines = min(MAX_HEADLINE_LINES, headingTextLines.getLines().size());
+            for (int l = 0; l < maxLines; l++) {
+                for (PdfObject pdfObject: headingTextLines.getLines().get(l).getObjects()) {
+                    pdfObject.render(mainBoxPosition.getTextStart(), HEAD_LINE_POS_MAP.get(maxLines)[l]);
                 }
+            }
+            if (headingTextLines.getLines().size() > MAX_HEADLINE_LINES) {
+                userSession.addErrorItem(ERROR, FORMATTING, String.format("Túl hosszú a box fejléce, le kellett vágni a második sorban. " +
+                    "Cikkszám: %s. Teljes címsor: %s", box.getArticles().get(0).getNumber(), box.getTitle()));
             }
         }
 
@@ -247,14 +246,16 @@ public class BoxRenderer {
 
             // description
             g2.setNonStrokingColor(Color.black);
+            g2.setStrokingColor(Color.black);
             g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
-            g2.setUnderline(false);
-            String description = StringEscapeUtils.unescapeHtml4(article.getDescription());
-            final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT, description,
-                    getSplitWidths(boxPositions, articleIndex, currentLine, m));
-            for (String line: descriptionSplit) {
-                g2.drawHtmlString(line, getBoxPositionForLine(boxPositions, currentLine, m).getDescriptionStart(),
+            g2.setLineWidth(.5f);
+            final Paragraph paragraph = util.splitMultiLineText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT,
+                article.getDescription(), getSplitWidths(boxPositions, articleIndex, currentLine, m));
+            for (Line line: paragraph.getLines()) {
+                for (PdfObject pdfObject: line.getObjects()) {
+                    pdfObject.render(getBoxPositionForLine(boxPositions, currentLine, m).getDescriptionStart(),
                         getLineYBaseLine(currentLine, m));
+                }
                 currentLine++;
             }
         }
@@ -276,10 +277,10 @@ public class BoxRenderer {
         int lineCount = 0;
         float requiredSpace = m.getTextBoxHeadHeight();
         for (int i = articleStartIndex; i < articles.size(); i++) {
-            final String[] descriptionSplit = util.splitGraphicsText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT,
+            final Paragraph paragraph = util.splitMultiLineText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT,
                     articles.get(i).getDescription(), getSplitWidths(boxPositions, i, lineCount, m));
-            requiredSpace += descriptionSplit.length * m.getTextBoxLineHeight();
-            lineCount += descriptionSplit.length;
+            requiredSpace += paragraph.getLines().size() * m.getTextBoxLineHeight();
+            lineCount += paragraph.getLines().size();
             if (requiredSpace > availableBoxes * BOX_HEIGHT) {
                 return new RequiredHeight(availableBoxes, i);
             }
