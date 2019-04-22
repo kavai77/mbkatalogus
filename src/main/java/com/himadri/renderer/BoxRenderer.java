@@ -208,23 +208,25 @@ public class BoxRenderer {
 
         // heading text
         g2.setNonStrokingColor(Color.black);
+        g2.setStrokingColor(Color.black);
         g2.setFont(Fonts.BOX_TITLE_FONT);
+        g2.setLineWidth(.5f);
         Paragraph headingTextLines = util.splitMultiLineText(g2, Fonts.BOX_TITLE_FONT, box.getTitle(),
                 mainBoxPosition.getTextEnd() - mainBoxPosition.getTextStart(),
                 categoryStart - mainBoxPosition.getTextStart() - m.getTextMargin());
-        if (headingTextLines.getLines().isEmpty()) {
-            userSession.addErrorItem(ERROR, FORMATTING, String.format("Nincs box fejléce (dtp megnevezés): %s", box.getArticles().get(0).getNumber()));
-        } else {
-            final int maxLines = min(MAX_HEADLINE_LINES, headingTextLines.getLines().size());
-            for (int l = 0; l < maxLines; l++) {
+        if (!headingTextLines.getLines().isEmpty()) {
+            final int lineCount = min(MAX_HEADLINE_LINES, headingTextLines.getLines().size());
+            for (int l = 0; l < lineCount; l++) {
                 for (PdfObject pdfObject: headingTextLines.getLines().get(l).getObjects()) {
-                    pdfObject.render(mainBoxPosition.getTextStart(), HEAD_LINE_POS_MAP.get(maxLines)[l]);
+                    pdfObject.render(mainBoxPosition.getTextStart(), HEAD_LINE_POS_MAP.get(lineCount)[l]);
                 }
             }
             if (headingTextLines.getLines().size() > MAX_HEADLINE_LINES) {
                 userSession.addErrorItem(ERROR, FORMATTING, String.format("Túl hosszú a box fejléce, le kellett vágni a második sorban. " +
                     "Cikkszám: %s. Teljes címsor: %s", box.getArticles().get(0).getNumber(), box.getTitle()));
             }
+        } else {
+            userSession.addErrorItem(ERROR, FORMATTING, String.format("Nincs box fejléce (dtp megnevezés): %s", box.getArticles().get(0).getNumber()));
         }
 
         // description
