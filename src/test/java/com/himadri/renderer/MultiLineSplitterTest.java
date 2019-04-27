@@ -134,6 +134,7 @@ public class MultiLineSplitterTest {
     public static void setUpClass() throws Exception {
         when(g2.getDocument()).thenReturn(mock(PDDocument.class));
         when(g2.getStringWidth(any(), anyFloat(), anyString())).thenAnswer((Answer<Float>) it -> (float) ((String) it.getArgument(2)).length());
+        when(g2.removeSpecialCharacters(any(), anyString())).then((Answer<String>) it -> (String) it.getArgument(1));
     }
 
     @Before
