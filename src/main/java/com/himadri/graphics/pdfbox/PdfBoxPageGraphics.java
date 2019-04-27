@@ -1,6 +1,5 @@
 package com.himadri.graphics.pdfbox;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.himadri.dto.ErrorItem;
 import com.himadri.model.service.UserSession;
@@ -96,6 +95,23 @@ public class PdfBoxPageGraphics {
 
     public PDFont getFont() {
         return currentFont;
+    }
+
+    public void beginText(float x, float y) {
+        try {
+            contentStream.beginText();
+            contentStream.setTextMatrix(Matrix.getTranslateInstance(x, pageHeight - y));
+        } catch (IOException e) {
+            throw new PdfBoxGraphicsException(e);
+        }
+    }
+
+    public void endText() {
+        try {
+            contentStream.endText();
+        } catch (IOException e) {
+            throw new PdfBoxGraphicsException(e);
+        }
     }
 
     public void showText(String text) {
@@ -232,8 +248,7 @@ public class PdfBoxPageGraphics {
         }
     }
 
-    @VisibleForTesting
-    String removeSpecialCharacters(PDFont pdFont, String text) {
+    public String removeSpecialCharacters(PDFont pdFont, String text) {
         final int[] specialChars = text.chars().filter(value -> {
             try {
                 pdFont.encode(String.valueOf((char) value));

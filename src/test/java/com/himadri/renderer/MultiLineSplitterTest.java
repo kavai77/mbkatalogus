@@ -1,11 +1,13 @@
 package com.himadri.renderer;
 
+import com.google.common.collect.ImmutableList;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.service.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -30,8 +32,7 @@ public class MultiLineSplitterTest {
     @Mock
     private PDFontService pdFontService;
 
-    @Mock
-    private PdfBoxPageGraphics g2;
+    private static PdfBoxPageGraphics g2 = mock(PdfBoxPageGraphics.class);
 
     private Util util;
 
@@ -46,9 +47,17 @@ public class MultiLineSplitterTest {
         this.expectedLines = expectedLines;
     }
 
+    private static List<PdfObject> wrapBeginEndText(PdfObject... pdfObjects) {
+        return ImmutableList.<PdfObject>builder()
+            .add(new BeginTextPdfObject(g2))
+            .add(pdfObjects)
+            .add(new EndTextPdfObject(g2))
+            .build();
+    }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        PdfBoxPageGraphics g2 = mock(PdfBoxPageGraphics.class);
+
         FontChangePdfObject boldItalicFontChange = new FontChangePdfObject(g2, font.deriveFont(Font.BOLD | Font.ITALIC));
         FontChangePdfObject boldFontChange = new FontChangePdfObject(g2, font.deriveFont(Font.BOLD));
         
@@ -57,27 +66,29 @@ public class MultiLineSplitterTest {
                 " megy<b> a vonat <p><ul></p>megy< <i>a</i>> vonat <br>kanizsara<>",
                 new float[] {3, 5},
                 of(
-                    of(new TextPdfObject(g2, "megy", 0), boldFontChange),
-                    of(new TextPdfObject(g2, "a", 0)),
-                    of(new TextPdfObject(g2, "vonat", 0)),
-                    of(new TextPdfObject(g2, "megy<", 0)),
-                    of(boldItalicFontChange, new TextPdfObject(g2, "a", 0), boldFontChange, new TextPdfObject(g2, ">", 0)),
-                    of(new TextPdfObject(g2, "vonat", 0)),
-                    of(new TextPdfObject(g2, "kanizsara<>", 0))
+                    wrapBeginEndText(new TextPdfObject(g2, "megy", 0), boldFontChange),
+                    wrapBeginEndText(new TextPdfObject(g2, "a", 0)),
+                    wrapBeginEndText(new TextPdfObject(g2, "vonat", 0)),
+                    wrapBeginEndText(new TextPdfObject(g2, "megy<", 0)),
+                    wrapBeginEndText(boldItalicFontChange, new TextPdfObject(g2, "a", 0), boldFontChange, new TextPdfObject(g2, ">", 0)),
+                    wrapBeginEndText(new TextPdfObject(g2, "vonat", 0)),
+                    wrapBeginEndText(new TextPdfObject(g2, "kanizsara<>", 0))
                 )
             },
             new Object[] {
                 " megy<b> a vonat <p><ul></p>megy< <i>a</i>> vonat <br>kanizsara<>",
                 new float[] {30},
                 of(
-                    of( new TextPdfObject(g2, "megy", 0),
+                    wrapBeginEndText(
+                        new TextPdfObject(g2, "megy", 0),
                         boldFontChange,
                         new TextPdfObject(g2, " ", 0),
                         new TextPdfObject(g2, "a", 0),
                         new TextPdfObject(g2, " ", 0),
                         new TextPdfObject(g2, "vonat", 0)
                     ),
-                    of( new TextPdfObject(g2, "megy<", 0),
+                    wrapBeginEndText(
+                        new TextPdfObject(g2, "megy<", 0),
                         new TextPdfObject(g2, " ", 0),
                         boldItalicFontChange,
                         new TextPdfObject(g2, "a", 0),
@@ -87,34 +98,42 @@ public class MultiLineSplitterTest {
                         new TextPdfObject(g2, "vonat", 0)
 
                     ),
-                    of(new TextPdfObject(g2, "kanizsara<>", 0))
+                    wrapBeginEndText(new TextPdfObject(g2, "kanizsara<>", 0))
                 )
             },
             new Object[] {
                 " megy<b> a vonat <p><ul></p>megy< <i>a</i>> vonat <br>kanizsara<>",
                 new float[] {9, 5, 7},
                 of(
-                    of( new TextPdfObject(g2, "megy", 0),
+                    wrapBeginEndText(
+                        new TextPdfObject(g2, "megy", 0),
                         boldFontChange,
                         new TextPdfObject(g2, " ", 0),
                         new TextPdfObject(g2, "a", 0)
                     ),
-                    of(new TextPdfObject(g2, "vonat", 0)),
-                    of( new TextPdfObject(g2, "megy<", 0),
+                    wrapBeginEndText(new TextPdfObject(g2, "vonat", 0)),
+                    wrapBeginEndText(
+                        new TextPdfObject(g2, "megy<", 0),
                         new TextPdfObject(g2, " ", 0),
                         boldItalicFontChange,
                         new TextPdfObject(g2, "a", 0),
                         boldFontChange
                     ),
-                    of( new TextPdfObject(g2, ">", 0),
+                    wrapBeginEndText(
+                        new TextPdfObject(g2, ">", 0),
                         new TextPdfObject(g2, " ", 0),
                         new TextPdfObject(g2, "vonat", 0)
-
                     ),
-                    of(new TextPdfObject(g2, "kanizsara<>", 0))
+                    wrapBeginEndText(new TextPdfObject(g2, "kanizsara<>", 0))
                 )
             }
         );
+    }
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        when(g2.getDocument()).thenReturn(mock(PDDocument.class));
+        when(g2.getStringWidth(any(), anyFloat(), anyString())).thenAnswer((Answer<Float>) it -> (float) ((String) it.getArgument(2)).length());
     }
 
     @Before
@@ -123,9 +142,6 @@ public class MultiLineSplitterTest {
         util = new Util();
         util.pdFontService = pdFontService;
         when(pdFontService.getPDFont(any(), any())).thenReturn(mock(PDFont.class));
-        when(g2.getDocument()).thenReturn(mock(PDDocument.class));
-        when(g2.getStringWidth(any(), anyFloat(), anyString())).thenAnswer((Answer<Float>) it -> (float) ((String) it.getArgument(2)).length());
-
     }
 
     @Test
@@ -155,6 +171,9 @@ public class MultiLineSplitterTest {
                     break;
                 case "FontChangePdfObject":
                     assertEquals(((FontChangePdfObject) expectedPdfObject).getFont().getStyle(), ((FontChangePdfObject) actualPdfObject).getFont().getStyle());
+                    break;
+                case "BeginTextPdfObject":
+                case "EndTextPdfObject":
                     break;
                 default:
                     fail("Unrecognized PdfObject " + actualPdfObject.getClass().getSimpleName());

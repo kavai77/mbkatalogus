@@ -10,28 +10,26 @@ class Paragraph (
     var font: Font
 ){
     val lines: MutableList<Line> = arrayListOf()
-    private var line: Line = Line()
+    private var line: Line = Line(g2)
     private var pdFont = pdFontService.getPDFont(g2.document, font);
     private var currentStyle = font.style
     private var underline = false
 
     fun lineBreak() {
         if (line.isNotBlank()) {
-            line.removeBlankWordsAtEnd()
-            if (underline) {
-                line.addPdfObject(UnderlinePdfObject(g2, line.underLineXStart, line.totalWidth))
-            }
+            line.finalizeLine(underline)
             lines.add(line)
-            line = Line()
+            line = Line(g2)
         }
     }
 
     fun addWord(word: String, width: FloatArray) {
-        val wordWidth = g2.getStringWidth(pdFont, font.size2D, word)
+        val newWord = g2.removeSpecialCharacters(pdFont, word)
+        val wordWidth = g2.getStringWidth(pdFont, font.size2D, newWord)
         if (line.totalWidth + wordWidth > width[minOf(lines.size, width.size - 1)]) {
             lineBreak()
         }
-        line.addPdfObject(TextPdfObject(g2, word, wordWidth))
+        line.addPdfObject(TextPdfObject(g2, newWord, wordWidth))
     }
 
     fun addToCurrentStyle(style: Int) = changeCurrentStyle(currentStyle or style)
@@ -56,10 +54,16 @@ class Paragraph (
     }
 }
 
-class Line {
+class Line (
+    val g2: PdfBoxPageGraphics
+){
     val objects: MutableList<PdfObject> = arrayListOf()
     var totalWidth = 0f
     var underLineXStart = 0f
+
+    init {
+        addPdfObject(BeginTextPdfObject(g2))
+    }
 
     fun isBlank() = !isNotBlank()
 
@@ -74,7 +78,16 @@ class Line {
         totalWidth += obj.width()
     }
 
-    fun removeBlankWordsAtEnd() {
+    fun finalizeLine(underLine: Boolean) {
+        removeBlankWordsAtEnd()
+        if (underLine) {
+            addPdfObject(UnderlinePdfObject(g2, underLineXStart, totalWidth))
+        }
+        addPdfObject(EndTextPdfObject(g2))
+        objects.sortBy { it.sortValue() }
+    }
+
+    private fun removeBlankWordsAtEnd() {
         val iterator = objects.listIterator(objects.size)
         while (iterator.hasPrevious()) {
             val current = iterator.previous()
@@ -95,6 +108,7 @@ class Line {
 interface PdfObject {
     fun render(x: Float, y: Float)
     fun width(): Float
+    fun sortValue(): Int
 }
 
 class TextPdfObject (
@@ -102,11 +116,11 @@ class TextPdfObject (
     val text: String,
     val width: Float
 ) : PdfObject {
-    override fun render(x: Float, y: Float) {
-        g2.showText(text)
-    }
+    override fun render(x: Float, y: Float) = g2.showText(text)
 
     override fun width() = width
+
+    override fun sortValue() = 0
 }
 
 class UnderlinePdfObject (
@@ -114,20 +128,40 @@ class UnderlinePdfObject (
     val underLineX1: Float,
     val underLineX2: Float
 ) : PdfObject {
-    override fun render(x: Float, y: Float) {
-        g2.drawLine(underLineX1 + x, y + 0.7f, underLineX2 + x, y + 0.7f)
-    }
+    override fun render(x: Float, y: Float) = g2.drawLine(underLineX1 + x, y + 0.7f, underLineX2 + x, y + 0.7f)
 
     override fun width() = 0f
+
+    override fun sortValue() = 1
 }
 
 class FontChangePdfObject (
     val g2: PdfBoxPageGraphics,
     val font: Font
 ) : PdfObject {
-    override fun render(x: Float, y: Float) {
-        g2.setFont(font)
-    }
+    override fun render(x: Float, y: Float) = g2.setFont(font)
 
     override fun width() = 0f
+
+    override fun sortValue() = 0
+}
+
+class BeginTextPdfObject (
+    val g2: PdfBoxPageGraphics
+) : PdfObject {
+    override fun render(x: Float, y: Float) = g2.beginText(x, y)
+
+    override fun width() = 0f
+
+    override fun sortValue() = 0
+}
+
+class EndTextPdfObject (
+    val g2: PdfBoxPageGraphics
+) : PdfObject {
+    override fun render(x: Float, y: Float) = g2.endText()
+
+    override fun width() = 0f
+
+    override fun sortValue() = 0
 }
