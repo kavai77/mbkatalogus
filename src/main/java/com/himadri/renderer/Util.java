@@ -5,6 +5,7 @@ import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.service.Paragraph;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
@@ -25,7 +26,8 @@ import static org.apache.pdfbox.pdmodel.common.PDRectangle.A4;
 @Component
 public class Util {
     public static final Set<String> trueValueSet = ImmutableSet.of("i", "igen", "y", "yes", "t", "true");
-    public static final Pattern LINE_BREAK_PATTERN = Pattern.compile(";;|<p>|<br>");
+    public static final Set<String> lineBreaks = ImmutableSet.of(";;", "<p>", "<br>");
+    public static final Pattern LINE_BREAK_PATTERN = Pattern.compile(String.join("|", lineBreaks));
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("</?[a-zA-Z]+>");
     public static final Pattern HTML_TAG_PATTERN_OR_WHITESPACE = Pattern.compile("</?[a-zA-Z]+>|\\s");
     private static final int PRESS_PAGE_MARGIN = 20;
@@ -160,5 +162,9 @@ public class Util {
         }
 
         return parts.toArray(new String[]{});
+    }
+
+    public String removeLeadingHtmlBreaks(String str) {
+        return StringUtils.removePattern(str, String.format("^(%s|\\s+)+", String.join("|", lineBreaks)));
     }
 }

@@ -1,13 +1,21 @@
 package com.himadri.renderer;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UtilTest {
+
+    private Util util;
+
+    @Before
+    public void setUp() throws Exception {
+        util = new Util();
+    }
 
     @Test
     public void forceLineBreakTest() {
@@ -35,6 +43,14 @@ public class UtilTest {
 
     }
 
-
-
+    @Test
+    public void testRemoveLeadingHtmlBreaks() {
+        assertNull(util.removeLeadingHtmlBreaks(null));
+        assertEquals("", util.removeLeadingHtmlBreaks(""));
+        assertEquals("Próba", util.removeLeadingHtmlBreaks("Próba"));
+        assertEquals("Próba</p><br>", util.removeLeadingHtmlBreaks("Próba</p><br>"));
+        assertEquals("Próba</p><br>", util.removeLeadingHtmlBreaks("<p>Próba</p><br>"));
+        assertEquals("Próba  <p>  <br>;;próba", util.removeLeadingHtmlBreaks("  <p>  <br>;;Próba  <p>  <br>;;próba"));
+        assertEquals("", util.removeLeadingHtmlBreaks("  <p>  <br>;;  <p>  <br>;;"));
+    }
 }

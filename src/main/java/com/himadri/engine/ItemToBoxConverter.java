@@ -48,6 +48,9 @@ public class ItemToBoxConverter {
     @Autowired
     ImageLoaderServiceRegistry imageLoaderServiceRegistry;
 
+    @Autowired
+    Util util;
+
     private PdfBoxPageGraphics pdfBoxGraphics;
 
     @PostConstruct
@@ -135,7 +138,7 @@ public class ItemToBoxConverter {
                 descriptionBuilder.append(Util.FORCE_LINE_BREAK_CHARACTERS);
             }
         }
-        final String itemText = stripToEmpty(item.getLeiras());
+        final String itemText = util.removeLeadingHtmlBreaks(stripToEmpty(item.getLeiras()));
         descriptionBuilder.append(itemText);
         return new Box.Article(item.getCikkszam(), remove(item.getKiskerar(), '\u00a0'),
                 descriptionBuilder.toString(), item.getTargymutato(), isEmpty(itemText));

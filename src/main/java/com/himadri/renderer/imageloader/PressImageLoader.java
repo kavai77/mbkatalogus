@@ -83,7 +83,6 @@ public class PressImageLoader implements ImageLoader {
             throw new ImageNotFoundException();
         }
         userSession.getTotalImageSize().addAndGet(imageFile.length());
-        System.out.printf("Adding image %s size %d. Total length %d%n", imageFile.getName(), imageFile.length(), userSession.getTotalImageSize().get());
         try (InputStream fis = new FileInputStream(imageFile)) {
             if (endsWithAny(lowerCase(imageFile.getName()), ".jpg", ".jpeg")) {
                 return JPEGFactory.createFromStream(document, fis);
