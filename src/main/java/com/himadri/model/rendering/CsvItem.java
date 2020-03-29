@@ -43,4 +43,6 @@ public class CsvItem {
     private String nagykep;
     @CsvBindByName
     private String uj;
+    @CsvBindByName
+    private String ertmenny;
 }

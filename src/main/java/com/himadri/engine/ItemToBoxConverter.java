@@ -124,11 +124,23 @@ public class ItemToBoxConverter {
         StringBuilder descriptionBuilder = new StringBuilder();
         if (userRequest.isWholeSaleFormat()) {
             if (isNotBlank(item.getNagykerar())) {
-                descriptionBuilder.append(remove(item.getNagykerar(), '\u00a0')).append(",- ");
+                descriptionBuilder
+                        .append(remove(item.getNagykerar(), '\u00a0'))
+                        .append(",- ");
+            }
+            if (isNotBlank(item.getErtmenny())) {
+                descriptionBuilder
+                        .append('#')
+                        .append(remove(item.getErtmenny(), '\u00a0'))
+                        .append(' ');
             }
             if (isNotBlank(item.getM1()) || isNotBlank(item.getM2()) || isNotBlank(item.getM3())) {
-                final String m1m2m3 = String.format("%s%s/%s/%s", stripToEmpty(item.getM1()),
-                        stripToEmpty(item.getMe()), stripToEmpty(item.getM2()), stripToEmpty(item.getM3()));
+                final String m1m2m3 = String.format("%s%s/%s/%s",
+                        stripToEmpty(item.getM1()),
+                        stripToEmpty(item.getMe()),
+                        stripToEmpty(item.getM2()),
+                        stripToEmpty(item.getM3())
+                );
                 descriptionBuilder.append("(Min:")
                     .append(removePattern(m1m2m3, "/*$"))
                     .append(") ");
