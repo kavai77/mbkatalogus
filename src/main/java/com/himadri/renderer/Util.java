@@ -25,7 +25,7 @@ import static org.apache.pdfbox.pdmodel.common.PDRectangle.A4;
 
 @Component
 public class Util {
-    public static final Set<String> trueValueSet = ImmutableSet.of("i", "igen", "y", "yes", "t", "true");
+    public static final Set<String> trueValueSet = ImmutableSet.of("i", "igen", "y", "yes", "t", "true", "1");
     public static final Set<String> lineBreaks = ImmutableSet.of(";;", "<p>", "<br>");
     public static final Pattern LINE_BREAK_PATTERN = Pattern.compile(String.join("|", lineBreaks));
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("</?[a-zA-Z]+>");
