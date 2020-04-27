@@ -91,6 +91,8 @@ public class ItemToBoxConverter {
                 .anyMatch(i -> Util.trueValueSet.contains(defaultString(i.getNagykep()).toLowerCase()));
         final boolean newProduct = items.getItems().stream()
                 .anyMatch(i -> Util.trueValueSet.contains(defaultString(i.getUj()).toLowerCase()));
+        final boolean onNewPage = items.getItems().stream()
+                .anyMatch(i -> Util.trueValueSet.contains(defaultString(i.getUjoldalon()).toLowerCase()));
         for (int counter = 0; articleStart < articleList.size(); counter++) {
             int availableBoxSize = counter < availableBoxHeights.size() ? availableBoxHeights.get(counter) : BOX_ROWS_PER_PAGE;
             final BoxRenderer.RequiredHeight requiredOccupiedSpace = boxRenderer.calculateBoxHeight(
@@ -111,7 +113,7 @@ public class ItemToBoxConverter {
                         stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
                         wideBox ? PageRenderer.BOX_COLUMNS_PER_PAGE : 1,
                         requiredOccupiedSpace.getBoxHeight(),
-                        newProduct, articles));
+                        newProduct, onNewPage, articles));
             }
 
             articleStart = requiredOccupiedSpace.getIndexOfNextArticle();

@@ -312,7 +312,7 @@ public class PageCollectorEngineTest {
     }
 
     private Box createBoxWithSize(char namePrefix, int index, int width, int height, Box.Type type) {
-        return new Box(null, null, namePrefix + Integer.toString(index), null, "group", 0, width, height, false, null, null, type);
+        return new Box(null, null, namePrefix + Integer.toString(index), null, "group", 0, width, height, false, false, null, null, type);
     }
 
     private UserRequest createUserRequest() {

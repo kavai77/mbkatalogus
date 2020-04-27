@@ -12,6 +12,7 @@ data class Box(
     val width: Int,
     val height: Int,
     val isNewProduct: Boolean? = null,
+    val onNewPage: Boolean? = null,
     val articles: List<Article>? = null,
     val bufferedImage: BufferedImage? = null,
     val boxType: Type
@@ -31,6 +32,7 @@ data class Box(
             width: Int,
             height: Int,
             isNewProduct: Boolean,
+            onNewPage: Boolean,
             articles: List<Article>
         ) = Box(
             image = image,
@@ -42,6 +44,7 @@ data class Box(
             width = width,
             height = height,
             isNewProduct = isNewProduct,
+            onNewPage = onNewPage,
             articles = articles,
             boxType = Type.ARTICLE
         )

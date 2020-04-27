@@ -8,6 +8,7 @@ import com.himadri.engine.ItemCategorizerEngine.CsvProductGroup;
 import com.himadri.model.rendering.Box;
 import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -158,12 +159,17 @@ public class PageCollectorEngine {
         }
 
         boolean addBoxToPage(Box box) {
-            if (!searchNextEmptySpot(box)) {
+            if (!searchNextEmptySpot(box) || forcedNewPage(box)) {
                 return false;
             }
             box.setDimensions(row, column);
             occupyBox(box);
             return true;
+        }
+
+        private boolean forcedNewPage(Box box) {
+            return BooleanUtils.isTrue(box.getOnNewPage()) &&
+                    pageBoxes.stream().anyMatch(it -> it.getBoxType() == Box.Type.ARTICLE);
         }
 
         boolean addBoxToBottom(Box box) {
