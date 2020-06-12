@@ -20,22 +20,50 @@ import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 
+import java.awt.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Controller
 public class BeanController {
     private static final String FONT_RESOURCE_PATH = "/fonts/";
+    private static final Logger LOGGER = LoggerFactory.getLogger(BeanController.class);
     private final Map<String, TTFParser> fontExtensionParser = ImmutableMap.of(
             "ttf", new TTFParser(),
             "otf", new OTFParser());
 
     @Value("${itemCategorizerEngineClass}")
     private String itemCategorizerEngineClass;
+
+    @Autowired
+    private Environment environment;
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void openBrowser() {
+        final String uri = "http://localhost:" +  environment.getProperty("local.server.port");
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI(uri));
+            } else {
+                throw new IOException("log info");
+            }
+        } catch (IOException | URISyntaxException e) {
+            LOGGER.info("Open this URL with a browser: {}", uri);
+        }
+    }
 
     @Bean
     public CatalogueReader catalogueReader() {

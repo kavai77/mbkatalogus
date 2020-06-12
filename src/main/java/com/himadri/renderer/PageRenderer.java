@@ -2,6 +2,7 @@ package com.himadri.renderer;
 
 import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableMap;
+import com.himadri.I18NService;
 import com.himadri.dto.UserRequest;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
@@ -9,7 +10,6 @@ import com.himadri.model.rendering.Page;
 import com.himadri.model.service.UserSession;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -45,8 +45,8 @@ public class PageRenderer {
     @Autowired
     private Util util;
 
-    @Value("${${pdfLang}.pageName}")
-    private String pageName;
+    @Autowired
+    private I18NService i18NService;
 
     public void drawPage(PdfBoxPageGraphics g2, Page page, UserRequest userRequest) {
         float marginLeft = MARGIN_LEFT.get(page.getOrientation());
@@ -137,6 +137,7 @@ public class PageRenderer {
     private void drawPageNumber(PdfBoxPageGraphics g2, String number, PositionWithAlignment pageStartPosX, PositionWithAlignment numberStartPosX) {
         g2.setNonStrokingColor(Color.lightGray);
         g2.setFont(Fonts.PAGE_NB_OLDAL_FONT);
+        String pageName = i18NService.getMessage("pageName");
         g2.drawString(pageName, pageStartPosX.calculatePosX(g2, pageName),HEIGHT - MARGIN_BOTTOM + 12);
         g2.setNonStrokingColor(Color.black);
         g2.setFont(Fonts.PAGE_NB_FONT);

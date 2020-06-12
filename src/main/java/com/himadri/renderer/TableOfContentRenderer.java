@@ -1,10 +1,10 @@
 package com.himadri.renderer;
 
+import com.himadri.I18NService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.TableOfContent;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -26,11 +26,8 @@ public class TableOfContentRenderer {
     @Autowired
     private Util util;
 
-    @Value("${${pdfLang}.tableOfContentTitle}")
-    private String tableOfContentTitle;
-
-    @Value("${${pdfLang}.tableOfContentPageNb}")
-    private String tableOfContentPageNb;
+    @Autowired
+    private I18NService i18NService;
 
     public void renderTableOfContent(PdfBoxPageGraphics g2, TableOfContent tableOfContent) {
         g2.saveGraphicsState();
@@ -64,6 +61,7 @@ public class TableOfContentRenderer {
         }
         g2.transform(-tx, -ty);
         g2.setFont(TITLE_FONT);
+        String tableOfContentTitle = i18NService.getMessage("tableOfContentTitle");
         g2.drawString(tableOfContentTitle, MARGIN_X - 10, MARGIN_Y + g2.getStringWidth(tableOfContentTitle),- Math.PI / 2);
         g2.restoreGraphicsState();
     }
@@ -73,6 +71,6 @@ public class TableOfContentRenderer {
         g2.setLineWidth(.5f);
         g2.drawLine(0, 0, (WIDTH - COLUMN_GAP) / 2f  - MARGIN_X, 0);
         g2.setFont(PAGE_FONT);
-        g2.drawString(tableOfContentPageNb, 5, -5);
+        g2.drawString(i18NService.getMessage("tableOfContentPageNb"), 5, -5);
     }
 }

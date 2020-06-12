@@ -38,9 +38,8 @@ public class App extends WebMvcConfigurerAdapter {
 
     public static void main(String[] args) throws Exception {
         new SpringApplicationBuilder(App.class)
-                .initializers(new YamlFileApplicationContextInitializer())
+                .headless(false)
                 .run(args);
     }
-
 
 }
