@@ -14,9 +14,6 @@ spring:
     multipart:
       max-file-size: 1024MB
       max-request-size: 2048MB
-
-server:
-  port: 8081
 ---
 spring:
   profiles: szerszam
@@ -29,8 +26,6 @@ spring:
 instance: bio
 pageTitle: Bio Katalógus
 pdfLang: hu
-server:
-  port: 8082
 ---
 spring:
   profiles: szerb
