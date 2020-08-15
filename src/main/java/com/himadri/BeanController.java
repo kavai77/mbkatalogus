@@ -60,7 +60,7 @@ public class BeanController {
             } else {
                 throw new IOException("log info");
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (Throwable e) {
             LOGGER.info("Open this URL with a browser: {}", uri);
         }
     }
