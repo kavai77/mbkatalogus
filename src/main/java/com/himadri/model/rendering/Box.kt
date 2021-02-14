@@ -1,5 +1,6 @@
 package com.himadri.model.rendering
 
+import java.awt.Color
 import java.awt.image.BufferedImage
 
 data class Box(
@@ -8,7 +9,7 @@ data class Box(
     val title: String? = null,
     val category: String? = null,
     val productGroup: String? = null,
-    val indexOfProductGroup: Int? = null,
+    val productColor: Color? = null,
     val width: Int,
     val height: Int,
     val isNewProduct: Boolean? = null,
@@ -28,7 +29,7 @@ data class Box(
             title: String,
             category: String,
             productGroup: String,
-            indexOfProductGroup: Int,
+            productColor: Color,
             width: Int,
             height: Int,
             isNewProduct: Boolean,
@@ -40,7 +41,7 @@ data class Box(
             title = title,
             category = category,
             productGroup = productGroup,
-            indexOfProductGroup = indexOfProductGroup,
+            productColor = productColor,
             width = width,
             height = height,
             isNewProduct = isNewProduct,

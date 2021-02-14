@@ -2,6 +2,7 @@ package com.himadri.engine;
 
 import com.himadri.model.rendering.CsvItem;
 import com.himadri.model.service.UserSession;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
@@ -25,7 +26,12 @@ public class SortingItemCategorizerEngine implements ItemCategorizerEngine {
         product.forEach((k, v) -> {
             final List<CsvItemGroup> boxes = new ArrayList<>();
             v.values().forEach(a -> boxes.add(new CsvItemGroup(a)));
-            retValue.add(new CsvProductGroup(k, boxes));
+            Optional<String> color = v.values().stream()
+                .flatMap(Collection::stream)
+                .map(CsvItem::getSzin)
+                .filter(StringUtils::isNotBlank)
+                .findFirst();
+            retValue.add(new CsvProductGroup(k, color, boxes));
         });
         return retValue;
     }

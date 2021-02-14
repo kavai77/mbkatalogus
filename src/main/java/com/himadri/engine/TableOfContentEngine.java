@@ -14,7 +14,11 @@ public class TableOfContentEngine {
         for (Page page: pages) {
             for (Box box: page.getBoxes()) {
                 if (box.getBoxType() == Box.Type.ARTICLE) {
-                    tableOfContent.getTableOfContent().putIfAbsent(box.getProductGroup(), page.getPageNumber());
+                    TableOfContent.TableOfContentItem tableOfContentItem = new TableOfContent.TableOfContentItem(
+                        page.getPageNumber(),
+                        box.getProductColor()
+                    );
+                    tableOfContent.getTableOfContent().putIfAbsent(box.getProductGroup(), tableOfContentItem);
                 }
             }
         }

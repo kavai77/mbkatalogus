@@ -58,10 +58,6 @@ public class Util {
         }
     }
 
-    public Color getBoxMainColor(Box box) {
-        return getProductGroupMainColor(box.getIndexOfProductGroup());
-    }
-
     public Color getProductGroupMainColor(int indexOfProductGroup) {
         return PRODUCT_GROUP_COLORS[indexOfProductGroup % PRODUCT_GROUP_COLORS.length];
     }

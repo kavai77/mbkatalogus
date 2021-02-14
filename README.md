@@ -11,7 +11,7 @@ docker run -it --rm -p 8080:8080 --name mbkatalogus -e SPRING_PROFILES_ACTIVE=sz
 --mount type=volume,source=mbkatalogusdb,target=/usr/share/db \
 docker.himadri.eu:5000/kavai77/mbkatalogus:1.5
 ```
-Then visit: `http://localhost:8080`
+Then visit: http://localhost:8080
 
 `IMAGE_DIR_ON_HOST` and `LOGO_DIR_ON_HOST` must point to existing directories on the host where the images and logos are found.
 They can be also the same directory.

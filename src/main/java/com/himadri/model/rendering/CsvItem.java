@@ -47,4 +47,6 @@ public class CsvItem {
     private String ertmenny;
     @CsvBindByName
     private String ujoldalon;
+    @CsvBindByName
+    private String szin;
 }

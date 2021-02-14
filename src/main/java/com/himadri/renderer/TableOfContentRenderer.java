@@ -2,6 +2,7 @@ package com.himadri.renderer;
 
 import com.himadri.I18NService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
+import com.himadri.model.rendering.Document;
 import com.himadri.model.rendering.TableOfContent;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,8 @@ public class TableOfContentRenderer {
         g2.transform(tx, ty);
         drawPageNbAndBaseLine(g2);
         int i = 0;
-        for (Map.Entry<String, Integer> entry: tableOfContent.getTableOfContent().entrySet()) {
+        for (Map.Entry<String, TableOfContent.TableOfContentItem> entry: tableOfContent.getTableOfContent().entrySet()) {
+            TableOfContent.TableOfContentItem tableOfContentItem = entry.getValue();
             if (ty + BOX_HEIGHT > HEIGHT - MARGIN_Y) {
                 g2.transform(-tx, -ty);
                 tx = (WIDTH + COLUMN_GAP) / 2;
@@ -46,12 +48,12 @@ public class TableOfContentRenderer {
             }
             ty += BOX_HEIGHT;
             g2.transform(0, BOX_HEIGHT);
-            g2.setNonStrokingColor(util.getProductGroupMainColor(i));
+            g2.setNonStrokingColor(tableOfContentItem.getColor());
             g2.fillRect(-0.25f, 0.25f - BOX_HEIGHT, PAGE_BOX_WIDTH,  BOX_HEIGHT - 0.5f);
             g2.setStrokingColor(Color.black);
             g2.drawLine(0, 0, (WIDTH - COLUMN_GAP) / 2f  - MARGIN_X, 0);
             g2.drawLine(PAGE_BOX_WIDTH, 0, PAGE_BOX_WIDTH, -BOX_HEIGHT);
-            String pageString = entry.getValue() + ".";
+            String pageString = tableOfContentItem.getPageNumber() + ".";
             g2.setNonStrokingColor(Color.black);
             g2.setFont(PAGE_FONT);
             g2.drawString(pageString, PAGE_BOX_WIDTH - 5 - g2.getStringWidth(pageString), -5);

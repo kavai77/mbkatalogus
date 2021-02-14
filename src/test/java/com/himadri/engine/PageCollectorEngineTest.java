@@ -15,9 +15,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.awt.*;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -52,7 +54,7 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testSingleBoxes() throws Exception {
-        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), any(), any(), any()))
                 .thenReturn(createNarrowBoxesWithSize('A', ARTICLE, IntStream.generate(() -> 1).limit(17).toArray()));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),
                  createUserRequest());
@@ -70,7 +72,7 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testBigBoxes() throws Exception {
-        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), any(), any(), any()))
                 .thenReturn(createNarrowBoxesWithSize('A', ARTICLE, 5, 5, 4, 4, 2 ));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),
                 createUserRequest());
@@ -86,7 +88,7 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testWideBoxes() throws Exception {
-        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), any(), any(), any()))
                 .thenReturn(
                         createWideBoxesWithSize('A', ARTICLE, 2, 1 ),
                         createNarrowBoxesWithSize('B', ARTICLE, 3, 4)
@@ -121,7 +123,7 @@ public class PageCollectorEngineTest {
             .thenReturn(
                 createWideBoxesWithSize('F', IMAGE,1).get(0)
             );
-        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), any(), any(), any()))
             .thenReturn(
                 createWideBoxesWithSize('A', ARTICLE, 1, 1 ),
                 createNarrowBoxesWithSize('B', ARTICLE, 3, 4),
@@ -160,7 +162,7 @@ public class PageCollectorEngineTest {
             .thenReturn(
                 createNarrowBoxesWithSize('F', IMAGE,2).get(0)
             );
-        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), any(), any(), any()))
             .thenReturn(
                 createWideBoxesWithSize('A', ARTICLE, 1 ),
                 createNarrowBoxesWithSize('B', ARTICLE, 3, 4),
@@ -204,7 +206,7 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testWideOnNewPageBoxes() throws Exception {
-        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), any(), any(), any()))
                 .thenReturn(
                         createWideBoxesWithSize('A', ARTICLE, 2),
                         createNarrowBoxesWithSize('B', ARTICLE, 1),
@@ -229,7 +231,7 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testTooBigBox() throws Exception {
-        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), any(), any(), any()))
                 .thenReturn(createNarrowBoxesWithSize('A', ARTICLE, 3, 9 ));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1),createUserRequest());
         assertEquals(1, pages.size());
@@ -240,7 +242,7 @@ public class PageCollectorEngineTest {
 
     @Test
     public void testOnlyWideBoxes() throws Exception {
-        when(itemToBoxConverter.createArticleBox(any(), anyInt(), anyString(), any(), any()))
+        when(itemToBoxConverter.createArticleBox(any(), anyInt(), any(), any(), any()))
                 .thenReturn(createWideBoxesWithSize('A', ARTICLE, 3, 3, 3, 6 ));
         final List<Page> pages = sut.createPages(createDummyItemGroups(1, 1), createUserRequest());
         assertEquals(3, pages.size());
@@ -312,7 +314,7 @@ public class PageCollectorEngineTest {
     }
 
     private Box createBoxWithSize(char namePrefix, int index, int width, int height, Box.Type type) {
-        return new Box(null, null, namePrefix + Integer.toString(index), null, "group", 0, width, height, false, false, null, null, type);
+        return new Box(null, null, namePrefix + Integer.toString(index), null, "group", Color.blue, width, height, false, false, null, null, type);
     }
 
     private UserRequest createUserRequest() {
@@ -320,7 +322,7 @@ public class PageCollectorEngineTest {
     }
 
     private List<CsvProductGroup> createDummyItemGroups(int nbOfGroups, int nbOfItemsEach) {
-        return Stream.generate(() -> new CsvProductGroup("group", createDummyItems(nbOfItemsEach)))
+        return Stream.generate(() -> new CsvProductGroup("group", Optional.of("color"), createDummyItems(nbOfItemsEach)))
                 .limit(nbOfGroups).collect(Collectors.toList());
     }
 

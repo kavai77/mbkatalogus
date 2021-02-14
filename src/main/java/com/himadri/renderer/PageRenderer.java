@@ -55,7 +55,7 @@ public class PageRenderer {
         Color mainColor = page.getBoxes()
                 .stream()
                 .filter(b -> b.getBoxType() == Box.Type.ARTICLE)
-                .map(b -> util.getBoxMainColor(b))
+                .map(b -> b.getProductColor())
                 .findFirst()
                 .orElse(util.getProductGroupMainColor(0));
 

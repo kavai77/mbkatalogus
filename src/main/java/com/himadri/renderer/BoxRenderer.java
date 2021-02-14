@@ -180,7 +180,7 @@ public class BoxRenderer {
         final BoxPosition mainBoxPosition = boxPositions.getMainBoxPosition();
 
         // headline box
-        final Color mainColor = util.getBoxMainColor(box);
+        final Color mainColor = box.getProductColor();
         g2.setNonStrokingColor(mainColor);
 //        g2.setPaint(new LinearGradientPaint(TEXT_BOX_X, textBoxHeadHeight, TEXT_BOX_X + TEXT_BOX_WIDTH, 0,
 //                new float[]{0.0f, 0.5f, 1f}, new Color[]{mainColor, Color.white, mainColor}));

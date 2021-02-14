@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,7 +80,7 @@ public class ItemToBoxConverter {
         }
     }
 
-    public List<Box> createArticleBox(CsvItemGroup items, int indexOfProductGroup, String productGroupName,
+    public List<Box> createArticleBox(CsvItemGroup items, int indexOfProductGroup, ItemCategorizerEngine.CsvProductGroup productGroup,
                                       UserRequest userRequest, List<Integer> availableBoxHeights) {
         final String boxTitle = getBoxTitle(items.getItems(), userRequest);
         List<Box.Article> articleList = items.getItems().stream().map(item -> convertItemToArticle(item, userRequest)).collect(Collectors.toList());
@@ -108,9 +109,25 @@ public class ItemToBoxConverter {
             String brandImage = isNotBlank(firstItem.getGyarto()) ? stripToEmpty(firstItem.getGyarto()) + PSD_EXTENSION : null;
             final String imageName = imageLoader.getImageName(firstItem);
             final List<Box.Article> articles = articleList.subList(articleStart, requiredOccupiedSpace.getIndexOfNextArticle());
+            Color color;
+            if (productGroup.getColor().isPresent()) {
+                try {
+                    String colorStr = productGroup.getColor().get();
+                    colorStr = StringUtils.removeStart(colorStr, "#");
+                    colorStr = StringUtils.prependIfMissing(colorStr, "0x");
+                    color = Color.decode(colorStr);
+                } catch (NumberFormatException e) {
+                    color = util.getProductGroupMainColor(indexOfProductGroup);
+                    userSessionCache.getIfPresent(userRequest.getRequestId()).addErrorItem(ErrorItem.Severity.WARN,
+                        ErrorItem.ErrorCategory.FORMATTING,
+                        String.format("Értelmezhetetlen szín %s, figyelmen kívül hagyjuk", productGroup.getColor().get()));
+                }
+            } else {
+                color = util.getProductGroupMainColor(indexOfProductGroup);
+            }
             if (!articles.isEmpty()) {
                 boxList.add(Box.createArticleBox(imageName, brandImage, boxTitle,
-                        stripToEmpty(firstItem.getCikkfajta()), productGroupName, indexOfProductGroup,
+                        stripToEmpty(firstItem.getCikkfajta()), productGroup.getName(), color,
                         wideBox ? PageRenderer.BOX_COLUMNS_PER_PAGE : 1,
                         requiredOccupiedSpace.getBoxHeight(),
                         newProduct, onNewPage, articles));

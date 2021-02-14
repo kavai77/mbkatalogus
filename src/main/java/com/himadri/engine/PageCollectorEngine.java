@@ -90,7 +90,7 @@ public class PageCollectorEngine {
                     final boolean wideBox = csvItemGroup.getItems().stream()
                         .anyMatch(i -> trueValueSet.contains(defaultString(i.getNagykep()).toLowerCase()));
                     final List<Box> itemBoxes = itemToBoxConverter.createArticleBox(csvItemGroup, indexOfProductGroup,
-                        productGroup.getName(), userRequest, currentPageBuilder.getAvailableBoxHeights(wideBox ? BOX_COLUMNS_PER_PAGE : 1));
+                        productGroup, userRequest, currentPageBuilder.getAvailableBoxHeights(wideBox ? BOX_COLUMNS_PER_PAGE : 1));
                     for (Box box : itemBoxes) {
                         final boolean added = currentPageBuilder.addBoxToPage(box);
                         if (!added) {

@@ -72,6 +72,15 @@ public class StrictItemCategorizerEngine implements ItemCategorizerEngine {
             }
         }
 
+        for (CsvProductGroup productGroup: productGroups) {
+            Optional<String> color = productGroup.getItemGroups().stream()
+                .flatMap(it -> it.getItems().stream())
+                .map(CsvItem::getSzin)
+                .filter(StringUtils::isNotBlank)
+                .findFirst();
+            productGroup.setColor(color);
+        }
+
         return productGroups;
     }
 
