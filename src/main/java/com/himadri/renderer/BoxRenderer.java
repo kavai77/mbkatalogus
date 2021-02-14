@@ -47,6 +47,7 @@ public class BoxRenderer {
         1, new int[] {13},
         2, new int[] {10, 22}
     );
+    static final float BOX_SYMBOL_WIDTH = 8f;
 
     @Autowired
     private Cache<String, UserSession> userSessionCache;
@@ -246,6 +247,28 @@ public class BoxRenderer {
             g2.drawString(article.getPrice(), boxPosition.getTextEnd() - g2.getStringWidth(article.getPrice()),
                     getLineYBaseLine(currentLine, m));
 
+            // gyűjtő és karton
+            if (isNotBlank(article.getGyujtoKarton())) {
+                g2.setNonStrokingColor(Color.black);
+                g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
+                g2.drawString(article.getGyujtoKarton(),
+                    boxPosition.getDescriptionEnd(articleIndex) + m.getTextMargin() + BOX_SYMBOL_WIDTH,
+                    getLineYBaseLine(currentLine, m));
+                try {
+                    PDImageXObject boxImage = imageLoader.loadResourceImage("/box.png", g2.getDocument());
+                    if (boxImage != null) {
+                        final float scale = BOX_SYMBOL_WIDTH / boxImage.getWidth();
+                        g2.drawImage(boxImage,
+                            boxPosition.getDescriptionEnd(articleIndex) + m.getTextMargin() / 2,
+                            getLineYBaseLine(currentLine, m) - boxImage.getHeight() * scale,
+                            boxImage.getWidth() * scale,
+                            boxImage.getHeight() * scale);
+                    }
+                } catch (IOException e) {
+                    userSession.addErrorItem(WARN, IMAGE, "Hibás doboz logó a gyűjtő és karton mennyiségekhez");
+                }
+            }
+
             // description
             g2.setNonStrokingColor(Color.black);
             g2.setStrokingColor(Color.black);
@@ -255,8 +278,7 @@ public class BoxRenderer {
                 article.getDescription(), getSplitWidths(boxPositions, articleIndex, currentLine, m));
             for (Line line: paragraph.getLines()) {
                 for (PdfObject pdfObject: line.getObjects()) {
-                    pdfObject.render(getBoxPositionForLine(boxPositions, currentLine, m).getDescriptionStart(),
-                        getLineYBaseLine(currentLine, m));
+                    pdfObject.render(boxPosition.getDescriptionStart(), getLineYBaseLine(currentLine, m));
                 }
                 currentLine++;
             }
@@ -328,9 +350,15 @@ public class BoxRenderer {
         final PDFont priceFont = fontService.getPDFont(g2.getDocument(), Fonts.BOX_PRICE_FONT);
         final float[] descriptionEnds = Floats.toArray(
                 articles.stream().
-                map(Box.Article::getPrice).
-                map(priceStr -> g2.getStringWidth(priceFont, Fonts.BOX_PRICE_FONT.getSize2D(), priceStr)).
-                map(priceWidth -> boxTextEnd - priceWidth - m.getTextMargin() / 2).
+                map(article -> {
+                    float priceWidth = g2.getStringWidth(priceFont, Fonts.BOX_PRICE_FONT.getSize2D(), article.getPrice());
+                    float descriptionEnd = boxTextEnd - priceWidth - m.getTextMargin() / 2;
+                    if (isNotBlank(article.getGyujtoKarton())) {
+                        float gyujtoKartonWidth = g2.getStringWidth(priceFont, Fonts.BOX_PRODUCT_DESCRIPTION_FONT.getSize2D(), article.getGyujtoKarton());
+                        descriptionEnd -= gyujtoKartonWidth + 2 * m.getTextMargin() + BOX_SYMBOL_WIDTH;
+                    }
+                    return descriptionEnd;
+                }).
                 collect(Collectors.toList()));
         final BoxPosition mainBoxPosition = new BoxPosition()
                 .withTextStart(mainBoxTextStart)

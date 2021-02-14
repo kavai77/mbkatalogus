@@ -77,6 +77,8 @@ data class Box(
         val price: String,
         val description: String,
         val indexName: String?,
-        val isEmptyItemText: Boolean)
+        val isEmptyItemText: Boolean,
+        val gyujtoKarton: String
+    )
 
 }

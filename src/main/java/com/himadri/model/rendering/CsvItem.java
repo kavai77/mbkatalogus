@@ -49,4 +49,8 @@ public class CsvItem {
     private String ujoldalon;
     @CsvBindByName
     private String szin;
+    @CsvBindByName
+    private String gyujto;
+    @CsvBindByName
+    private String karton;
 }
