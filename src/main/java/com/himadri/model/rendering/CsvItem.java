@@ -50,7 +50,5 @@ public class CsvItem {
     @CsvBindByName
     private String szin;
     @CsvBindByName
-    private String gyujto;
-    @CsvBindByName
-    private String karton;
+    private String csomagolas;
 }

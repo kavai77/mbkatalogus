@@ -248,10 +248,10 @@ public class BoxRenderer {
                     getLineYBaseLine(currentLine, m));
 
             // gyűjtő és karton
-            if (isNotBlank(article.getGyujtoKarton())) {
+            if (isNotBlank(article.getPackaging())) {
                 g2.setNonStrokingColor(Color.black);
                 g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
-                g2.drawString(article.getGyujtoKarton(),
+                g2.drawString(article.getPackaging(),
                     boxPosition.getDescriptionEnd(articleIndex) + m.getTextMargin() + BOX_SYMBOL_WIDTH,
                     getLineYBaseLine(currentLine, m));
                 try {
@@ -353,9 +353,9 @@ public class BoxRenderer {
                 map(article -> {
                     float priceWidth = g2.getStringWidth(priceFont, Fonts.BOX_PRICE_FONT.getSize2D(), article.getPrice());
                     float descriptionEnd = boxTextEnd - priceWidth - m.getTextMargin() / 2;
-                    if (isNotBlank(article.getGyujtoKarton())) {
-                        float gyujtoKartonWidth = g2.getStringWidth(priceFont, Fonts.BOX_PRODUCT_DESCRIPTION_FONT.getSize2D(), article.getGyujtoKarton());
-                        descriptionEnd -= gyujtoKartonWidth + 2 * m.getTextMargin() + BOX_SYMBOL_WIDTH;
+                    if (isNotBlank(article.getPackaging())) {
+                        float packagingWidth = g2.getStringWidth(priceFont, Fonts.BOX_PRODUCT_DESCRIPTION_FONT.getSize2D(), article.getPackaging());
+                        descriptionEnd -= packagingWidth + 2 * m.getTextMargin() + BOX_SYMBOL_WIDTH;
                     }
                     return descriptionEnd;
                 }).

@@ -169,20 +169,10 @@ public class ItemToBoxConverter {
                 descriptionBuilder.append(Util.FORCE_LINE_BREAK_CHARACTERS);
             }
         }
-        StringBuilder gyujtoKartonBuilder = new StringBuilder();
-        if (isNotBlank(item.getGyujto())) {
-            gyujtoKartonBuilder.append(item.getGyujto());
-        }
-        if (isNotBlank(item.getKarton())) {
-            if (gyujtoKartonBuilder.length() > 0) {
-                gyujtoKartonBuilder.append("/");
-            }
-            gyujtoKartonBuilder.append(item.getKarton());
-        }
         final String itemText = util.removeLeadingHtmlBreaks(stripToEmpty(item.getLeiras()));
         descriptionBuilder.append(itemText);
         return new Box.Article(item.getCikkszam(), remove(item.getKiskerar(), '\u00a0'),
-                descriptionBuilder.toString(), item.getTargymutato(), isEmpty(itemText), gyujtoKartonBuilder.toString());
+                descriptionBuilder.toString(), item.getTargymutato(), isEmpty(itemText), StringUtils.defaultString(item.getCsomagolas()));
     }
 
     private String getBoxTitle(List<CsvItem> items, UserRequest userRequest) {
