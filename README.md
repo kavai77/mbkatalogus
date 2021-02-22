@@ -29,3 +29,9 @@ docker run -it --rm -p 8080:8080 --name mbkatalogus -e SPRING_PROFILES_ACTIVE=sz
 --mount type=volume,source=mbkatalogusdb,target=/usr/share/db \
 docker.himadri.eu:5000/kavai77/mbkatalogus:1.5
 ```
+
+### Upload image
+```
+docker login docker.himadri.eu:5000
+docker push docker.himadri.eu:5000/kavai77/mbkatalogus:1.5
+```
