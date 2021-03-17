@@ -14,6 +14,9 @@ import com.himadri.model.service.PdfObject;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.imageloader.ImageLoader;
 import com.himadri.renderer.imageloader.ImageLoaderServiceRegistry;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
@@ -251,15 +254,17 @@ public class BoxRenderer {
             if (isNotBlank(article.getPackaging())) {
                 g2.setNonStrokingColor(Color.black);
                 g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
+                float firstLineDescriptionEnds = boxPosition.getDescriptionEnd()[articleIndex] -
+                    boxPositions.getMainBoxPosition().getPackagingWidth()[articleIndex];
                 g2.drawString(article.getPackaging(),
-                    boxPosition.getDescriptionEnd(articleIndex) + m.getTextMargin() + BOX_SYMBOL_WIDTH,
+                    firstLineDescriptionEnds + m.getTextMargin() + BOX_SYMBOL_WIDTH,
                     getLineYBaseLine(currentLine, m));
                 try {
                     PDImageXObject boxImage = imageLoader.loadResourceImage("/box.png", g2.getDocument());
                     if (boxImage != null) {
                         final float scale = BOX_SYMBOL_WIDTH / boxImage.getWidth();
                         g2.drawImage(boxImage,
-                            boxPosition.getDescriptionEnd(articleIndex) + m.getTextMargin() / 2,
+                            firstLineDescriptionEnds + m.getTextMargin() / 2,
                             getLineYBaseLine(currentLine, m) - boxImage.getHeight() * scale,
                             boxImage.getWidth() * scale,
                             boxImage.getHeight() * scale);
@@ -280,7 +285,7 @@ public class BoxRenderer {
                 for (PdfObject pdfObject: line.getObjects()) {
                     pdfObject.render(boxPosition.getDescriptionStart(), getLineYBaseLine(currentLine, m));
                 }
-                currentLine++;
+                boxPosition = getBoxPositionForLine(boxPositions, ++currentLine, m);
             }
         }
 
@@ -322,15 +327,23 @@ public class BoxRenderer {
 
     private float[] getSplitWidths(BoxPositions boxPositions, int indexOfArticle, int currentLine, BoxMetrics m) {
         if (currentLine >= m.getMainBoxLineCount()) {
-            return new float[]{boxPositions.getExtendedBoxPosition().getDescriptionEnd(indexOfArticle) -
-                    boxPositions.getExtendedBoxPosition().getDescriptionStart()};
+            return new float[]{boxPositions.getExtendedBoxPosition().getDescriptionEnd()[indexOfArticle] -
+                boxPositions.getExtendedBoxPosition().getDescriptionStart() -
+                boxPositions.getMainBoxPosition().getPackagingWidth()[indexOfArticle],
+                boxPositions.getExtendedBoxPosition().getDescriptionEnd()[indexOfArticle] -
+                boxPositions.getExtendedBoxPosition().getDescriptionStart()};
         } else {
             float[] splitWidths = new float[m.getMainBoxLineCount() - currentLine + 1];
-            Arrays.fill(splitWidths, 0, m.getMainBoxLineCount() - currentLine,
-                    boxPositions.getMainBoxPosition().getDescriptionEnd(indexOfArticle) -
-                            boxPositions.getMainBoxPosition().getDescriptionStart());
+            splitWidths[0] = boxPositions.getMainBoxPosition().getDescriptionEnd()[indexOfArticle] -
+                             boxPositions.getMainBoxPosition().getDescriptionStart() -
+                             boxPositions.getMainBoxPosition().getPackagingWidth()[indexOfArticle];
+            if (m.getMainBoxLineCount() - currentLine > 1) {
+                Arrays.fill(splitWidths, 1, m.getMainBoxLineCount() - currentLine,
+                    boxPositions.getMainBoxPosition().getDescriptionEnd()[indexOfArticle] -
+                        boxPositions.getMainBoxPosition().getDescriptionStart());
+            }
             splitWidths[m.getMainBoxLineCount() - currentLine] =
-                    boxPositions.getExtendedBoxPosition().getDescriptionEnd(indexOfArticle) -
+                    boxPositions.getExtendedBoxPosition().getDescriptionEnd()[indexOfArticle] -
                     boxPositions.getExtendedBoxPosition().getDescriptionStart();
             return splitWidths;
         }
@@ -352,24 +365,30 @@ public class BoxRenderer {
                 articles.stream().
                 map(article -> {
                     float priceWidth = g2.getStringWidth(priceFont, Fonts.BOX_PRICE_FONT.getSize2D(), article.getPrice());
-                    float descriptionEnd = boxTextEnd - priceWidth - m.getTextMargin() / 2;
-                    if (isNotBlank(article.getPackaging())) {
-                        float packagingWidth = g2.getStringWidth(priceFont, Fonts.BOX_PRODUCT_DESCRIPTION_FONT.getSize2D(), article.getPackaging());
-                        descriptionEnd -= packagingWidth + 2 * m.getTextMargin() + BOX_SYMBOL_WIDTH;
-                    }
-                    return descriptionEnd;
+                    return boxTextEnd - priceWidth - m.getTextMargin() / 2;
                 }).
                 collect(Collectors.toList()));
-        final BoxPosition mainBoxPosition = new BoxPosition()
-                .withTextStart(mainBoxTextStart)
-                .withTextEnd(boxTextEnd)
-                .withDescriptionStart(mainBoxTextStart + maxProductNumberWidth + m.getTextMargin())
-                .withDescriptionEnd(descriptionEnds);
-        final BoxPosition extendedBoxPosition = new BoxPosition()
-                .withTextStart(extendedBoxTextStart)
-                .withTextEnd(boxTextEnd)
-                .withDescriptionStart(extendedBoxTextStart + maxProductNumberWidth + m.getTextMargin())
-                .withDescriptionEnd(descriptionEnds);
+        final float[] packagingWidths = Floats.toArray(
+            articles.stream().
+                map(article -> isNotBlank(article.getPackaging())
+                    ? g2.getStringWidth(priceFont, Fonts.BOX_PRODUCT_DESCRIPTION_FONT.getSize2D(), article.getPackaging())
+                        + 2 * m.getTextMargin() + BOX_SYMBOL_WIDTH
+                    : 0)
+                .collect(Collectors.toList()));
+        final BoxPosition mainBoxPosition = BoxPosition.builder()
+                .textStart(mainBoxTextStart)
+                .textEnd(boxTextEnd)
+                .descriptionStart(mainBoxTextStart + maxProductNumberWidth + m.getTextMargin())
+                .descriptionEnd(descriptionEnds)
+                .packagingWidth(packagingWidths)
+                .build();
+        final BoxPosition extendedBoxPosition = BoxPosition.builder()
+                .textStart(extendedBoxTextStart)
+                .textEnd(boxTextEnd)
+                .descriptionStart(extendedBoxTextStart + maxProductNumberWidth + m.getTextMargin())
+                .descriptionEnd(descriptionEnds)
+                .packagingWidth(packagingWidths)
+                .build();
         return new BoxPositions(mainBoxPosition, extendedBoxPosition);
     }
 
@@ -391,65 +410,20 @@ public class BoxRenderer {
         }
     }
 
+    @Builder
+    @Getter
     private static class BoxPosition {
-        private float descriptionStart;
-        private float[] descriptionEnd;
-        private float textStart;
-        private float textEnd;
-
-        public BoxPosition withDescriptionStart(float descriptionStart) {
-            this.descriptionStart = descriptionStart;
-            return this;
-        }
-
-        public BoxPosition withDescriptionEnd(float[] descriptionEnd) {
-            this.descriptionEnd = descriptionEnd;
-            return this;
-        }
-
-        public BoxPosition withTextStart(float textStart) {
-            this.textStart = textStart;
-            return this;
-        }
-
-        public BoxPosition withTextEnd(float textEnd) {
-            this.textEnd = textEnd;
-            return this;
-        }
-
-        public float getDescriptionStart() {
-            return descriptionStart;
-        }
-
-        public float getDescriptionEnd(int index) {
-            return descriptionEnd[index];
-        }
-
-        public float getTextStart() {
-            return textStart;
-        }
-
-        public float getTextEnd() {
-            return textEnd;
-        }
+        private final float descriptionStart;
+        private final float[] descriptionEnd;
+        private final float[] packagingWidth;
+        private final float textStart;
+        private final float textEnd;
     }
 
+    @Data
     public static class RequiredHeight {
         private final int boxHeight;
         private final int indexOfNextArticle;
-
-        public RequiredHeight(int boxHeight, int indexOfNextArticle) {
-            this.boxHeight = boxHeight;
-            this.indexOfNextArticle = indexOfNextArticle;
-        }
-
-        public int getBoxHeight() {
-            return boxHeight;
-        }
-
-        public int getIndexOfNextArticle() {
-            return indexOfNextArticle;
-        }
     }
 
 }
