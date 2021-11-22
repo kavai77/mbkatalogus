@@ -22,7 +22,6 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -63,9 +62,6 @@ public class BoxRenderer {
 
     @Autowired
     private ImageLoaderServiceRegistry imageLoaderServiceRegistry;
-
-    @Value("${logoImageLocation}")
-    private String logoImageLocation;
 
     private final BoxMetrics regularBoxMetrics = new BoxMetrics(
             95f,
@@ -153,7 +149,7 @@ public class BoxRenderer {
                 PDImageXObject logoImage = imageLoader.loadLogoImage(box, g2.getDocument(), userSession);
                 if (logoImage != null) {
                     float scale = min(1f, min(m.getLogoImageWidthMax() / logoImage.getWidth(), m.getLogoImageHeightMax() / logoImage.getHeight()));
-                    g2.drawImage(logoImage, 3f, 3f, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
+                    g2.drawImage(logoImage, 3f, m.getImageHeightMax() - logoImage.getHeight() * scale + 5, logoImage.getWidth() * scale, logoImage.getHeight() * scale);
                 }
             } catch (ImageNotFoundException e) {
                 userSession.addErrorItem(WARN, IMAGE, "Nem található a logo kép: " + box.getBrandImage());
