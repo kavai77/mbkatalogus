@@ -13,7 +13,7 @@
 
     <properties>
         <docker.image.prefix>kavai77</docker.image.prefix>
-        <kotlin.version>1.3.21</kotlin.version>
+        <kotlin.version>1.6.0</kotlin.version>
         <timestamp>${maven.build.timestamp}</timestamp>
     </properties>
 
