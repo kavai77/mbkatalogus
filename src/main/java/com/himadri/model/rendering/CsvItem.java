@@ -51,4 +51,6 @@ public class CsvItem {
     private String szin;
     @CsvBindByName
     private String csomagolas;
+    @CsvBindByName
+    private String cikkazon;
 }

@@ -2,6 +2,7 @@ package com.himadri.model.service
 
 import com.himadri.graphics.pdfbox.PDFontService
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics
+import java.awt.Color
 import java.awt.Font
 
 class Paragraph (
@@ -51,6 +52,10 @@ class Paragraph (
     fun addUnderline() {
         underline = false
         line.addPdfObject(UnderlinePdfObject(g2, line.underLineXStart, line.totalWidth))
+    }
+
+    fun changeColor(color: Color) {
+        line.addPdfObject(ColorChangePdfObject(g2, color))
     }
 }
 
@@ -160,6 +165,17 @@ class EndTextPdfObject (
     val g2: PdfBoxPageGraphics
 ) : PdfObject {
     override fun render(x: Float, y: Float) = g2.endText()
+
+    override fun width() = 0f
+
+    override fun sortValue() = 0
+}
+
+class ColorChangePdfObject (
+    val g2: PdfBoxPageGraphics,
+    val color: Color
+) : PdfObject {
+    override fun render(x: Float, y: Float) = g2.setNonStrokingColor(color)
 
     override fun width() = 0f
 

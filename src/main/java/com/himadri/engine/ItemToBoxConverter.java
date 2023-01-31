@@ -144,8 +144,9 @@ public class ItemToBoxConverter {
         if (userRequest.isWholeSaleFormat()) {
             if (isNotBlank(item.getNagykerar())) {
                 descriptionBuilder
+                        .append("<wholesalepricecolor><b>")
                         .append(remove(item.getNagykerar(), '\u00a0'))
-                        .append(",- ");
+                        .append(",-</b></wholesalepricecolor> ");
             }
             if (isNotBlank(item.getErtmenny())) {
                 descriptionBuilder
@@ -172,7 +173,8 @@ public class ItemToBoxConverter {
         final String itemText = util.removeLeadingHtmlBreaks(stripToEmpty(item.getLeiras()));
         descriptionBuilder.append(itemText);
         return new Box.Article(item.getCikkszam(), remove(item.getKiskerar(), '\u00a0'),
-                descriptionBuilder.toString(), item.getTargymutato(), isEmpty(itemText), StringUtils.defaultString(item.getCsomagolas()));
+                descriptionBuilder.toString(), item.getTargymutato(), isEmpty(itemText), StringUtils.defaultString(item.getCsomagolas()),
+                StringUtils.defaultString(item.getCikkazon()));
     }
 
     private String getBoxTitle(List<CsvItem> items, UserRequest userRequest) {

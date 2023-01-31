@@ -19,6 +19,11 @@ import lombok.Data;
 import lombok.Getter;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.krysalis.barcode4j.HumanReadablePlacement;
+import org.krysalis.barcode4j.impl.int2of5.Interleaved2Of5Bean;
+import org.krysalis.barcode4j.impl.upcean.EAN13Bean;
+import org.krysalis.barcode4j.output.bitmap.BitmapCanvasProvider;
+import org.krysalis.barcode4j.output.java2d.Java2DCanvasProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -236,7 +241,7 @@ public class BoxRenderer {
             BoxPosition boxPosition = getBoxPositionForLine(boxPositions, currentLine, m);
 
             // product number
-            g2.setNonStrokingColor(Color.black);
+            g2.setNonStrokingColor(Fonts.BOX_PRODUCT_NUMBER_COLOR);
             g2.setFont(Fonts.BOX_PRODUCT_NUMBER_FONT);
             g2.drawString(article.getNumber(), boxPosition.getTextStart(), getLineYBaseLine(currentLine, m));
 
@@ -282,6 +287,22 @@ public class BoxRenderer {
                     pdfObject.render(boxPosition.getDescriptionStart(), getLineYBaseLine(currentLine, m));
                 }
                 boxPosition = getBoxPositionForLine(boxPositions, ++currentLine, m);
+            }
+
+            // vonalkód
+            if (isNotBlank(article.getCikkAzon())) {
+                try {
+                    EAN13Bean bean = new EAN13Bean();
+                    bean.setHeight(m.getTextBoxLineHeight());
+                    bean.doQuietZone(false);
+                    bean.setMsgPosition(HumanReadablePlacement.HRP_NONE);
+                    BitmapCanvasProvider provider = new BitmapCanvasProvider(300, BufferedImage.TYPE_BYTE_GRAY,true, 0);
+                    bean.generateBarcode(provider, article.getCikkAzon());
+                    provider.finish();
+                    g2.drawImage(provider.getBufferedImage(), boxPosition.getTextEnd() - 45 + m.getTextMargin(), m.getTextBoxHeadHeight() + (currentLine - 1) * m.getTextBoxLineHeight(), 45, m.getTextBoxLineHeight());
+                } catch (IOException e) {
+                    userSession.addErrorItem(WARN, FORMATTING, "Nem sikerült a vonalkód rajzolása: " + article.getCikkAzon());
+                }
             }
         }
 

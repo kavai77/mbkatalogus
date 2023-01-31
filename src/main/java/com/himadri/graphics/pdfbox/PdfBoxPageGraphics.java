@@ -26,7 +26,7 @@ import java.util.Set;
 public class PdfBoxPageGraphics {
     private static Logger LOG = LoggerFactory.getLogger(Util.class);
 
-    public static final Set<String> SUPPORTED_HTML_TAGS = ImmutableSet.of("<b>", "</b>", "<i>", "</i>", "<strong>", "</strong>", "<u>", "</u>");
+    public static final Set<String> SUPPORTED_HTML_TAGS = ImmutableSet.of("<b>", "</b>", "<i>", "</i>", "<strong>", "</strong>", "<u>", "</u>", "<wholesalepricecolor>", "</wholesalepricecolor>");
 
     private final PDDocument document;
     private final PDPageContentStream contentStream;

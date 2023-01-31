@@ -92,6 +92,12 @@ public class Util {
                             case "</u>":
                                 paragraph.addUnderline();
                                 break;
+                            case "<wholesalepricecolor>":
+                                paragraph.changeColor(Fonts.BOX_WHOLESALE_PRICE_COLOR);
+                                break;
+                            case "</wholesalepricecolor>":
+                                paragraph.changeColor(Color.black);
+                                break;
                         }
                     }
                 } else {
