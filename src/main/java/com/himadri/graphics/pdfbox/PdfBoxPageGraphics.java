@@ -1,6 +1,5 @@
 package com.himadri.graphics.pdfbox;
 
-import com.google.common.collect.ImmutableSet;
 import com.himadri.dto.ErrorItem;
 import com.himadri.model.service.UserSession;
 import com.himadri.renderer.Util;
@@ -21,13 +20,8 @@ import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Set;
 
 public class PdfBoxPageGraphics {
-    private static Logger LOG = LoggerFactory.getLogger(Util.class);
-
-    public static final Set<String> SUPPORTED_HTML_TAGS = ImmutableSet.of("<b>", "</b>", "<i>", "</i>", "<strong>", "</strong>", "<u>", "</u>", "<wholesalepricecolor>", "</wholesalepricecolor>");
-
     private final PDDocument document;
     private final PDPageContentStream contentStream;
     private final float pageHeight;

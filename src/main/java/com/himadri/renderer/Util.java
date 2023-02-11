@@ -4,7 +4,9 @@ import com.google.common.collect.ImmutableSet;
 import com.himadri.graphics.pdfbox.PDFontService;
 import com.himadri.graphics.pdfbox.PdfBoxPageGraphics;
 import com.himadri.model.rendering.Box;
+import com.himadri.model.service.Line;
 import com.himadri.model.service.Paragraph;
+import com.himadri.model.service.PdfObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -62,7 +64,7 @@ public class Util {
         return PRODUCT_GROUP_COLORS[indexOfProductGroup % PRODUCT_GROUP_COLORS.length];
     }
 
-    public Paragraph splitMultiLineText(PdfBoxPageGraphics g2, Font font, String text, float... width) {
+    public Paragraph splitMultiLineText(PdfBoxPageGraphics g2, Font font, String text, boolean withBarcode, float... width) {
         Paragraph paragraph = new Paragraph(g2, pdFontService, font);
         String unescapedText = StringEscapeUtils.unescapeHtml4(text);
         String[] forcedLines = LINE_BREAK_PATTERN.split(unescapedText);
@@ -70,41 +72,49 @@ public class Util {
             String[] words = splitWithDelimiters(forcedLine, HTML_TAG_PATTERN_OR_WHITESPACE);
             for (String word: words) {
                 if (HTML_TAG_PATTERN.matcher(word).matches()) {
-                    if (PdfBoxPageGraphics.SUPPORTED_HTML_TAGS.contains(word)) {
-                        switch (word) {
-                            case "<b>":
-                            case "<strong>":
-                                paragraph.addToCurrentStyle(Font.BOLD);
-                                break;
-                            case "</b>":
-                            case "</strong>":
-                                paragraph.removeFromCurrentStyle(Font.BOLD);
-                                break;
-                            case "<i>":
-                                paragraph.addToCurrentStyle(Font.ITALIC);
-                                break;
-                            case "</i>":
-                                paragraph.removeFromCurrentStyle(Font.ITALIC);
-                                break;
-                            case "<u>":
-                                paragraph.startUnderLine();
-                                break;
-                            case "</u>":
-                                paragraph.addUnderline();
-                                break;
-                            case "<wholesalepricecolor>":
-                                paragraph.changeColor(Fonts.BOX_WHOLESALE_PRICE_COLOR);
-                                break;
-                            case "</wholesalepricecolor>":
-                                paragraph.changeColor(Color.black);
-                                break;
-                        }
+                    switch (word) {
+                        case "<b>":
+                        case "<strong>":
+                            paragraph.addToCurrentStyle(Font.BOLD);
+                            break;
+                        case "</b>":
+                        case "</strong>":
+                            paragraph.removeFromCurrentStyle(Font.BOLD);
+                            break;
+                        case "<i>":
+                            paragraph.addToCurrentStyle(Font.ITALIC);
+                            break;
+                        case "</i>":
+                            paragraph.removeFromCurrentStyle(Font.ITALIC);
+                            break;
+                        case "<u>":
+                            paragraph.startUnderLine();
+                            break;
+                        case "</u>":
+                            paragraph.addUnderline();
+                            break;
+                        case "<wholesalepricecolor>":
+                            paragraph.changeColor(Fonts.BOX_WHOLESALE_PRICE_COLOR);
+                            break;
+                        case "</wholesalepricecolor>":
+                            paragraph.changeColor(Color.black);
+                            break;
                     }
                 } else {
                     paragraph.addWord(word, width);
                 }
             }
-            paragraph.lineBreak();
+            paragraph.lineBreak(false);
+        }
+        if (withBarcode) {
+            int lastLineIndex = paragraph.getLines().size() - 1;
+            Line lastLine = paragraph.getLines().get(lastLineIndex);
+            float lastLineMaxWidth = width[Math.min(lastLineIndex, width.length - 1)];
+            if (paragraph.getLines().size() <= 1 || // we need minimum 2 lines, otherwise the barcode would cover the price
+                lastLine.getTotalWidth() > lastLineMaxWidth - BoxRenderer.BARCODE_WIDTH // if the barcode covers the text in the last line, we make an extra line
+            ) {
+                paragraph.lineBreak(true);
+            }
         }
         return paragraph;
     }

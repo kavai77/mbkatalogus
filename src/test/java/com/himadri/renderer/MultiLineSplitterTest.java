@@ -147,7 +147,7 @@ public class MultiLineSplitterTest {
 
     @Test
     public void splitGraphicsText() {
-        Paragraph actualParagraph = util.splitMultiLineText(g2, font, text, widths);
+        Paragraph actualParagraph = util.splitMultiLineText(g2, font, text, false, widths);
 
         assertEquals(expectedLines.size(), actualParagraph.getLines().size());
         for (int i = 0; i < expectedLines.size(); i++) {

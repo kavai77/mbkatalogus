@@ -20,10 +20,8 @@ import lombok.Getter;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.krysalis.barcode4j.HumanReadablePlacement;
-import org.krysalis.barcode4j.impl.int2of5.Interleaved2Of5Bean;
 import org.krysalis.barcode4j.impl.upcean.EAN13Bean;
 import org.krysalis.barcode4j.output.bitmap.BitmapCanvasProvider;
-import org.krysalis.barcode4j.output.java2d.Java2DCanvasProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +53,7 @@ public class BoxRenderer {
         2, new int[] {10, 22}
     );
     static final float BOX_SYMBOL_WIDTH = 8f;
+    public static final int BARCODE_WIDTH = 45;
 
     @Autowired
     private Cache<String, UserSession> userSessionCache;
@@ -216,7 +215,7 @@ public class BoxRenderer {
         g2.setStrokingColor(Color.black);
         g2.setFont(Fonts.BOX_TITLE_FONT);
         g2.setLineWidth(.5f);
-        Paragraph headingTextLines = util.splitMultiLineText(g2, Fonts.BOX_TITLE_FONT, box.getTitle(),
+        Paragraph headingTextLines = util.splitMultiLineText(g2, Fonts.BOX_TITLE_FONT, box.getTitle(), false,
                 mainBoxPosition.getTextEnd() - mainBoxPosition.getTextStart(),
                 categoryStart - mainBoxPosition.getTextStart() - m.getTextMargin());
         if (!headingTextLines.getLines().isEmpty()) {
@@ -255,7 +254,8 @@ public class BoxRenderer {
             if (isNotBlank(article.getPackaging())) {
                 g2.setNonStrokingColor(Color.black);
                 g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
-                float firstLineDescriptionEnds = boxPosition.getDescriptionEnd()[articleIndex] -
+                float firstLineDescriptionEnds = boxPosition.getDescriptionEnd() -
+                    boxPositions.getMainBoxPosition().getPriceWidth()[articleIndex] -
                     boxPositions.getMainBoxPosition().getPackagingWidth()[articleIndex];
                 g2.drawString(article.getPackaging(),
                     firstLineDescriptionEnds + m.getTextMargin() + BOX_SYMBOL_WIDTH,
@@ -280,12 +280,17 @@ public class BoxRenderer {
             g2.setStrokingColor(Color.black);
             g2.setFont(Fonts.BOX_PRODUCT_DESCRIPTION_FONT);
             g2.setLineWidth(.5f);
+            float[] splitWidths = getSplitWidths(boxPositions, articleIndex, currentLine, m);
             final Paragraph paragraph = util.splitMultiLineText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT,
-                article.getDescription(), getSplitWidths(boxPositions, articleIndex, currentLine, m));
+                article.getDescription(), isNotBlank(article.getCikkAzon()), splitWidths);
+//            int lineNb = 0;
             for (Line line: paragraph.getLines()) {
                 for (PdfObject pdfObject: line.getObjects()) {
                     pdfObject.render(boxPosition.getDescriptionStart(), getLineYBaseLine(currentLine, m));
                 }
+//                g2.drawLine(boxPosition.getDescriptionStart() + splitWidths[lineNb], getLineYBaseLine(currentLine, m) - 10,
+//                        boxPosition.getDescriptionStart() + splitWidths[lineNb], getLineYBaseLine(currentLine, m));
+//                if (lineNb < splitWidths.length - 1) lineNb++;
                 boxPosition = getBoxPositionForLine(boxPositions, ++currentLine, m);
             }
 
@@ -299,7 +304,7 @@ public class BoxRenderer {
                     BitmapCanvasProvider provider = new BitmapCanvasProvider(300, BufferedImage.TYPE_BYTE_GRAY,true, 0);
                     bean.generateBarcode(provider, article.getCikkAzon());
                     provider.finish();
-                    g2.drawImage(provider.getBufferedImage(), boxPosition.getTextEnd() - 45 + m.getTextMargin(), m.getTextBoxHeadHeight() + (currentLine - 1) * m.getTextBoxLineHeight(), 45, m.getTextBoxLineHeight());
+                    g2.drawImage(provider.getBufferedImage(), boxPosition.getTextEnd() - BARCODE_WIDTH + m.getTextMargin(), m.getTextBoxHeadHeight() + (currentLine - 1) * m.getTextBoxLineHeight(), BARCODE_WIDTH, m.getTextBoxLineHeight());
                 } catch (IOException e) {
                     userSession.addErrorItem(WARN, FORMATTING, "Nem sikerült a vonalkód rajzolása: " + article.getCikkAzon());
                 }
@@ -323,8 +328,9 @@ public class BoxRenderer {
         int lineCount = 0;
         float requiredSpace = m.getTextBoxHeadHeight();
         for (int i = articleStartIndex; i < articles.size(); i++) {
-            final Paragraph paragraph = util.splitMultiLineText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT,
-                    articles.get(i).getDescription(), getSplitWidths(boxPositions, i, lineCount, m));
+            Box.Article article = articles.get(i);
+            Paragraph paragraph = util.splitMultiLineText(g2, Fonts.BOX_PRODUCT_DESCRIPTION_FONT,
+                    article.getDescription(), isNotBlank(article.getCikkAzon()), getSplitWidths(boxPositions, i, lineCount, m));
             requiredSpace += paragraph.getLines().size() * m.getTextBoxLineHeight();
             lineCount += paragraph.getLines().size();
             if (requiredSpace > availableBoxes * BOX_HEIGHT) {
@@ -344,23 +350,26 @@ public class BoxRenderer {
 
     private float[] getSplitWidths(BoxPositions boxPositions, int indexOfArticle, int currentLine, BoxMetrics m) {
         if (currentLine >= m.getMainBoxLineCount()) {
-            return new float[]{boxPositions.getExtendedBoxPosition().getDescriptionEnd()[indexOfArticle] -
+            return new float[]{
+                boxPositions.getExtendedBoxPosition().getDescriptionEnd() -
                 boxPositions.getExtendedBoxPosition().getDescriptionStart() -
-                boxPositions.getMainBoxPosition().getPackagingWidth()[indexOfArticle],
-                boxPositions.getExtendedBoxPosition().getDescriptionEnd()[indexOfArticle] -
+                boxPositions.getExtendedBoxPosition().getPriceWidth()[indexOfArticle] -
+                boxPositions.getExtendedBoxPosition().getPackagingWidth()[indexOfArticle],
+                boxPositions.getExtendedBoxPosition().getDescriptionEnd() -
                 boxPositions.getExtendedBoxPosition().getDescriptionStart()};
         } else {
             float[] splitWidths = new float[m.getMainBoxLineCount() - currentLine + 1];
-            splitWidths[0] = boxPositions.getMainBoxPosition().getDescriptionEnd()[indexOfArticle] -
+            splitWidths[0] = boxPositions.getMainBoxPosition().getDescriptionEnd() -
                              boxPositions.getMainBoxPosition().getDescriptionStart() -
+                             boxPositions.getMainBoxPosition().getPriceWidth()[indexOfArticle] -
                              boxPositions.getMainBoxPosition().getPackagingWidth()[indexOfArticle];
             if (m.getMainBoxLineCount() - currentLine > 1) {
                 Arrays.fill(splitWidths, 1, m.getMainBoxLineCount() - currentLine,
-                    boxPositions.getMainBoxPosition().getDescriptionEnd()[indexOfArticle] -
+                    boxPositions.getMainBoxPosition().getDescriptionEnd() -
                         boxPositions.getMainBoxPosition().getDescriptionStart());
             }
             splitWidths[m.getMainBoxLineCount() - currentLine] =
-                    boxPositions.getExtendedBoxPosition().getDescriptionEnd()[indexOfArticle] -
+                    boxPositions.getExtendedBoxPosition().getDescriptionEnd() -
                     boxPositions.getExtendedBoxPosition().getDescriptionStart();
             return splitWidths;
         }
@@ -378,11 +387,11 @@ public class BoxRenderer {
         final float maxProductNumberWidth = (float) articles.stream().map(Box.Article::getNumber).mapToDouble(
                 a -> g2.getStringWidth(productNumberFont, Fonts.BOX_PRODUCT_NUMBER_FONT.getSize2D(), a)).max().getAsDouble();
         final PDFont priceFont = fontService.getPDFont(g2.getDocument(), Fonts.BOX_PRICE_FONT);
-        final float[] descriptionEnds = Floats.toArray(
+        final float[] priceWidths = Floats.toArray(
                 articles.stream().
                 map(article -> {
                     float priceWidth = g2.getStringWidth(priceFont, Fonts.BOX_PRICE_FONT.getSize2D(), article.getPrice());
-                    return boxTextEnd - priceWidth - m.getTextMargin() / 2;
+                    return priceWidth + m.getTextMargin() / 2;
                 }).
                 collect(Collectors.toList()));
         final float[] packagingWidths = Floats.toArray(
@@ -396,15 +405,17 @@ public class BoxRenderer {
                 .textStart(mainBoxTextStart)
                 .textEnd(boxTextEnd)
                 .descriptionStart(mainBoxTextStart + maxProductNumberWidth + m.getTextMargin())
-                .descriptionEnd(descriptionEnds)
+                .descriptionEnd(boxTextEnd)
                 .packagingWidth(packagingWidths)
+                .priceWidth(priceWidths)
                 .build();
         final BoxPosition extendedBoxPosition = BoxPosition.builder()
                 .textStart(extendedBoxTextStart)
                 .textEnd(boxTextEnd)
                 .descriptionStart(extendedBoxTextStart + maxProductNumberWidth + m.getTextMargin())
-                .descriptionEnd(descriptionEnds)
+                .descriptionEnd(boxTextEnd)
                 .packagingWidth(packagingWidths)
+                .priceWidth(priceWidths)
                 .build();
         return new BoxPositions(mainBoxPosition, extendedBoxPosition);
     }
@@ -431,7 +442,8 @@ public class BoxRenderer {
     @Getter
     private static class BoxPosition {
         private final float descriptionStart;
-        private final float[] descriptionEnd;
+        private final float descriptionEnd;
+        private final float[] priceWidth;
         private final float[] packagingWidth;
         private final float textStart;
         private final float textEnd;

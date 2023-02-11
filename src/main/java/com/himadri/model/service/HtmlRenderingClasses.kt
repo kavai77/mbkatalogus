@@ -11,13 +11,13 @@ class Paragraph (
     var font: Font
 ){
     val lines: MutableList<Line> = arrayListOf()
-    private var line: Line = Line(g2)
+    var line: Line = Line(g2)
     private var pdFont = pdFontService.getPDFont(g2.document, font);
     private var currentStyle = font.style
     private var underline = false
 
-    fun lineBreak() {
-        if (line.isNotBlank()) {
+    fun lineBreak(forceEmpty: Boolean = false) {
+        if (line.isNotBlank() || forceEmpty) {
             line.finalizeLine(underline)
             lines.add(line)
             line = Line(g2)
